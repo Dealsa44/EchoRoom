@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
 
 type SafeMode = 'light' | 'deep' | 'learning';
 type ChatStyle = 'introverted' | 'balanced' | 'outgoing';
@@ -8,6 +9,7 @@ interface User {
   id: string;
   username: string;
   email: string;
+  password: string;
   avatar: string;
   bio: string;
   interests: string[];
@@ -32,6 +34,7 @@ interface AppContextType extends AppState {
   setLanguage: (lang: Language) => void;
   toggleDarkMode: () => void;
   setSafeMode: (mode: SafeMode) => void;
+  logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,6 +55,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     isDarkMode: false,
     safeMode: 'light',
   });
+
+  // Check for existing user on app load
+  useEffect(() => {
+    const savedUser = getCurrentUserFromStorage();
+    if (savedUser) {
+      setState(prev => ({ 
+        ...prev, 
+        user: savedUser, 
+        isAuthenticated: true 
+      }));
+    }
+  }, []);
 
   const setUser = (user: User | null) => {
     setState(prev => ({ ...prev, user }));
@@ -74,6 +89,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setState(prev => ({ ...prev, safeMode }));
   };
 
+  const logout = () => {
+    logoutUser();
+    setState(prev => ({ 
+      ...prev, 
+      user: null, 
+      isAuthenticated: false 
+    }));
+  };
+
   return (
     <AppContext.Provider value={{
       ...state,
@@ -82,6 +106,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setLanguage,
       toggleDarkMode,
       setSafeMode,
+      logout,
     }}>
       {children}
     </AppContext.Provider>

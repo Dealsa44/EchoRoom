@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Edit, BarChart3, Bot, Languages, BookOpen } from 'lucide-react';
+import { Edit, BarChart3, Bot, Languages, BookOpen, LogOut, Mail, User } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/contexts/AppContext';
@@ -11,7 +11,7 @@ import AITooltip from '@/components/ai/AITooltip';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, safeMode, setSafeMode } = useApp();
+  const { user, safeMode, setSafeMode, logout } = useApp();
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -23,6 +23,19 @@ const Profile = () => {
             <div className="text-4xl mb-3">{user?.avatar || '🌟'}</div>
             <h2 className="text-xl font-bold">{user?.username || 'Guest'}</h2>
             <p className="text-muted-foreground">{user?.bio || 'Welcome to EchoRoom'}</p>
+            
+            {/* User Info */}
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Mail size={14} />
+                <span>{user?.email}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <User size={14} />
+                <span>ID: {user?.id}</span>
+              </div>
+            </div>
+            
             <div className="flex justify-center gap-2 mt-4">
               <Button variant="outline" onClick={() => navigate('/profile/edit')}>
                 <Edit size={16} />
@@ -101,6 +114,20 @@ const Profile = () => {
                 <div>7-day streak</div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Logout Section */}
+        <Card>
+          <CardContent className="p-4">
+            <Button 
+              variant="destructive" 
+              className="w-full" 
+              onClick={logout}
+            >
+              <LogOut size={16} />
+              <span className="ml-2">Logout</span>
+            </Button>
           </CardContent>
         </Card>
       </div>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { LanguageAIProvider } from "@/contexts/LanguageAIContext";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 // Pages
 import Welcome from "./pages/Welcome";
@@ -37,17 +38,64 @@ const App = () => (
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/chat-rooms" element={<ChatRooms />} />
-            <Route path="/chat-room/:id" element={<ChatRoom />} />
-            <Route path="/match" element={<Match />} />
-            <Route path="/private-chat/:userId" element={<PrivateChat />} />
-            <Route path="/forum" element={<Forum />} />
-            <Route path="/forum/thread/:id" element={<ForumThread />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/edit" element={<ProfileEdit />} />
-            <Route path="/profile/stats" element={<ProfileStats />} />
-            <Route path="/settings" element={<Settings />} />
+            
+            {/* Protected Routes */}
+            <Route path="/home" element={
+              <AuthGuard>
+                <Home />
+              </AuthGuard>
+            } />
+            <Route path="/chat-rooms" element={
+              <AuthGuard>
+                <ChatRooms />
+              </AuthGuard>
+            } />
+            <Route path="/chat-room/:id" element={
+              <AuthGuard>
+                <ChatRoom />
+              </AuthGuard>
+            } />
+            <Route path="/match" element={
+              <AuthGuard>
+                <Match />
+              </AuthGuard>
+            } />
+            <Route path="/private-chat/:userId" element={
+              <AuthGuard>
+                <PrivateChat />
+              </AuthGuard>
+            } />
+            <Route path="/forum" element={
+              <AuthGuard>
+                <Forum />
+              </AuthGuard>
+            } />
+            <Route path="/forum/thread/:id" element={
+              <AuthGuard>
+                <ForumThread />
+              </AuthGuard>
+            } />
+            <Route path="/profile" element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } />
+            <Route path="/profile/edit" element={
+              <AuthGuard>
+                <ProfileEdit />
+              </AuthGuard>
+            } />
+            <Route path="/profile/stats" element={
+              <AuthGuard>
+                <ProfileStats />
+              </AuthGuard>
+            } />
+            <Route path="/settings" element={
+              <AuthGuard>
+                <Settings />
+              </AuthGuard>
+            } />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

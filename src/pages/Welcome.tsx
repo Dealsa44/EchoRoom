@@ -6,8 +6,15 @@ import { useApp } from '@/contexts/AppContext';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { language, setLanguage } = useApp();
+  const { language, setLanguage, isAuthenticated } = useApp();
   const [currentSlogan, setCurrentSlogan] = useState(0);
+
+  // Redirect authenticated users to home
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   const slogans = [
     "Conversations begin with thoughts – not just selfies.",
@@ -104,7 +111,7 @@ const Welcome = () => {
           <Button
             variant="ghost"
             size="lg"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/login')}
             className="w-full text-muted-foreground"
           >
             {t.continueAsGuest}

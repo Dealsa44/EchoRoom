@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
+import { loginUser, LoginData } from '@/lib/auth';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,31 +23,38 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate authentication
-    setTimeout(() => {
-      const mockUser = {
-        id: '1',
-        username: 'thoughtful_soul',
+    try {
+      const loginData: LoginData = {
         email: formData.email,
-        avatar: '🌸',
-        bio: 'Deep thinker, book lover, always learning',
-        interests: ['Philosophy', 'Books', 'Mindfulness'],
-        languages: ['English', 'Georgian'],
-        chatStyle: 'introverted' as const,
-        safeMode: 'light' as const,
-        anonymousMode: false,
-        aiAssistant: true,
+        password: formData.password,
       };
 
-      setUser(mockUser);
-      setIsAuthenticated(true);
-      setLoading(false);
+      const result = await loginUser(loginData);
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        setIsAuthenticated(true);
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in to EchoRoom.",
+        });
+        navigate('/home');
+      } else {
+        toast({
+          title: "Login Failed",
+          description: result.errors?.join(', ') || "Invalid email or password.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in to EchoRoom.",
+        title: "Login Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
-      navigate('/home');
-    }, 1500);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
