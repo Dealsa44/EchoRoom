@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { LanguageAIProvider } from "@/contexts/LanguageAIContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import AuthGuard from "@/components/auth/AuthGuard";
+import PublicGuard from "@/components/auth/PublicGuard";
 
 // Pages
 import Welcome from "./pages/Welcome";
@@ -15,6 +17,8 @@ import Home from "./pages/Home";
 import ChatRooms from "./pages/ChatRooms";
 import ChatRoom from "./pages/ChatRoom";
 import Match from "./pages/Match";
+import Matches from "./pages/Matches";
+import ChatInbox from "./pages/ChatInbox";
 import PrivateChat from "./pages/PrivateChat";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
@@ -29,15 +33,24 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppProvider>
-      <LanguageAIProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <NotificationProvider>
+        <LanguageAIProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
           <Routes>
             <Route path="/" element={<Welcome />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={
+              <PublicGuard>
+                <Login />
+              </PublicGuard>
+            } />
+            <Route path="/register" element={
+              <PublicGuard>
+                <Register />
+              </PublicGuard>
+            } />
             
             {/* Protected Routes */}
             <Route path="/home" element={
@@ -60,6 +73,16 @@ const App = () => (
                 <Match />
               </AuthGuard>
             } />
+                      <Route path="/matches" element={
+            <AuthGuard>
+              <Matches />
+            </AuthGuard>
+          } />
+          <Route path="/chat-inbox" element={
+            <AuthGuard>
+              <ChatInbox />
+            </AuthGuard>
+          } />
             <Route path="/private-chat/:userId" element={
               <AuthGuard>
                 <PrivateChat />
@@ -99,9 +122,10 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      </LanguageAIProvider>
+          </BrowserRouter>
+          </TooltipProvider>
+        </LanguageAIProvider>
+      </NotificationProvider>
     </AppProvider>
   </QueryClientProvider>
 );

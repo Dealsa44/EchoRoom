@@ -5,10 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { updateUserProfile } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
+import { GenderIdentity, Orientation, AttractionPreference } from '@/contexts/AppContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -22,6 +26,13 @@ const ProfileEdit = () => {
     bio: user?.bio || '',
     currentPassword: '',
     newPassword: '',
+    // New fields for identity and preferences
+    genderIdentity: user?.genderIdentity || 'prefer-not-to-say' as GenderIdentity,
+    orientation: user?.orientation || 'other' as Orientation,
+    attractionPreferences: user?.attractionPreferences || [] as AttractionPreference[],
+    lookingForRelationship: user?.lookingForRelationship || false,
+    customGender: user?.customGender || '',
+    customOrientation: user?.customOrientation || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +46,13 @@ const ProfileEdit = () => {
         username: formData.username,
         email: formData.email,
         bio: formData.bio,
+        // New fields for identity and preferences
+        genderIdentity: formData.genderIdentity,
+        orientation: formData.orientation,
+        attractionPreferences: formData.attractionPreferences,
+        lookingForRelationship: formData.lookingForRelationship,
+        customGender: formData.customGender,
+        customOrientation: formData.customOrientation,
       };
 
       // Only include password update if new password is provided
@@ -126,6 +144,111 @@ const ProfileEdit = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="Tell us about yourself..."
                 />
+              </div>
+
+              {/* Identity & Preferences Section */}
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Identity & Preferences
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Gender Identity</Label>
+                    <Select 
+                      value={formData.genderIdentity} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, genderIdentity: value as GenderIdentity }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your gender identity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="non-binary">Non-binary</SelectItem>
+                        <SelectItem value="transgender">Transgender</SelectItem>
+                        <SelectItem value="agender">Agender</SelectItem>
+                        <SelectItem value="genderfluid">Genderfluid</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.genderIdentity === 'other' && (
+                      <Input
+                        placeholder="Please specify your gender identity"
+                        value={formData.customGender}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customGender: e.target.value }))}
+                        className="mt-2"
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Orientation</Label>
+                    <Select 
+                      value={formData.orientation} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, orientation: value as Orientation }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your orientation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="heterosexual">Heterosexual</SelectItem>
+                        <SelectItem value="homosexual">Homosexual</SelectItem>
+                        <SelectItem value="bisexual">Bisexual</SelectItem>
+                        <SelectItem value="asexual">Asexual</SelectItem>
+                        <SelectItem value="pansexual">Pansexual</SelectItem>
+                        <SelectItem value="queer">Queer</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.orientation === 'other' && (
+                      <Input
+                        placeholder="Please specify your orientation"
+                        value={formData.customOrientation}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customOrientation: e.target.value }))}
+                        className="mt-2"
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Who are you attracted to?</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['women', 'men', 'non-binary', 'all-genders'] as AttractionPreference[]).map((pref) => (
+                        <Badge
+                          key={pref}
+                          variant={formData.attractionPreferences.includes(pref) ? "default" : "outline"}
+                          className="cursor-pointer hover:scale-105 transition-transform duration-200 select-none"
+                          onClick={() => {
+                            const newPrefs = formData.attractionPreferences.includes(pref)
+                              ? formData.attractionPreferences.filter(p => p !== pref)
+                              : [...formData.attractionPreferences, pref];
+                            setFormData(prev => ({ ...prev, attractionPreferences: newPrefs }));
+                          }}
+                        >
+                          {pref === 'women' ? 'Women' : 
+                           pref === 'men' ? 'Men' : 
+                           pref === 'non-binary' ? 'Non-binary' : 'All genders'}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <span>Looking for a relationship?</span>
+                      <Switch
+                        checked={formData.lookingForRelationship}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForRelationship: checked }))}
+                      />
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      This will help others understand your intentions and improve your matches.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 border-t">

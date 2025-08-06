@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen } from 'lucide-react';
+import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLanguageAI } from '@/contexts/LanguageAIContext';
 import { toast } from '@/hooks/use-toast';
+import { chatRooms } from '@/data/chatRooms';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
@@ -16,7 +17,7 @@ import AITooltip from '@/components/ai/AITooltip';
 const ChatRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, safeMode } = useApp();
+  const { user, safeMode, leaveRoom } = useApp();
   const {
     learningLanguage,
     languageLevel,
@@ -47,51 +48,454 @@ const ChatRoom = () => {
   const [showAIModal, setShowAIModal] = useState(false);
   const [showLanguagePanel, setShowLanguagePanel] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
+  const [activeChannel, setActiveChannel] = useState('general');
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [showModTools, setShowModTools] = useState(false);
+  const [mutedUsers, setMutedUsers] = useState<Set<string>>(new Set());
+  const [pinnedMessages, setPinnedMessages] = useState<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Find the actual room data based on the ID
+  const room = chatRooms.find(r => r.id === id);
+  
+  // If room not found, redirect to chat rooms
+  useEffect(() => {
+    if (!room) {
+      toast({
+        title: "Room not found",
+        description: "The chat room you're looking for doesn't exist.",
+        variant: "destructive",
+      });
+      navigate('/chat-rooms');
+    }
+  }, [room, navigate]);
+
+  if (!room) {
+    return <div>Loading...</div>;
+  }
+
   const roomData = {
-    id: id,
-    title: 'Language Learning Hub',
-    description: 'Practice your language skills with native speakers and AI assistance',
-    members: 127,
-    activeNow: 8,
-    isAnonymousAllowed: true
+    id: room.id,
+    title: room.title,
+    description: room.description,
+    members: room.members,
+    activeNow: room.activeNow,
+    icon: room.icon,
+    category: room.category,
+    tags: room.tags,
+    isPrivate: room.isPrivate,
+    isAnonymousAllowed: true,
+    channels: getChannelsForCategory(room.category),
+    moderators: getModeratorsByCategory(room.category),
+    rules: getRulesByCategory(room.category)
   };
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      user: { name: 'LanguageHelper', avatar: '🌍', isAnonymous: false },
-      content: 'Welcome to the Language Learning Hub! Feel free to practice your language skills here.',
-      timestamp: '2 min ago',
-      isAI: false
-    },
-    {
-      id: 2,
-      user: { name: 'Anonymous', avatar: '👤', isAnonymous: true },
-      content: 'Hello! I am learning English. Can someone help me practice?',
-      timestamp: '1 min ago',
-      isAI: false
-    },
-    {
-      id: 3,
-      user: { name: 'AI Assistant', avatar: '🤖', isAnonymous: false },
-      content: 'Great initiative! I can help you practice English. What would you like to work on today?',
-      timestamp: '30 sec ago',
-      isAI: true
-    }
-  ]);
+  // Helper functions to get category-specific content
+  function getChannelsForCategory(category: string) {
+    const baseChannels = [
+      { id: 'general', name: 'General', description: 'Main discussion', isDefault: true }
+    ];
 
-  const aiSuggestions = [
-    "What's your favorite way to learn new vocabulary?",
-    "How do you practice pronunciation?",
-    "What language challenges do you face most often?",
-    "What's your goal for language learning this week?"
-  ];
+    const categoryChannels = {
+      'languages': [
+        { id: 'grammar', name: 'Grammar Help', description: 'Grammar questions and tips' },
+        { id: 'pronunciation', name: 'Pronunciation', description: 'Pronunciation practice' },
+        { id: 'culture', name: 'Culture Exchange', description: 'Cultural discussions' },
+        { id: 'resources', name: 'Resources', description: 'Learning materials and links' }
+      ],
+      'philosophy': [
+        { id: 'ethics', name: 'Ethics', description: 'Moral philosophy discussions' },
+        { id: 'metaphysics', name: 'Metaphysics', description: 'Nature of reality' },
+        { id: 'logic', name: 'Logic', description: 'Reasoning and argumentation' }
+      ],
+      'books': [
+        { id: 'reviews', name: 'Book Reviews', description: 'Share your book reviews' },
+        { id: 'recommendations', name: 'Recommendations', description: 'Get book suggestions' },
+        { id: 'discussions', name: 'Book Discussions', description: 'Discuss current reads' }
+      ],
+      'wellness': [
+        { id: 'meditation', name: 'Meditation', description: 'Meditation practices' },
+        { id: 'mindfulness', name: 'Mindfulness', description: 'Mindful living tips' },
+        { id: 'support', name: 'Support', description: 'Mutual support and encouragement' }
+      ],
+      'art': [
+        { id: 'writing', name: 'Creative Writing', description: 'Share your writing' },
+        { id: 'feedback', name: 'Feedback', description: 'Get constructive feedback' },
+        { id: 'prompts', name: 'Writing Prompts', description: 'Creative challenges' }
+      ],
+      'science': [
+        { id: 'physics', name: 'Physics', description: 'Physics discussions' },
+        { id: 'technology', name: 'Technology', description: 'Latest tech trends' },
+        { id: 'research', name: 'Research', description: 'Share interesting research' }
+      ]
+    };
+
+    return [...baseChannels, ...(categoryChannels[category] || [])];
+  }
+
+  function getModeratorsByCategory(category: string) {
+    const categoryMods = {
+      'languages': ['LanguageHelper', 'PracticeBot'],
+      'philosophy': ['SocratesBot', 'LogicMaster'],
+      'books': ['BookBot', 'LiteraryGuide'],
+      'wellness': ['ZenMaster', 'WellnessBot'],
+      'art': ['CreativeBot', 'ArtMentor'],
+      'science': ['ScienceBot', 'TechGuru']
+    };
+    return categoryMods[category] || ['ModeratorBot', 'Helper'];
+  }
+
+  function getRulesByCategory(category: string) {
+    const baseRules = [
+      'Be respectful to all members',
+      'Stay on topic',
+      'No spam or harassment'
+    ];
+
+    const categoryRules = {
+      'languages': [...baseRules, 'Help others learn and practice', 'Be patient with learners'],
+      'philosophy': [...baseRules, 'Support arguments with reasoning', 'Respect different viewpoints'],
+      'books': [...baseRules, 'Use spoiler warnings', 'Cite sources when discussing'],
+      'wellness': [...baseRules, 'Provide emotional support', 'No medical advice'],
+      'art': [...baseRules, 'Give constructive feedback', 'Respect creative expression'],
+      'science': [...baseRules, 'Cite scientific sources', 'Promote evidence-based discussion']
+    };
+
+    return categoryRules[category] || baseRules;
+  }
+
+  // Generate initial messages based on room category
+  const getInitialMessages = (category: string, roomTitle: string, moderators: string[]) => {
+    const moderatorName = moderators[0] || 'Helper';
+    const moderatorAvatar = room.icon;
+
+    const categoryMessages = {
+      'languages': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! Feel free to practice your language skills here.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '👋', count: 3, users: ['user1', 'user2', 'user3'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'Anonymous', avatar: '👤', isAnonymous: true, role: 'member' },
+          content: 'Hello! I am learning English. Can someone help me practice?',
+          timestamp: '1 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '❤️', count: 2, users: ['user4', 'user5'] }]
+        }
+      ],
+      'philosophy': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! Share your thoughts and explore deep questions together.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '🤔', count: 5, users: ['user1', 'user2', 'user3', 'user4', 'user5'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'DeepThinker', avatar: '💭', isAnonymous: false, role: 'member' },
+          content: 'What do you think about the nature of consciousness? Is it purely physical?',
+          timestamp: '1 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '🧠', count: 3, users: ['user6', 'user7', 'user8'] }]
+        }
+      ],
+      'books': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! Share your latest reads and discover new stories.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '📖', count: 4, users: ['user1', 'user2', 'user3', 'user4'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'BookWorm', avatar: '🐛', isAnonymous: false, role: 'member' },
+          content: 'Just finished "The Midnight Library" - absolutely amazing! Anyone else read it?',
+          timestamp: '1 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '⭐', count: 6, users: ['user5', 'user6', 'user7', 'user8', 'user9', 'user10'] }]
+        }
+      ],
+      'wellness': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! This is a safe space for wellness and mindfulness.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '🧘', count: 7, users: ['user1', 'user2', 'user3', 'user4', 'user5', 'user6', 'user7'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'ZenSeeker', avatar: '🕯️', isAnonymous: false, role: 'member' },
+          content: 'Today\'s meditation session was incredibly peaceful. How is everyone feeling?',
+          timestamp: '1 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '☮️', count: 5, users: ['user8', 'user9', 'user10', 'user11', 'user12'] }]
+        }
+      ],
+      'art': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! Share your creative works and get constructive feedback.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '🎨', count: 8, users: ['user1', 'user2', 'user3', 'user4', 'user5', 'user6', 'user7', 'user8'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'PoetSoul', avatar: '🖋️', isAnonymous: false, role: 'member' },
+          content: 'Just shared a new poem in the writing channel. Would love your thoughts!',
+          timestamp: '1 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '💫', count: 4, users: ['user9', 'user10', 'user11', 'user12'] }]
+        }
+      ],
+      'science': [
+        {
+          id: 1,
+          user: { name: moderatorName, avatar: moderatorAvatar, isAnonymous: false, role: 'moderator' },
+          content: `Welcome to ${roomTitle}! Discuss the latest in science and technology.`,
+          timestamp: '2 min ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '🔬', count: 6, users: ['user1', 'user2', 'user3', 'user4', 'user5', 'user6'] }]
+        },
+        {
+          id: 2,
+          user: { name: 'ScienceBot', avatar: '🤖', isAnonymous: false, role: 'bot' },
+          content: 'New breakthrough in quantum computing was announced today! Thoughts on the implications?',
+          timestamp: '1 min ago',
+          isAI: true,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [{ emoji: '⚛️', count: 9, users: ['user7', 'user8', 'user9', 'user10', 'user11', 'user12', 'user13', 'user14', 'user15'] }]
+        }
+      ]
+    };
+
+    return categoryMessages[category] || categoryMessages['languages'];
+  };
+
+  const [messages, setMessages] = useState(() => 
+    getInitialMessages(room.category, room.title, roomData.moderators)
+  );
+
+  // Generate AI suggestions based on room category
+  const getAISuggestions = (category: string) => {
+    const categorySuggestions = {
+      'languages': [
+        "What's your favorite way to learn new vocabulary?",
+        "How do you practice pronunciation?",
+        "What language challenges do you face most often?",
+        "What's your goal for language learning this week?"
+      ],
+      'philosophy': [
+        "What philosophical question keeps you up at night?",
+        "How do you define consciousness?",
+        "What's your perspective on free will vs determinism?",
+        "How do you find meaning in existence?"
+      ],
+      'books': [
+        "What book changed your perspective on life?",
+        "What's your favorite literary genre and why?",
+        "Which author has influenced your thinking the most?",
+        "What book are you currently reading?"
+      ],
+      'wellness': [
+        "What's your favorite mindfulness practice?",
+        "How do you manage stress in daily life?",
+        "What brings you the most inner peace?",
+        "How do you practice self-care?"
+      ],
+      'art': [
+        "What inspires your creative process?",
+        "How do you overcome creative blocks?",
+        "What art form speaks to you most deeply?",
+        "How has creativity impacted your life?"
+      ],
+      'science': [
+        "What scientific discovery fascinates you most?",
+        "How do you think AI will change our future?",
+        "What's the most complex scientific concept you understand?",
+        "Which field of science excites you most?"
+      ]
+    };
+
+    return categorySuggestions[category] || categorySuggestions['languages'];
+  };
+
+  const aiSuggestions = getAISuggestions(room.category);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const currentChannelMessages = messages.filter(msg => msg.channel === activeChannel);
+  const pinnedChannelMessages = currentChannelMessages.filter(msg => msg.isPinned);
+  const isUserModerator = user && roomData.moderators.includes(user.username || '');
+
+  const handleReaction = (messageId: number, emoji: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        const existingReaction = msg.reactions.find(r => r.emoji === emoji);
+        if (existingReaction) {
+          // Toggle reaction
+          const userInReaction = existingReaction.users.includes(user?.username || '');
+          if (userInReaction) {
+            return {
+              ...msg,
+              reactions: msg.reactions.map(r => r.emoji === emoji 
+                ? { ...r, count: r.count - 1, users: r.users.filter(u => u !== user?.username) }
+                : r
+              ).filter(r => r.count > 0)
+            };
+          } else {
+            return {
+              ...msg,
+              reactions: msg.reactions.map(r => r.emoji === emoji 
+                ? { ...r, count: r.count + 1, users: [...r.users, user?.username || ''] }
+                : r
+              )
+            };
+          }
+        } else {
+          return {
+            ...msg,
+            reactions: [...msg.reactions, { emoji, count: 1, users: [user?.username || ''] }]
+          };
+        }
+      }
+      return msg;
+    }));
+  };
+
+  const handleReplyToMessage = (messageId: number) => {
+    setReplyingTo(messageId);
+  };
+
+  const handlePinMessage = (messageId: number) => {
+    if (!isUserModerator) return;
+    
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId ? { ...msg, isPinned: !msg.isPinned } : msg
+    ));
+    
+    setPinnedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+
+    toast({
+      title: pinnedMessages.has(messageId) ? "Message unpinned" : "Message pinned",
+      description: "Moderator action completed",
+    });
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (!isUserModerator) return;
+    
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    toast({
+      title: "Message deleted",
+      description: "Moderator action completed",
+      variant: "destructive",
+    });
+  };
+
+  const handleMuteUser = (username: string) => {
+    if (!isUserModerator) return;
+    
+    setMutedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(username)) {
+        newSet.delete(username);
+      } else {
+        newSet.add(username);
+      }
+      return newSet;
+    });
+
+    toast({
+      title: mutedUsers.has(username) ? `${username} unmuted` : `${username} muted`,
+      description: "Moderator action completed",
+    });
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'moderator': return <Crown size={12} className="text-yellow-500" />;
+      case 'bot': return <Bot size={12} className="text-blue-500" />;
+      default: return null;
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'moderator': return 'text-yellow-600';
+      case 'bot': return 'text-blue-600';
+      default: return '';
+    }
+  };
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -127,15 +531,22 @@ const ChatRoom = () => {
       user: {
         name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
         avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
-        isAnonymous: anonymousMode
+        isAnonymous: anonymousMode,
+        role: 'member'
       },
       content: message,
       timestamp: 'now',
-      isAI: false
+      isAI: false,
+      channel: activeChannel,
+      replyTo: replyingTo,
+      replies: [],
+      isPinned: false,
+      reactions: []
     };
 
     setMessages(prev => [...prev, newMessage]);
     setMessage('');
+    setReplyingTo(null);
 
     // Enhanced AI response simulation
     setTimeout(() => {
@@ -186,10 +597,15 @@ const ChatRoom = () => {
 
       const aiMessage = {
         id: messages.length + 2,
-        user: { name: 'AI Assistant', avatar: '🤖', isAnonymous: false },
+        user: { name: 'AI Assistant', avatar: '🤖', isAnonymous: false, role: 'bot' },
         content: aiResponse,
         timestamp: 'just now',
-        isAI: true
+        isAI: true,
+        channel: activeChannel,
+        replyTo: null,
+        replies: [],
+        isPinned: false,
+        reactions: []
       };
       
       setMessages(prev => [...prev, aiMessage]);
@@ -220,7 +636,13 @@ const ChatRoom = () => {
     if (currentSession) {
       endLearningSession();
     }
-    navigate('/chat-rooms');
+    
+    // Remove from joined rooms
+    if (id) {
+      leaveRoom(id);
+    }
+    
+    navigate(-1);
   };
 
   const sendSuggestedMessage = (suggestion: string) => {
@@ -242,7 +664,7 @@ const ChatRoom = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-card border-b border-border shadow-soft">
+      <div className="sticky top-0 z-40 chat-room-header border-b border-border shadow-soft">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full">
           <div className="flex items-center gap-3">
             <Button
@@ -254,47 +676,12 @@ const ChatRoom = () => {
             </Button>
             <div>
               <h1 className="font-semibold">{roomData.title}</h1>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Users size={12} />
-                <span>{roomData.activeNow} active now</span>
-              </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            {roomData.isAnonymousAllowed && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setAnonymousMode(!anonymousMode)}
-                className={anonymousMode ? 'text-primary' : ''}
-              >
-                {anonymousMode ? <EyeOff size={16} /> : <Eye size={16} />}
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={() => setShowAIModal(true)}>
-              <Bot size={16} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setShowLanguagePanel(!showLanguagePanel)}>
-              <Languages size={16} />
-            </Button>
-          </div>
         </div>
       </div>
 
-      {/* Safe Mode Indicator */}
-      <div className="bg-safe-light/20 border-b border-border p-2">
-        <div className="max-w-md mx-auto flex items-center justify-center gap-2">
-          <Badge className={`bg-safe-${safeMode}`}>
-            {safeMode} mode active
-          </Badge>
-          <span className="text-xs text-muted-foreground">
-            Conversations are filtered for safety
-          </span>
-        </div>
-      </div>
-
-      {/* Messages */}
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
         <div className="space-y-4">
           {messages.map((msg) => (

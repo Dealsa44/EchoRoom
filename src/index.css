@@ -100,60 +100,130 @@
     --primary-glow: 240 60% 75%;
 
     /* Dark Secondary - Sky Blue */
-    --secondary: 200 60% 60%;
-    --secondary-foreground: 200 20% 90%;
+    --secondary: 200 70% 60%;
+    --secondary-foreground: 200 30% 90%;
 
     /* Dark Soft Green Accent */
     --accent: 120 40% 60%;
-    --accent-foreground: 120 20% 90%;
+    --accent-foreground: 120 30% 90%;
 
     /* Dark Muted Colors */
-    --muted: 240 15% 15%;
-    --muted-foreground: 240 20% 65%;
+    --muted: 240 25% 15%;
+    --muted-foreground: 240 20% 60%;
 
-    /* Dark Destructive */
-    --destructive: 0 40% 60%;
-    --destructive-foreground: 0 10% 90%;
+    /* Dark Destructive - Soft Red */
+    --destructive: 0 40% 50%;
+    --destructive-foreground: 0 20% 90%;
 
     /* Dark Borders & Inputs */
-    --border: 240 20% 20%;
+    --border: 240 25% 20%;
     --input: 240 25% 15%;
     --ring: 240 50% 65%;
 
     /* Dark Safe Mode Colors */
-    --safe-light: 60 60% 65%;
+    --safe-light: 60 60% 60%;
     --safe-deep: 280 40% 60%;
     --safe-learning: 160 50% 60%;
 
     /* Dark Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(240 50% 65%), hsl(240 60% 75%));
-    --gradient-secondary: linear-gradient(135deg, hsl(200 60% 60%), hsl(200 70% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(200 70% 60%), hsl(200 80% 70%));
     --gradient-accent: linear-gradient(135deg, hsl(120 40% 60%), hsl(120 50% 70%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 50% 65%), hsl(200 60% 60%), hsl(120 40% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(240 50% 65%), hsl(200 70% 60%), hsl(120 40% 60%));
 
     /* Dark Shadows */
     --shadow-soft: 0 4px 20px -4px hsl(240 50% 65% / 0.2);
-    --shadow-medium: 0 8px 30px -8px hsl(240 50% 65% / 0.3);
+    --shadow-medium: 0 8px 30px -8px hsl(240 50% 65% / 0.25);
     --shadow-glow: 0 0 30px hsl(240 60% 75% / 0.4);
 
-    /* Sidebar - keeping existing values */
-    --sidebar-background: 240 20% 8%;
-    --sidebar-foreground: 240 30% 90%;
-    --sidebar-primary: 240 50% 65%;
-    --sidebar-primary-foreground: 240 30% 90%;
-    --sidebar-accent: 240 15% 15%;
-    --sidebar-accent-foreground: 240 30% 90%;
-    --sidebar-border: 240 20% 20%;
-    --sidebar-ring: 240 50% 65%;
-  }
-}
+    --sidebar-background: 240 25% 10%;
 
-@layer base {
+    --sidebar-foreground: 240 30% 90%;
+
+    --sidebar-primary: 240 30% 90%;
+
+    --sidebar-primary-foreground: 240 25% 10%;
+
+    --sidebar-accent: 240 25% 15%;
+
+    --sidebar-accent-foreground: 240 30% 90%;
+
+    --sidebar-border: 240 25% 20%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Custom scrollbar hiding */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Global scrollbar hiding for mobile-first design */
+* {
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+*::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Only show scrollbars on desktop when absolutely necessary */
+@media (min-width: 768px) {
+  .show-scrollbar {
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+  
+  .show-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  
+  .show-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .show-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+  
+  .show-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+/* Chat room specific styles */
+.chat-room-header {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.dark .chat-room-header {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+/* Smooth transitions for chat elements */
+.chat-message {
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-message:hover {
+  transform: translateY(-1px);
 }

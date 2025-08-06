@@ -20,7 +20,7 @@ const TopBar = ({
 
   return (
     <>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-0 z-40 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto">
           {title && (
             <h1 className="text-lg font-semibold text-foreground">{title}</h1>

@@ -1,4 +1,4 @@
-import { User } from '@/contexts/AppContext';
+import { User, GenderIdentity, Orientation, AttractionPreference } from '@/contexts/AppContext';
 
 const USERS_STORAGE_KEY = 'echoroom_users';
 const CURRENT_USER_KEY = 'echoroom_current_user';
@@ -10,6 +10,13 @@ export interface RegisterData {
   languageProficiency: string;
   chatStyle: 'introverted' | 'balanced' | 'outgoing';
   interests: string[];
+  // New fields for gender and orientation
+  genderIdentity: GenderIdentity;
+  orientation: Orientation;
+  attractionPreferences: AttractionPreference[];
+  lookingForRelationship: boolean;
+  customGender?: string;
+  customOrientation?: string;
 }
 
 export interface LoginData {
@@ -137,6 +144,13 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       safeMode: 'light',
       anonymousMode: false,
       aiAssistant: true,
+      // New fields for gender and orientation
+      genderIdentity: data.genderIdentity,
+      orientation: data.orientation,
+      attractionPreferences: data.attractionPreferences,
+      lookingForRelationship: data.lookingForRelationship,
+      customGender: data.customGender,
+      customOrientation: data.customOrientation,
     };
     
     // Save user

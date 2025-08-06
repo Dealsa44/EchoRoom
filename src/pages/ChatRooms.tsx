@@ -5,13 +5,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Users, Lock, Globe } from 'lucide-react';
+import { Search, Plus, Users, Lock, Globe, LogIn } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import CreateRoomModal from '@/components/modals/CreateRoomModal';
+import { useApp } from '@/contexts/AppContext';
+import { toast } from '@/hooks/use-toast';
+import { chatRooms } from '@/data/chatRooms';
 
 const ChatRooms = () => {
   const navigate = useNavigate();
+  const { joinedRooms, joinRoom, leaveRoom } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -26,81 +30,41 @@ const ChatRooms = () => {
     { value: 'languages', label: 'Language Learning' }
   ];
 
-  const chatRooms = [
-    {
-      id: 1,
-      title: 'Philosophy Corner',
-      category: 'philosophy',
-      members: 127,
-      description: 'Deep discussions about life, existence, and meaning',
-      isPrivate: false,
-      activeNow: 8,
-      tags: ['Deep', 'Thoughtful'],
-      icon: '🤔'
-    },
-    {
-      id: 2,
-      title: 'Book Lovers United',
-      category: 'books',
-      members: 243,
-      description: 'Share your latest reads and discover new stories',
-      isPrivate: false,
-      activeNow: 15,
-      tags: ['Fiction', 'Reviews'],
-      icon: '📚'
-    },
-    {
-      id: 3,
-      title: 'Mindful Meditation',
-      category: 'wellness',
-      members: 89,
-      description: 'Guided meditation sessions and mindfulness tips',
-      isPrivate: false,
-      activeNow: 5,
-      tags: ['Calm', 'Healing'],
-      icon: '🧘'
-    },
-    {
-      id: 4,
-      title: 'Creative Writing Circle',
-      category: 'art',
-      members: 156,
-      description: 'Share your stories, poems, and get gentle feedback',
-      isPrivate: false,
-      activeNow: 12,
-      tags: ['Creative', 'Supportive'],
-      icon: '✍️'
-    },
-    {
-      id: 5,
-      title: 'Language Exchange',
-      category: 'languages',
-      members: 201,
-      description: 'Practice English, Georgian, and other languages',
-      isPrivate: false,
-      activeNow: 23,
-      tags: ['Learning', 'Practice'],
-      icon: '🌍'
-    },
-    {
-      id: 6,
-      title: 'Safe Space Support',
-      category: 'wellness',
-      members: 67,
-      description: 'Mental health support and understanding',
-      isPrivate: true,
-      activeNow: 3,
-      tags: ['Support', 'Private'],
-      icon: '💜'
-    }
-  ];
 
-  const filteredRooms = chatRooms.filter(room => {
+
+  // Filter out rooms that user has already joined
+  const availableRooms = chatRooms.filter(room => !joinedRooms.includes(room.id));
+
+  const filteredRooms = availableRooms.filter(room => {
     const matchesSearch = room.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || room.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleJoinRoom = (roomId: string) => {
+    console.log('=== CHATROOMS: About to join room ===', roomId);
+    console.log('Current joinedRooms in ChatRooms:', joinedRooms);
+    
+    joinRoom(roomId);
+    
+    toast({
+      title: "Joined room!",
+      description: "You can now access this room from your messages.",
+    });
+    
+    // Add a small delay to let state update, then check the state
+    setTimeout(() => {
+      console.log('=== CHATROOMS: After joinRoom call ===');
+      console.log('joinedRooms after join:', joinedRooms);
+      console.log('localStorage after join:', localStorage.getItem('joinedRooms'));
+    }, 100);
+    
+    // Auto-navigate to the joined room
+    navigate(`/chat-room/${roomId}`);
+  };
+
+
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -143,13 +107,17 @@ const ChatRooms = () => {
           </div>
         </div>
 
-        {/* Room List */}
+        {/* Joined Rooms - Hidden as they should appear in ChatInbox instead */}
+
+        {/* Available Room List */}
         <div className="space-y-3">
+          {filteredRooms.length > 0 && (
+            <h3 className="text-sm font-medium text-muted-foreground">Available Rooms</h3>
+          )}
           {filteredRooms.map((room) => (
             <Card 
               key={room.id} 
-              className="cursor-pointer transition-all hover:shadow-medium hover:scale-[1.02]"
-              onClick={() => navigate(`/chat-room/${room.id}`)}
+              className="transition-all hover:shadow-medium hover:scale-[1.02]"
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -190,15 +158,45 @@ const ChatRooms = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Join Button */}
+                <div className="mt-3 pt-3 border-t border-border">
+                  <Button 
+                    onClick={() => handleJoinRoom(room.id)}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <LogIn size={16} className="mr-2" />
+                    Join Chat
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {filteredRooms.length === 0 && (
+        {filteredRooms.length === 0 && availableRooms.length > 0 && (
           <div className="text-center py-8">
             <div className="text-4xl mb-2">🔍</div>
-            <p className="text-muted-foreground">No rooms found matching your search</p>
+            <p className="text-muted-foreground">
+              No rooms found matching your search
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateModal(true)}
+              className="mt-3"
+            >
+              Create a new room
+            </Button>
+          </div>
+        )}
+
+        {availableRooms.length === 0 && joinedRooms.length > 0 && (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2">🎉</div>
+            <p className="text-muted-foreground">
+              You've joined all available rooms!
+            </p>
             <Button
               variant="outline"
               onClick={() => setShowCreateModal(true)}

@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Heart, Brain, User } from 'lucide-react';
+import { Home, MessageCircle, Heart, Brain, User, Users, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BottomNavigation = () => {
@@ -8,8 +8,9 @@ const BottomNavigation = () => {
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/home' },
-    { icon: MessageCircle, label: 'Chat', path: '/chat-rooms' },
+    { icon: Mail, label: 'Messages', path: '/chat-inbox' },
     { icon: Heart, label: 'Match', path: '/match' },
+    { icon: Users, label: 'Matches', path: '/matches' },
     { icon: Brain, label: 'Forum', path: '/forum' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];

@@ -3,11 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Edit, BarChart3, Bot, Languages, BookOpen, LogOut, Mail, User } from 'lucide-react';
+import { Edit, BarChart3, LogOut, Mail, User, Users } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/contexts/AppContext';
-import AITooltip from '@/components/ai/AITooltip';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -43,8 +42,61 @@ const Profile = () => {
               </Button>
               <Button variant="outline" onClick={() => navigate('/profile/stats')}>
                 <BarChart3 size={16} />
-                <span className="ml-2">Stats</span>
+                <span className="ml-2">Journey</span>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Identity & Relationship Information */}
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              Identity & Preferences
+            </h3>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Gender Identity</span>
+                <Badge variant="outline">
+                  {user?.genderIdentity === 'other' && user?.customGender 
+                    ? user.customGender 
+                    : user?.genderIdentity === 'prefer-not-to-say' 
+                    ? 'Prefer not to say' 
+                    : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Orientation</span>
+                <Badge variant="outline">
+                  {user?.orientation === 'other' && user?.customOrientation 
+                    ? user.customOrientation 
+                    : user?.orientation?.charAt(0).toUpperCase() + user?.orientation?.slice(1) || 'Not set'}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Attracted to</span>
+                <div className="flex gap-1">
+                  {user?.attractionPreferences?.map(pref => (
+                    <Badge key={pref} variant="secondary" className="text-xs">
+                      {pref === 'women' ? 'Women' : 
+                       pref === 'men' ? 'Men' : 
+                       pref === 'non-binary' ? 'Non-binary' : 'All'}
+                    </Badge>
+                  )) || <span className="text-muted-foreground text-xs">Not set</span>}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Looking for relationship</span>
+                <Switch 
+                  checked={user?.lookingForRelationship || false} 
+                  disabled 
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -69,53 +121,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* AI & Language Quick Access */}
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Bot className="w-4 h-4 text-primary" />
-              AI & Language Tools
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <AITooltip 
-                title="Language Progress"
-                description="View your detailed language learning statistics and achievements"
-              >
-                <Button 
-                  variant="outline" 
-                  className="h-auto p-3 flex-col gap-1"
-                  onClick={() => navigate('/profile/stats')}
-                >
-                  <Languages className="w-4 h-4 text-primary" />
-                  <span className="text-xs">Language Stats</span>
-                </Button>
-              </AITooltip>
-              
-              <AITooltip 
-                title="Learning Preferences"
-                description="Set your AI assistant personality and language learning preferences"
-              >
-                <Button 
-                  variant="outline" 
-                  className="h-auto p-3 flex-col gap-1"
-                  onClick={() => navigate('/profile/edit')}
-                >
-                  <BookOpen className="w-4 h-4 text-primary" />
-                  <span className="text-xs">AI Settings</span>
-                </Button>
-              </AITooltip>
-            </div>
-            
-            <div className="bg-primary/5 p-3 rounded-lg">
-              <div className="text-sm font-medium mb-1">Quick Stats</div>
-              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                <div>23 corrections</div>
-                <div>127 words learned</div>
-                <div>7-day streak</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Logout Section */}
         <Card>

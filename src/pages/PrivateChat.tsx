@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -25,29 +25,68 @@ const PrivateChat = () => {
   const [userLevel, setUserLevel] = useState('b1');
   const [showLanguagePanel, setShowLanguagePanel] = useState(false);
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [showAttachments, setShowAttachments] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Mock user data - in real app this would come from API
+  const getUserById = (id: string) => {
+    const users = {
+      '1': { name: 'Luna', avatar: '🌙', status: 'online', languageLearning: 'English' },
+      '2': { name: 'Alex', avatar: '📚', status: 'online', languageLearning: 'Japanese' },
+      '3': { name: 'Sage', avatar: '🌱', status: 'online', languageLearning: 'Spanish' },
+      '4': { name: 'Maya', avatar: '🎨', status: 'online', languageLearning: 'Italian' },
+      '5': { name: 'Kai', avatar: '🏃', status: 'away', languageLearning: 'English' }
+    };
+    return users[id as keyof typeof users] || users['1'];
+  };
+
+  const userInfo = getUserById(userId || '1');
   const chatPartner = {
     id: userId,
-    name: 'Luna',
-    avatar: '🌙',
-    status: 'online',
+    name: userInfo.name,
+    avatar: userInfo.avatar,
+    status: userInfo.status,
     safeMode: true,
-    languageLearning: 'English'
+    languageLearning: userInfo.languageLearning
+  };
+
+  const getInitialMessage = (userName: string) => {
+    const messages = {
+      'Luna': 'Hi! I saw we both love philosophy. What\'s your favorite philosophical question?',
+      'Alex': 'Hey! I noticed you\'re interested in books. What\'s the last book that really changed your perspective?',
+      'Sage': 'Hello! I love that we both practice mindfulness. What\'s your favorite way to find inner peace?',
+      'Maya': 'Hi there! I see you appreciate art. What kind of creative expression speaks to you most?',
+      'Kai': 'Hey! I noticed we both value fitness. What\'s your favorite way to stay active?'
+    };
+    return messages[userName as keyof typeof messages] || messages['Luna'];
   };
 
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'them',
-      content: 'Hi! I saw we both love philosophy. What\'s your favorite philosophical question?',
+      content: getInitialMessage(userInfo.name),
       timestamp: '5 min ago',
       translated: false,
       corrected: false,
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
-      corrections: []
+      corrections: [],
+      type: 'text',
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: null,
+      deliveryStatus: 'delivered',
+      isEncrypted: true
     },
     {
       id: 2,
@@ -59,7 +98,14 @@ const PrivateChat = () => {
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
-      corrections: []
+      corrections: [],
+      type: 'text',
+      reactions: [{ emoji: '❤️', userId: 'them', userName: userInfo.name }],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: null,
+      deliveryStatus: 'read',
+      isEncrypted: true
     },
     {
       id: 3,
@@ -71,7 +117,14 @@ const PrivateChat = () => {
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
-      corrections: []
+      corrections: [],
+      type: 'text',
+      reactions: [{ emoji: '👍', userId: 'me', userName: 'You' }],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: null,
+      deliveryStatus: 'delivered',
+      isEncrypted: true
     },
     {
       id: 4,
@@ -96,13 +149,254 @@ const PrivateChat = () => {
           explanation: 'Spelling error: the plural of "choice" is "choices"',
           rule: 'Irregular plural form'
         }
-      ]
+      ],
+      type: 'text',
+      reactions: [],
+      isEdited: true,
+      isDeleted: false,
+      replyTo: null,
+      deliveryStatus: 'read',
+      isEncrypted: true
+    },
+    {
+      id: 5,
+      sender: 'them',
+      content: '🎵 Voice message',
+      timestamp: '30 sec ago',
+      translated: false,
+      corrected: false,
+      originalContent: '',
+      translatedContent: '',
+      hasErrors: false,
+      corrections: [],
+      type: 'voice',
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: 4,
+      deliveryStatus: 'delivered',
+      isEncrypted: true,
+      voiceData: {
+        duration: 15,
+        waveform: [0.2, 0.5, 0.8, 0.3, 0.7, 0.4, 0.9, 0.1, 0.6, 0.3]
+      }
     }
   ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Simulate typing indicator
+  useEffect(() => {
+    let typingTimer: NodeJS.Timeout;
+    if (isTyping) {
+      setPartnerTyping(false);
+      typingTimer = setTimeout(() => {
+        setPartnerTyping(true);
+        setTimeout(() => setPartnerTyping(false), 2000);
+      }, 1000);
+    }
+    return () => clearTimeout(typingTimer);
+  }, [isTyping]);
+
+  // Message reaction handlers
+  const handleReaction = (messageId: number, emoji: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        const existingReaction = msg.reactions?.find(r => r.userId === 'me');
+        if (existingReaction) {
+          if (existingReaction.emoji === emoji) {
+            // Remove reaction
+            return { ...msg, reactions: msg.reactions?.filter(r => r.userId !== 'me') || [] };
+          } else {
+            // Change reaction
+            return { 
+              ...msg, 
+              reactions: msg.reactions?.map(r => r.userId === 'me' ? { ...r, emoji } : r) || []
+            };
+          }
+        } else {
+          // Add reaction
+          return { 
+            ...msg, 
+            reactions: [...(msg.reactions || []), { emoji, userId: 'me', userName: 'You' }]
+          };
+        }
+      }
+      return msg;
+    }));
+    
+    toast({
+      title: "Reaction added",
+      description: `You reacted with ${emoji}`,
+    });
+  };
+
+  // Message editing
+  const handleEditMessage = (messageId: number) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message && message.sender === 'me') {
+      setEditingMessageId(messageId);
+      setEditingText(message.content);
+    }
+  };
+
+  const saveEditedMessage = () => {
+    if (editingMessageId && editingText.trim()) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === editingMessageId 
+          ? { ...msg, content: editingText, isEdited: true }
+          : msg
+      ));
+      setEditingMessageId(null);
+      setEditingText('');
+      toast({
+        title: "Message edited",
+        description: "Your message has been updated",
+      });
+    }
+  };
+
+  // Message deletion
+  const handleDeleteMessage = (messageId: number) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, content: 'This message was deleted', isDeleted: true, type: 'deleted' }
+        : msg
+    ));
+    toast({
+      title: "Message deleted",
+      description: "Message has been removed",
+    });
+  };
+
+  // Reply to message
+  const handleReplyToMessage = (messageId: number) => {
+    setReplyingTo(messageId);
+    // Focus input (would need ref in real implementation)
+  };
+
+  // File attachment handlers
+  const handleImageUpload = () => {
+    // Simulate image upload
+    const newMessage = {
+      id: messages.length + 1,
+      sender: 'me' as const,
+      content: '📷 Photo',
+      timestamp: 'now',
+      translated: false,
+      corrected: false,
+      originalContent: '',
+      translatedContent: '',
+      hasErrors: false,
+      corrections: [],
+      type: 'image' as const,
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: replyingTo,
+      deliveryStatus: 'sent' as const,
+      isEncrypted: true,
+      imageUrl: 'https://picsum.photos/300/200?random=' + Math.random()
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    setShowAttachments(false);
+    
+    toast({
+      title: "Photo sent",
+      description: "Your photo has been shared",
+    });
+  };
+
+  const handleVoiceRecord = () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      toast({
+        title: "Recording started",
+        description: "Tap to stop recording",
+      });
+      
+      // Simulate recording
+      setTimeout(() => {
+        if (isRecording) {
+          setIsRecording(false);
+          const newMessage = {
+            id: messages.length + 1,
+            sender: 'me' as const,
+            content: '🎵 Voice message',
+            timestamp: 'now',
+            translated: false,
+            corrected: false,
+            originalContent: '',
+            translatedContent: '',
+            hasErrors: false,
+            corrections: [],
+            type: 'voice' as const,
+            reactions: [],
+            isEdited: false,
+            isDeleted: false,
+            replyTo: replyingTo,
+            deliveryStatus: 'sent' as const,
+            isEncrypted: true,
+            voiceData: {
+              duration: Math.floor(Math.random() * 30) + 5,
+              waveform: Array.from({ length: 20 }, () => Math.random())
+            }
+          };
+
+          setMessages(prev => [...prev, newMessage]);
+          setReplyingTo(null);
+          
+          toast({
+            title: "Voice message sent",
+            description: "Your voice message has been shared",
+          });
+        }
+      }, 3000);
+    } else {
+      setIsRecording(false);
+    }
+  };
+
+  const handleFileUpload = () => {
+    // Simulate file upload
+    const newMessage = {
+      id: messages.length + 1,
+      sender: 'me' as const,
+      content: '📄 Document.pdf',
+      timestamp: 'now',
+      translated: false,
+      corrected: false,
+      originalContent: '',
+      translatedContent: '',
+      hasErrors: false,
+      corrections: [],
+      type: 'file' as const,
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: replyingTo,
+      deliveryStatus: 'sent' as const,
+      isEncrypted: true,
+      fileData: {
+        name: 'Language_Practice_Notes.pdf',
+        size: '2.4 MB',
+        type: 'application/pdf'
+      }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    setShowAttachments(false);
+    
+    toast({
+      title: "File sent",
+      description: "Your file has been shared",
+    });
+  };
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -128,11 +422,20 @@ const PrivateChat = () => {
       originalContent: hasErrors ? message.replace('their', 'there') : '',
       translatedContent: '',
       hasErrors,
-      corrections
+      corrections,
+      type: 'text' as const,
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: replyingTo,
+      deliveryStatus: 'sent' as const,
+      isEncrypted: true
     };
 
     setMessages(prev => [...prev, newMessage]);
     setMessage('');
+    setReplyingTo(null);
+    setIsTyping(false);
 
     if (hasErrors && practiceMode) {
       toast({
@@ -160,11 +463,23 @@ const PrivateChat = () => {
         originalContent: '',
         translatedContent: `[${targetLanguage.toUpperCase()}] ${responses[Math.floor(Math.random() * responses.length)]}`,
         hasErrors: false,
-        corrections: []
+        corrections: [],
+        type: 'text' as const,
+        reactions: [],
+        isEdited: false,
+        isDeleted: false,
+        replyTo: null,
+        deliveryStatus: 'delivered' as const,
+        isEncrypted: true
       };
       
       setMessages(prev => [...prev, response]);
     }, 2000);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    setIsTyping(e.target.value.length > 0);
   };
 
   const handleGrammarCheck = (messageId: number) => {
@@ -262,7 +577,7 @@ const PrivateChat = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/match')}
+              onClick={() => navigate(-1)}
             >
               <ArrowLeft size={20} />
             </Button>
@@ -367,98 +682,381 @@ const PrivateChat = () => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
         <div className="space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-            >
-              <Card className={`max-w-[80%] ${
-                msg.sender === 'me' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-card'
-              }`}>
-                <CardContent className="p-3">
-                  <div className="text-sm mb-2">
-                    {renderMessageContent(msg)}
-                  </div>
-                  
-                  {(msg.translated || (autoTranslateEnabled && msg.sender === 'them')) && (
-                    <div className="text-xs opacity-80 mt-2 p-2 bg-primary/10 rounded">
-                      <Languages size={12} className="inline mr-1" />
-                      Translation: {msg.translatedContent || `[${targetLanguage.toUpperCase()}] ${msg.content}`}
-                    </div>
-                  )}
+          {messages.map((msg) => {
+            const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
+            
+            return (
+              <div
+                key={msg.id}
+                className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+              >
+                <Card className={`max-w-[80%] relative group ${
+                  msg.sender === 'me' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-card'
+                } ${msg.isDeleted ? 'opacity-60' : ''}`}>
+                  <CardContent className="p-3">
+                    {/* Reply indicator */}
+                    {replyToMessage && (
+                      <div className="text-xs p-2 mb-2 bg-black/10 rounded border-l-2 border-primary/50">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Reply size={10} />
+                          <span className="font-medium">
+                            {replyToMessage.sender === 'me' ? 'You' : chatPartner.name}
+                          </span>
+                        </div>
+                        <div className="truncate opacity-80">
+                          {replyToMessage.content}
+                        </div>
+                      </div>
+                    )}
 
-                  {practiceMode && msg.hasErrors && (
-                    <div className="text-xs mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                      <BookOpen size={12} className="inline mr-1 text-yellow-600" />
-                      <span className="text-yellow-800">Click underlined words for grammar help!</span>
+                    {/* Message content */}
+                    <div className="text-sm mb-2">
+                      {editingMessageId === msg.id ? (
+                        <div className="space-y-2">
+                          <Input
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="text-sm"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={saveEditedMessage}>Save</Button>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setEditingMessageId(null);
+                              setEditingText('');
+                            }}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {msg.type === 'image' && (
+                            <div className="mb-2">
+                              <img 
+                                src={msg.imageUrl} 
+                                alt="Shared image" 
+                                className="rounded-lg max-w-full h-auto"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'https://picsum.photos/300/200?random=fallback';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {msg.type === 'voice' && msg.voiceData && (
+                            <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  if (playingVoiceId === msg.id) {
+                                    setPlayingVoiceId(null);
+                                  } else {
+                                    setPlayingVoiceId(msg.id);
+                                    setTimeout(() => setPlayingVoiceId(null), msg.voiceData!.duration * 1000);
+                                  }
+                                }}
+                              >
+                                {playingVoiceId === msg.id ? <Pause size={14} /> : <Play size={14} />}
+                              </Button>
+                              <div className="flex-1 flex items-center gap-1">
+                                {msg.voiceData.waveform.map((height, i) => (
+                                  <div
+                                    key={i}
+                                    className={`w-1 bg-current rounded ${
+                                      playingVoiceId === msg.id ? 'animate-pulse' : ''
+                                    }`}
+                                    style={{ height: `${Math.max(height * 20, 4)}px` }}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs">{msg.voiceData.duration}s</span>
+                            </div>
+                          )}
+
+                          {msg.type === 'file' && msg.fileData && (
+                            <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
+                              <File size={16} />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium">{msg.fileData.name}</div>
+                                <div className="text-xs opacity-70">{msg.fileData.size}</div>
+                              </div>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <Download size={12} />
+                              </Button>
+                            </div>
+                          )}
+
+                          {(msg.type === 'text' || !msg.type) && (
+                            <>
+                              {renderMessageContent(msg)}
+                              {msg.isEdited && (
+                                <span className="text-xs opacity-50 ml-2">(edited)</span>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
                     </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs opacity-70">{msg.timestamp}</span>
+
+                    {/* Reactions */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="flex gap-1 mb-2">
+                        {msg.reactions.map((reaction, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 px-2 py-1 bg-black/10 rounded-full text-xs"
+                          >
+                            <span>{reaction.emoji}</span>
+                            <span>{reaction.userName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
-                    <div className="flex gap-1">
-                      {msg.sender === 'me' && practiceMode && (
-                        <AITooltip 
-                          title="Grammar Check"
-                          description="Check this message for grammar and spelling errors"
-                        >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs"
-                            onClick={() => handleGrammarCheck(msg.id)}
-                          >
-                            {msg.corrected ? <CheckCircle size={12} className="text-green-500" /> : <BookOpen size={12} />}
-                          </Button>
-                        </AITooltip>
-                      )}
-                      
-                      {!autoTranslateEnabled && (
-                        <AITooltip 
-                          title="Translate Message"
-                          description="See this message in your learning language"
-                        >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs"
-                            onClick={() => handleTranslate(msg.id)}
-                          >
-                            <Languages size={12} className={msg.translated ? 'text-primary' : ''} />
-                          </Button>
-                        </AITooltip>
-                      )}
+                    {(msg.translated || (autoTranslateEnabled && msg.sender === 'them')) && (
+                      <div className="text-xs opacity-80 mt-2 p-2 bg-primary/10 rounded">
+                        <Languages size={12} className="inline mr-1" />
+                        Translation: {msg.translatedContent || `[${targetLanguage.toUpperCase()}] ${msg.content}`}
+                      </div>
+                    )}
 
-                      {msg.sender === 'them' && (
-                        <AITooltip 
-                          title="Ask AI for Help"
-                          description="Get AI suggestions for how to respond to this message"
+                    {practiceMode && msg.hasErrors && (
+                      <div className="text-xs mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                        <BookOpen size={12} className="inline mr-1 text-yellow-600" />
+                        <span className="text-yellow-800">Click underlined words for grammar help!</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs opacity-70">{msg.timestamp}</span>
+                        {msg.isEncrypted && (
+                          <Lock size={10} className="opacity-50" />
+                        )}
+                        {msg.sender === 'me' && (
+                          <div className="flex items-center">
+                            {msg.deliveryStatus === 'sent' && <CheckCircle size={10} className="opacity-50" />}
+                            {msg.deliveryStatus === 'delivered' && <CheckCircle size={10} className="text-blue-500" />}
+                            {msg.deliveryStatus === 'read' && <CheckCheck size={10} className="text-blue-500" />}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Quick reactions */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '❤️')}
                         >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs"
-                            onClick={() => setShowAIModal(true)}
+                          ❤️
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '👍')}
+                        >
+                          👍
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '😊')}
+                        >
+                          😊
+                        </Button>
+
+                        {/* Message actions */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1"
+                          onClick={() => handleReplyToMessage(msg.id)}
+                        >
+                          <Reply size={10} />
+                        </Button>
+
+                        {msg.sender === 'me' && !msg.isDeleted && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleEditMessage(msg.id)}
+                            >
+                              <Edit3 size={10} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1 text-red-500"
+                              onClick={() => handleDeleteMessage(msg.id)}
+                            >
+                              <Trash2 size={10} />
+                            </Button>
+                          </>
+                        )}
+
+                        {/* Other actions */}
+                        {msg.sender === 'me' && practiceMode && (
+                          <AITooltip 
+                            title="Grammar Check"
+                            description="Check this message for grammar and spelling errors"
                           >
-                            <HelpCircle size={12} />
-                          </Button>
-                        </AITooltip>
-                      )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleGrammarCheck(msg.id)}
+                            >
+                              {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
+                            </Button>
+                          </AITooltip>
+                        )}
+                        
+                        {!autoTranslateEnabled && (
+                          <AITooltip 
+                            title="Translate Message"
+                            description="See this message in your learning language"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleTranslate(msg.id)}
+                            >
+                              <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
+                            </Button>
+                          </AITooltip>
+                        )}
+
+                        {msg.sender === 'them' && (
+                          <AITooltip 
+                            title="Ask AI for Help"
+                            description="Get AI suggestions for how to respond to this message"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => setShowAIModal(true)}
+                            >
+                              <HelpCircle size={10} />
+                            </Button>
+                          </AITooltip>
+                        )}
+                      </div>
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
+
+          {/* Typing indicator */}
+          {partnerTyping && (
+            <div className="flex justify-start">
+              <Card className="bg-card max-w-[80%]">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="text-lg">{chatPartner.avatar}</div>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">typing...</span>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          ))}
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
 
       {/* Message Input */}
       <div className="sticky bottom-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
+        {/* Reply indicator */}
+        {replyingTo && (
+          <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Reply size={12} />
+                <span className="text-sm">
+                  Replying to {messages.find(m => m.id === replyingTo)?.sender === 'me' ? 'yourself' : chatPartner.name}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReplyingTo(null)}
+                className="h-6 w-6 p-0"
+              >
+                ×
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {messages.find(m => m.id === replyingTo)?.content}
+            </p>
+          </div>
+        )}
+
+        {/* Attachment panel */}
+        {showAttachments && (
+          <div className="mb-3 p-3 bg-muted/50 rounded-lg">
+            <div className="grid grid-cols-4 gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImageUpload}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <Image size={20} />
+                <span className="text-xs">Photo</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Simulate camera
+                  handleImageUpload();
+                }}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <Camera size={20} />
+                <span className="text-xs">Camera</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFileUpload}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <File size={20} />
+                <span className="text-xs">File</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVoiceRecord}
+                className={`flex-col h-auto p-3 gap-1 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+              >
+                <Mic size={20} />
+                <span className="text-xs">{isRecording ? 'Stop' : 'Voice'}</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2 mb-2">
           <AITooltip 
             title="AI Assistant"
@@ -505,21 +1103,49 @@ const PrivateChat = () => {
         </div>
         
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAttachments(!showAttachments)}
+            className={`p-2 ${showAttachments ? 'text-primary' : ''}`}
+          >
+            <Paperclip size={16} />
+          </Button>
+          
           <Input
             placeholder="Type a thoughtful message..."
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             className="flex-1"
           />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim()}
-            variant="cozy"
-          >
-            <Send size={16} />
-          </Button>
+          
+          {message.trim() ? (
+            <Button
+              onClick={handleSendMessage}
+              variant="cozy"
+              className="px-3"
+            >
+              <Send size={16} />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleVoiceRecord}
+              variant="ghost"
+              className={`px-3 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+            >
+              <Mic size={16} />
+            </Button>
+          )}
         </div>
+
+        {/* Recording indicator */}
+        {isRecording && (
+          <div className="mt-2 flex items-center gap-2 text-red-600">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <span className="text-xs">Recording... Tap to stop</span>
+          </div>
+        )}
 
         {/* AI Assistant Modal */}
         <AIAssistantModal

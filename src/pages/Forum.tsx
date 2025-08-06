@@ -236,25 +236,30 @@ const Forum = () => {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm">{thread.authorAvatar}</span>
-                      <span>{thread.author}</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{thread.authorAvatar}</span>
+                        <div>
+                          <div className="font-medium text-foreground">{thread.author}</div>
+                          <div className="text-muted-foreground">Community Helper</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Heart size={12} />
+                          <span>{thread.upvotes}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageCircle size={12} />
+                          <span>{thread.replies}</span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Heart size={12} />
-                        <span>{thread.upvotes}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageCircle size={12} />
-                        <span>{thread.replies}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock size={12} />
-                        <span>{thread.lastActivity}</span>
-                      </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock size={10} />
+                      <span>Last activity {thread.lastActivity}</span>
                     </div>
                   </div>
                 </div>
