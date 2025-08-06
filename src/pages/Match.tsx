@@ -703,6 +703,7 @@ const Match = () => {
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Interests</label>
                   <Select 
+                    name="interestFilter"
                     value={filters.interests[0] || 'all'} 
                     onValueChange={(value) => {
                       if (value === 'all') {

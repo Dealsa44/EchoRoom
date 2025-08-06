@@ -346,6 +346,7 @@ const Register = () => {
               <Label htmlFor="username">Username</Label>
                              <Input
                  id="username"
+                 name="username"
                  placeholder="thoughtful_soul"
                  value={formData.username}
                  onChange={(e) => {
@@ -371,6 +372,7 @@ const Register = () => {
               <Label htmlFor="email">Email</Label>
                              <Input
                  id="email"
+                 name="email"
                  type="email"
                  placeholder="your@email.com"
                  value={formData.email}
@@ -398,6 +400,7 @@ const Register = () => {
               <div className="relative">
                                  <Input
                    id="password"
+                   name="password"
                    type={showPassword ? 'text' : 'password'}
                    placeholder="Choose a secure password"
                    value={formData.password}
@@ -438,6 +441,7 @@ const Register = () => {
              <div className="space-y-2">
                <Label>Language Proficiency</Label>
                                <Select 
+                  name="languageProficiency"
                   value={formData.languageProficiency} 
                   onValueChange={(value) => {
                     setFormData(prev => ({ ...prev, languageProficiency: value }));
@@ -496,6 +500,7 @@ const Register = () => {
              <div className="space-y-2">
                <Label>Gender Identity</Label>
                <Select 
+                 name="genderIdentity"
                  value={formData.genderIdentity} 
                  onValueChange={(value) => {
                    setFormData(prev => ({ ...prev, genderIdentity: value as GenderIdentity }));
@@ -518,6 +523,8 @@ const Register = () => {
                </Select>
                {formData.genderIdentity === 'other' && (
                  <Input
+                   id="customGender"
+                   name="customGender"
                    placeholder="Please specify your gender identity"
                    value={formData.customGender}
                    onChange={(e) => setFormData(prev => ({ ...prev, customGender: e.target.value }))}
@@ -532,6 +539,7 @@ const Register = () => {
              <div className="space-y-2">
                <Label>Orientation</Label>
                <Select 
+                 name="orientation"
                  value={formData.orientation} 
                  onValueChange={(value) => {
                    setFormData(prev => ({ ...prev, orientation: value as Orientation }));
@@ -553,6 +561,8 @@ const Register = () => {
                </Select>
                {formData.orientation === 'other' && (
                  <Input
+                   id="customOrientation"
+                   name="customOrientation"
                    placeholder="Please specify your orientation"
                    value={formData.customOrientation}
                    onChange={(e) => setFormData(prev => ({ ...prev, customOrientation: e.target.value }))}
@@ -612,6 +622,7 @@ const Register = () => {
              <div className="space-y-2">
                <Label>Chat Style</Label>
                                <Select 
+                  name="chatStyle"
                   value={formData.chatStyle} 
                   onValueChange={(value) => {
                     setFormData(prev => ({ ...prev, chatStyle: value }));

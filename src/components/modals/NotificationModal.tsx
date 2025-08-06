@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
@@ -49,6 +49,9 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
       <DialogContent className="max-w-sm mx-auto rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Notifications</DialogTitle>
+          <DialogDescription>
+            Stay updated with your latest matches, messages, and community activity.
+          </DialogDescription>
         </DialogHeader>
         
         <ScrollArea className="max-h-96">

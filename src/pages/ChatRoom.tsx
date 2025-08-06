@@ -786,6 +786,8 @@ const ChatRoom = () => {
         
         <div className="flex gap-2">
           <Input
+            id="messageInput"
+            name="messageInput"
             placeholder="Share your thoughts..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}

@@ -1113,6 +1113,8 @@ const PrivateChat = () => {
           </Button>
           
           <Input
+            id="privateChatMessage"
+            name="privateChatMessage"
             placeholder="Type a thoughtful message..."
             value={message}
             onChange={handleInputChange}

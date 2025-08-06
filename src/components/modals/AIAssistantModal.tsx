@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -200,6 +200,9 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
             <Bot className="w-5 h-5 text-primary" />
             AI Language Assistant
           </DialogTitle>
+          <DialogDescription>
+            Your personal AI companion for language learning, conversation practice, and communication support.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
@@ -215,7 +218,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
                 <CardContent className="p-3 space-y-3">
                   <div className="space-y-2">
                     <Label className="text-xs">Select AI Feature</Label>
-                    <Select value={selectedFeature} onValueChange={setSelectedFeature}>
+                    <Select name="aiFeature" value={selectedFeature} onValueChange={setSelectedFeature}>
                       <SelectTrigger className="h-8">
                         <SelectValue />
                       </SelectTrigger>
@@ -232,6 +235,8 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
                   <div className="space-y-2">
                     <Label className="text-xs">Your Message</Label>
                     <Input
+                      id="aiMessage"
+                      name="aiMessage"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       placeholder="Type your message here..."

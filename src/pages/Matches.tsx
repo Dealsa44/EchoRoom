@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
+
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -50,6 +51,7 @@ interface Profile {
 const Matches = () => {
   const navigate = useNavigate();
   const { user } = useApp();
+
   
   // Mock matches data - in real app this would come from context or API
   const [matches, setMatches] = useState<Profile[]>([

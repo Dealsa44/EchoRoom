@@ -339,6 +339,8 @@ const VocabularyTracker = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
+                id="vocabularySearch"
+                name="vocabularySearch"
                 placeholder="Search vocabulary..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -346,6 +348,8 @@ const VocabularyTracker = () => {
               />
             </div>
             <select
+              id="vocabularyFilter"
+              name="vocabularyFilter"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               className="px-3 py-2 border rounded-md"

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,6 +61,9 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
       <DialogContent className="max-w-sm mx-auto rounded-xl">
         <DialogHeader>
           <DialogTitle>Create a New Room</DialogTitle>
+          <DialogDescription>
+            Set up a new chat room for meaningful conversations and discussions.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,6 +71,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             <Label htmlFor="room-name">Room Name</Label>
             <Input
               id="room-name"
+              name="roomName"
               placeholder="e.g., Midnight Philosophers"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -77,7 +81,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="topic">Topic Category</Label>
-            <Select value={formData.topic} onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}>
+            <Select name="topic" value={formData.topic} onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a topic" />
               </SelectTrigger>
@@ -95,6 +99,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
+              name="description"
               placeholder="What will you discuss in this room?"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}

@@ -9,6 +9,7 @@ import { Search, Plus, Users, Lock, Globe, LogIn } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import CreateRoomModal from '@/components/modals/CreateRoomModal';
+
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
@@ -43,22 +44,12 @@ const ChatRooms = () => {
   });
 
   const handleJoinRoom = (roomId: string) => {
-    console.log('=== CHATROOMS: About to join room ===', roomId);
-    console.log('Current joinedRooms in ChatRooms:', joinedRooms);
-    
     joinRoom(roomId);
     
     toast({
       title: "Joined room!",
       description: "You can now access this room from your messages.",
     });
-    
-    // Add a small delay to let state update, then check the state
-    setTimeout(() => {
-      console.log('=== CHATROOMS: After joinRoom call ===');
-      console.log('joinedRooms after join:', joinedRooms);
-      console.log('localStorage after join:', localStorage.getItem('joinedRooms'));
-    }, 100);
     
     // Auto-navigate to the joined room
     navigate(`/chat-room/${roomId}`);
@@ -76,6 +67,8 @@ const ChatRooms = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
+              id="roomSearch"
+              name="roomSearch"
               placeholder="Search rooms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

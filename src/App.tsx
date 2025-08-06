@@ -8,6 +8,7 @@ import { LanguageAIProvider } from "@/contexts/LanguageAIContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 import PublicGuard from "@/components/auth/PublicGuard";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Pages
 import Welcome from "./pages/Welcome";
@@ -38,7 +39,13 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <ScrollToTop />
           <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={

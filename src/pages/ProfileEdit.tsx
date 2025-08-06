@@ -119,6 +119,7 @@ const ProfileEdit = () => {
                 <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
+                  name="username"
                   value={formData.username}
                   onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                   required
@@ -129,6 +130,7 @@ const ProfileEdit = () => {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
@@ -157,6 +159,7 @@ const ProfileEdit = () => {
                   <div className="space-y-2">
                     <Label>Gender Identity</Label>
                     <Select 
+                      name="genderIdentity"
                       value={formData.genderIdentity} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, genderIdentity: value as GenderIdentity }))}
                     >
@@ -176,6 +179,8 @@ const ProfileEdit = () => {
                     </Select>
                     {formData.genderIdentity === 'other' && (
                       <Input
+                        id="customGender"
+                        name="customGender"
                         placeholder="Please specify your gender identity"
                         value={formData.customGender}
                         onChange={(e) => setFormData(prev => ({ ...prev, customGender: e.target.value }))}
@@ -187,6 +192,7 @@ const ProfileEdit = () => {
                   <div className="space-y-2">
                     <Label>Orientation</Label>
                     <Select 
+                      name="orientation"
                       value={formData.orientation} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, orientation: value as Orientation }))}
                     >
@@ -205,6 +211,8 @@ const ProfileEdit = () => {
                     </Select>
                     {formData.orientation === 'other' && (
                       <Input
+                        id="customOrientation"
+                        name="customOrientation"
                         placeholder="Please specify your orientation"
                         value={formData.customOrientation}
                         onChange={(e) => setFormData(prev => ({ ...prev, customOrientation: e.target.value }))}
@@ -263,6 +271,7 @@ const ProfileEdit = () => {
                     <div className="relative">
                       <Input
                         id="currentPassword"
+                        name="currentPassword"
                         type={showPassword ? 'text' : 'password'}
                         value={formData.currentPassword}
                         onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
@@ -285,6 +294,7 @@ const ProfileEdit = () => {
                     <div className="relative">
                       <Input
                         id="newPassword"
+                        name="newPassword"
                         type={showNewPassword ? 'text' : 'password'}
                         value={formData.newPassword}
                         onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}

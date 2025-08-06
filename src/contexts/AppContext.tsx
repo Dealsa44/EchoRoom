@@ -119,15 +119,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const [state, setState] = useState<AppState>(initializeState);
 
-  // Debug: Log state changes
-  useEffect(() => {
-    console.log('=== AppContext State Change ===');
-    console.log('Joined rooms:', state.joinedRooms);
-    console.log('Is authenticated:', state.isAuthenticated);
-    console.log('User:', state.user?.username || 'None');
-    console.log('localStorage joinedRooms:', localStorage.getItem('joinedRooms'));
-    console.log('===============================');
-  }, [state.joinedRooms, state.isAuthenticated, state.user]);
+
 
   // Listen for storage events (changes from other tabs only)
   useEffect(() => {
@@ -135,7 +127,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (e.key === 'joinedRooms' && e.newValue) {
         try {
           const parsedRooms = JSON.parse(e.newValue);
-          console.log('Storage event - syncing joinedRooms from other tab:', parsedRooms);
+
           setState(prev => ({ ...prev, joinedRooms: parsedRooms }));
         } catch (error) {
           console.error('Failed to sync from storage event:', error);
@@ -179,21 +171,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const joinRoom = (roomId: string) => {
-    console.log('=== JOIN ROOM ===');
-    console.log('Joining room:', roomId);
-    console.log('Current joinedRooms:', state.joinedRooms);
-    
     // Calculate new joined rooms immediately
     const currentJoinedRooms = state.joinedRooms;
     const newJoinedRooms = currentJoinedRooms.includes(roomId) 
       ? currentJoinedRooms 
       : [...currentJoinedRooms, roomId];
     
-    console.log('New joinedRooms:', newJoinedRooms);
-    
     // Persist to localStorage BEFORE updating state
     localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-    console.log('Saved to localStorage:', JSON.stringify(newJoinedRooms));
     
     // Update state
     setState(prev => ({ 
@@ -203,19 +188,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const leaveRoom = (roomId: string) => {
-    console.log('=== LEAVE ROOM ===');
-    console.log('Leaving room:', roomId);
-    console.log('Current joinedRooms:', state.joinedRooms);
-    
     // Calculate new joined rooms immediately
     const currentJoinedRooms = state.joinedRooms;
     const newJoinedRooms = currentJoinedRooms.filter(id => id !== roomId);
     
-    console.log('New joinedRooms:', newJoinedRooms);
-    
     // Persist to localStorage BEFORE updating state
     localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-    console.log('Saved to localStorage:', JSON.stringify(newJoinedRooms));
     
     // Update state
     setState(prev => ({ 

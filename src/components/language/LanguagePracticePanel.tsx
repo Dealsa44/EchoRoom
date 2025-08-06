@@ -151,7 +151,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label className="text-xs">Learning Language</Label>
-                <Select value={learningLanguage} onValueChange={setLearningLanguage}>
+                <Select name="learningLanguage" value={learningLanguage} onValueChange={setLearningLanguage}>
                   <SelectTrigger className="h-8">
                     <SelectValue placeholder={getLanguageDisplayName(learningLanguage)} />
                   </SelectTrigger>
@@ -166,7 +166,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
 
               <div className="space-y-2">
                 <Label className="text-xs">Your Level</Label>
-                <Select value={languageLevel} onValueChange={setLanguageLevel}>
+                <Select name="languageLevel" value={languageLevel} onValueChange={setLanguageLevel}>
                   <SelectTrigger className="h-8">
                     <SelectValue placeholder={getLevelDisplayName(languageLevel)} />
                   </SelectTrigger>

@@ -399,6 +399,8 @@ const ForumThread = () => {
               {replyingTo === comment.id && (
                 <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
                   <Textarea
+                    id={`reply-${comment.id}`}
+                    name={`reply-${comment.id}`}
                     placeholder={`Reply to ${comment.author}...`}
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
@@ -538,6 +540,8 @@ const ForumThread = () => {
             </h4>
             <div className="space-y-3">
               <Textarea
+                id="mainComment"
+                name="mainComment"
                 placeholder="Share your thoughtful response..."
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
