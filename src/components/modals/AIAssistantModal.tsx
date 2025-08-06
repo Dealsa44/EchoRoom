@@ -194,7 +194,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-sm mx-auto max-h-[90vh] overflow-hidden" ref={modalRef}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[90vh] overflow-hidden" ref={modalRef}>
         <DialogHeader className="border-b pb-3">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Bot className="w-5 h-5 text-primary" />
@@ -205,7 +205,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className="overflow-y-auto max-h-[calc(85vh-120px)]">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="assistant" className="text-xs">Assistant</TabsTrigger>

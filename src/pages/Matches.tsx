@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,33 +20,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
-
+import { MatchCardSkeleton } from '@/components/ui/SkeletonLoader';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
-
-interface Profile {
-  id: number;
-  name: string;
-  avatar: string;
-  age: number;
-  location: string;
-  distance: number;
-  bio: string;
-  interests: string[];
-  languageLevel: string;
-  chatStyle: string;
-  lastActive: string;
-  isOnline: boolean;
-  sharedInterests: number;
-  genderIdentity: string;
-  orientation: string;
-  lookingForRelationship: boolean;
-  attractionPreferences: string[];
-  photos: string[];
-  isVerified: boolean;
-  profileCompletion: number;
-  iceBreakerAnswers: Record<string, string>;
-}
+import { Profile } from '@/types';
+import { getProfilesByIds } from '@/data/mockProfiles';
 
 const Matches = () => {
   const navigate = useNavigate();
@@ -54,70 +32,19 @@ const Matches = () => {
 
   
   // Mock matches data - in real app this would come from context or API
-  const [matches, setMatches] = useState<Profile[]>([
-    {
-      id: 1,
-      name: 'Luna',
-      avatar: '🌙',
-      age: 24,
-      location: 'Tbilisi, Georgia',
-      distance: 2.3,
-      bio: 'Philosophy student who loves deep conversations and poetry. Looking for meaningful connections.',
-      interests: ['Philosophy', 'Poetry', 'Mindfulness', 'Reading'],
-      languageLevel: 'B2',
-      chatStyle: 'introverted',
-      lastActive: '2 hours ago',
-      isOnline: false,
-      sharedInterests: 2,
-      genderIdentity: 'female',
-      orientation: 'bisexual',
-      lookingForRelationship: true,
-      attractionPreferences: ['women', 'men'],
-      photos: [
-        'https://picsum.photos/400/400?random=1',
-        'https://picsum.photos/400/400?random=2',
-        'https://picsum.photos/400/400?random=3'
-      ],
-      isVerified: true,
-      profileCompletion: 95,
-      iceBreakerAnswers: {
-        "What's your favorite way to spend a weekend?": "Reading philosophy books in a cozy café with good coffee",
-        "If you could travel anywhere right now, where would you go?": "Greece to explore ancient philosophy sites",
-        "What's the best book you've read recently?": "The Republic by Plato - it changed my perspective on everything"
-      }
-    },
-    {
-      id: 2,
-      name: 'Alex',
-      avatar: '📚',
-      age: 28,
-      location: 'London, UK',
-      distance: 5.1,
-      bio: 'Book enthusiast and language learner. Seeking someone to explore ideas and practice languages with.',
-      interests: ['Books', 'Languages', 'Culture', 'Travel'],
-      languageLevel: 'C1',
-      chatStyle: 'balanced',
-      lastActive: '1 hour ago',
-      isOnline: true,
-      sharedInterests: 3,
-      genderIdentity: 'non-binary',
-      orientation: 'pansexual',
-      lookingForRelationship: false,
-      attractionPreferences: ['all-genders'],
-      photos: [
-        'https://picsum.photos/400/400?random=4',
-        'https://picsum.photos/400/400?random=5',
-        'https://picsum.photos/400/400?random=6'
-      ],
-      isVerified: true,
-      profileCompletion: 88,
-      iceBreakerAnswers: {
-        "What's your favorite way to spend a weekend?": "Exploring bookstores and trying new cuisines",
-        "If you could travel anywhere right now, where would you go?": "Japan to practice Japanese and explore culture",
-        "What's the best book you've read recently?": "The Midnight Library - it made me think about life choices"
-      }
-    }
-  ]);
+  // Use centralized mock data - simulate matched profiles (Luna and Alex)
+  const [matches, setMatches] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading matches
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMatches(getProfilesByIds([1, 2]));
+      setLoading(false);
+    }, 1200);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChat = (profile: Profile) => {
     navigate(`/private-chat/${profile.id}`);
@@ -158,7 +85,17 @@ const Matches = () => {
       <TopBar title="Your Matches" />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-4">
-        {matches.length === 0 ? (
+        {loading ? (
+          <>
+            <div className="text-center mb-4">
+              <div className="h-6 w-24 bg-muted rounded animate-pulse mx-auto mb-2"></div>
+              <div className="h-4 w-48 bg-muted rounded animate-pulse mx-auto"></div>
+            </div>
+            {[...Array(2)].map((_, index) => (
+              <MatchCardSkeleton key={index} />
+            ))}
+          </>
+        ) : matches.length === 0 ? (
           <Card className="shadow-medium">
             <CardContent className="p-8 text-center">
               <div className="text-4xl mb-4">💔</div>

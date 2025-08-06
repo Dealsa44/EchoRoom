@@ -2,66 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
-/* EchoRoom Design System - Soft, minimal, cozy aesthetic */
+/* EchoRoom Design System - Premium, elegant, emotionally intelligent aesthetic */
 
 @layer base {
   :root {
-    /* Core Background & Text */
+    /* Core Background & Text - Enhanced with depth */
     --background: 250 40% 98%;
-    --foreground: 240 15% 15%;
+    --foreground: 240 15% 12%;
+    --surface: 250 35% 96%;
+    --surface-elevated: 250 45% 99%;
 
-    /* Card & Surface Colors */
+    /* Card & Surface Colors - More sophisticated layering */
     --card: 250 50% 97%;
-    --card-foreground: 240 15% 15%;
+    --card-foreground: 240 15% 12%;
+    --card-hover: 250 55% 99%;
 
     --popover: 250 50% 97%;
-    --popover-foreground: 240 15% 15%;
+    --popover-foreground: 240 15% 12%;
 
-    /* Primary - Soft Lavender */
-    --primary: 240 60% 75%;
-    --primary-foreground: 240 15% 15%;
-    --primary-glow: 240 70% 85%;
+    /* Enhanced Primary Palette - Dreamy Purple */
+    --primary: 260 55% 68%;
+    --primary-foreground: 260 15% 15%;
+    --primary-glow: 260 65% 78%;
+    --primary-soft: 260 45% 88%;
+    --primary-muted: 260 25% 92%;
 
-    /* Secondary - Sky Blue */
-    --secondary: 200 80% 80%;
-    --secondary-foreground: 200 30% 20%;
+    /* Secondary - Ethereal Blue */
+    --secondary: 210 75% 72%;
+    --secondary-foreground: 210 30% 18%;
+    --secondary-soft: 210 65% 85%;
+    --secondary-muted: 210 35% 90%;
 
-    /* Soft Green Accent */
-    --accent: 120 50% 80%;
-    --accent-foreground: 120 30% 20%;
+    /* Accent - Warm Coral */
+    --accent: 15 70% 75%;
+    --accent-foreground: 15 30% 20%;
+    --accent-soft: 15 60% 88%;
+    --accent-muted: 15 40% 92%;
 
-    /* Muted Colors */
-    --muted: 240 20% 92%;
-    --muted-foreground: 240 10% 45%;
+    /* Tertiary - Sage Green */
+    --tertiary: 140 45% 70%;
+    --tertiary-foreground: 140 30% 20%;
+    --tertiary-soft: 140 35% 85%;
+    --tertiary-muted: 140 25% 90%;
 
-    /* Destructive - Soft Red */
-    --destructive: 0 50% 70%;
-    --destructive-foreground: 0 20% 20%;
+    /* Muted Colors - Enhanced hierarchy */
+    --muted: 240 20% 90%;
+    --muted-foreground: 240 12% 42%;
+    --muted-soft: 240 15% 94%;
 
-    /* Borders & Inputs */
-    --border: 240 30% 88%;
-    --input: 240 40% 92%;
-    --ring: 240 60% 75%;
+    /* Destructive - Gentle Red */
+    --destructive: 0 45% 65%;
+    --destructive-foreground: 0 20% 18%;
+    --destructive-soft: 0 35% 85%;
 
-    /* Safe Mode Colors */
-    --safe-light: 60 80% 85%;
-    --safe-deep: 280 50% 80%;
-    --safe-learning: 160 60% 80%;
+    /* Success - Natural Green */
+    --success: 145 50% 65%;
+    --success-foreground: 145 30% 18%;
+    --success-soft: 145 40% 85%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(240 60% 75%), hsl(240 70% 85%));
-    --gradient-secondary: linear-gradient(135deg, hsl(200 80% 80%), hsl(200 90% 90%));
-    --gradient-accent: linear-gradient(135deg, hsl(120 50% 80%), hsl(120 60% 90%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 60% 75%), hsl(200 80% 80%), hsl(120 50% 80%));
+    /* Warning - Warm Amber */
+    --warning: 45 85% 70%;
+    --warning-foreground: 45 30% 18%;
+    --warning-soft: 45 75% 85%;
 
-    /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(240 60% 75% / 0.15);
-    --shadow-medium: 0 8px 30px -8px hsl(240 60% 75% / 0.2);
-    --shadow-glow: 0 0 30px hsl(240 70% 85% / 0.3);
+    /* Borders & Inputs - More refined */
+    --border: 240 25% 85%;
+    --border-soft: 240 20% 90%;
+    --input: 240 35% 94%;
+    --input-focus: 240 40% 96%;
+    --ring: 260 55% 68%;
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Safe Mode Colors - Enhanced */
+    --safe-light: 55 75% 82%;
+    --safe-deep: 285 45% 75%;
+    --safe-learning: 165 55% 75%;
+
+    /* Enhanced Gradients - More sophisticated */
+    --gradient-primary: linear-gradient(135deg, hsl(260 55% 68%) 0%, hsl(260 65% 78%) 50%, hsl(270 60% 85%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(210 75% 72%) 0%, hsl(210 85% 82%) 50%, hsl(220 80% 90%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(15 70% 75%) 0%, hsl(25 75% 82%) 50%, hsl(35 70% 88%) 100%);
+    --gradient-tertiary: linear-gradient(135deg, hsl(140 45% 70%) 0%, hsl(150 50% 78%) 50%, hsl(160 45% 85%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(260 55% 68%) 0%, hsl(210 75% 72%) 25%, hsl(15 70% 75%) 50%, hsl(140 45% 70%) 75%, hsl(270 60% 85%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(250 50% 97% / 0.8) 0%, hsl(250 45% 99% / 0.6) 100%);
+    --gradient-mesh: conic-gradient(from 0deg at 50% 50%, hsl(260 55% 68%), hsl(210 75% 72%), hsl(15 70% 75%), hsl(140 45% 70%), hsl(260 55% 68%));
+
+    /* Enhanced Shadows - More depth and sophistication */
+    --shadow-soft: 0 2px 8px -2px hsl(260 55% 68% / 0.08), 0 4px 16px -4px hsl(260 55% 68% / 0.06);
+    --shadow-medium: 0 4px 16px -4px hsl(260 55% 68% / 0.12), 0 8px 32px -8px hsl(260 55% 68% / 0.08);
+    --shadow-large: 0 8px 32px -8px hsl(260 55% 68% / 0.16), 0 16px 64px -16px hsl(260 55% 68% / 0.12);
+    --shadow-glow: 0 0 32px hsl(260 65% 78% / 0.25), 0 0 64px hsl(260 65% 78% / 0.15);
+    --shadow-colored: 0 4px 16px -4px hsl(var(--primary) / 0.15);
+    --shadow-inner: inset 0 2px 4px 0 hsl(260 55% 68% / 0.06);
+
+    /* Advanced Animation Curves */
+    --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-elastic: all 0.8s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-snappy: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Glass Morphism */
+    --glass-bg: hsl(250 50% 97% / 0.8);
+    --glass-border: hsl(250 30% 88% / 0.3);
+    --glass-backdrop: blur(16px) saturate(180%);
+
+    /* Typography Scale */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+
+    --line-height-tight: 1.25;
+    --line-height-snug: 1.375;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.625;
+
+    /* Spacing Scale */
+    --space-px: 1px;
+    --space-0: 0;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
 
     --radius: 1rem;
 
@@ -83,58 +156,98 @@
   }
 
   .dark {
-    /* Dark Background & Text */
-    --background: 240 20% 8%;
-    --foreground: 240 30% 90%;
+    /* Dark Background & Text - Enhanced with depth */
+    --background: 240 25% 6%;
+    --foreground: 240 20% 92%;
+    --surface: 240 20% 8%;
+    --surface-elevated: 240 25% 10%;
 
-    /* Dark Card & Surface Colors */
-    --card: 240 25% 10%;
-    --card-foreground: 240 30% 90%;
+    /* Dark Card & Surface Colors - More sophisticated layering */
+    --card: 240 20% 9%;
+    --card-foreground: 240 20% 92%;
+    --card-hover: 240 25% 12%;
 
-    --popover: 240 25% 10%;
-    --popover-foreground: 240 30% 90%;
+    --popover: 240 20% 9%;
+    --popover-foreground: 240 20% 92%;
 
-    /* Dark Primary - Soft Lavender */
-    --primary: 240 50% 65%;
-    --primary-foreground: 240 30% 90%;
-    --primary-glow: 240 60% 75%;
+    /* Enhanced Primary Palette - Dreamy Purple (Dark) */
+    --primary: 260 45% 72%;
+    --primary-foreground: 260 20% 95%;
+    --primary-glow: 260 55% 80%;
+    --primary-soft: 260 35% 25%;
+    --primary-muted: 260 25% 18%;
 
-    /* Dark Secondary - Sky Blue */
-    --secondary: 200 70% 60%;
-    --secondary-foreground: 200 30% 90%;
+    /* Secondary - Ethereal Blue (Dark) */
+    --secondary: 210 65% 68%;
+    --secondary-foreground: 210 20% 92%;
+    --secondary-soft: 210 45% 22%;
+    --secondary-muted: 210 35% 16%;
 
-    /* Dark Soft Green Accent */
-    --accent: 120 40% 60%;
-    --accent-foreground: 120 30% 90%;
+    /* Accent - Warm Coral (Dark) */
+    --accent: 15 60% 68%;
+    --accent-foreground: 15 20% 92%;
+    --accent-soft: 15 45% 22%;
+    --accent-muted: 15 35% 16%;
 
-    /* Dark Muted Colors */
-    --muted: 240 25% 15%;
-    --muted-foreground: 240 20% 60%;
+    /* Tertiary - Sage Green (Dark) */
+    --tertiary: 140 35% 65%;
+    --tertiary-foreground: 140 20% 92%;
+    --tertiary-soft: 140 25% 22%;
+    --tertiary-muted: 140 20% 16%;
 
-    /* Dark Destructive - Soft Red */
-    --destructive: 0 40% 50%;
-    --destructive-foreground: 0 20% 90%;
+    /* Dark Muted Colors - Enhanced hierarchy */
+    --muted: 240 20% 15%;
+    --muted-foreground: 240 15% 65%;
+    --muted-soft: 240 15% 12%;
 
-    /* Dark Borders & Inputs */
-    --border: 240 25% 20%;
-    --input: 240 25% 15%;
-    --ring: 240 50% 65%;
+    /* Destructive - Gentle Red (Dark) */
+    --destructive: 0 35% 60%;
+    --destructive-foreground: 0 20% 92%;
+    --destructive-soft: 0 25% 20%;
 
-    /* Dark Safe Mode Colors */
-    --safe-light: 60 60% 60%;
-    --safe-deep: 280 40% 60%;
-    --safe-learning: 160 50% 60%;
+    /* Success - Natural Green (Dark) */
+    --success: 145 40% 60%;
+    --success-foreground: 145 20% 92%;
+    --success-soft: 145 30% 20%;
 
-    /* Dark Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(240 50% 65%), hsl(240 60% 75%));
-    --gradient-secondary: linear-gradient(135deg, hsl(200 70% 60%), hsl(200 80% 70%));
-    --gradient-accent: linear-gradient(135deg, hsl(120 40% 60%), hsl(120 50% 70%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 50% 65%), hsl(200 70% 60%), hsl(120 40% 60%));
+    /* Warning - Warm Amber (Dark) */
+    --warning: 45 75% 65%;
+    --warning-foreground: 45 20% 92%;
+    --warning-soft: 45 55% 22%;
 
-    /* Dark Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(240 50% 65% / 0.2);
-    --shadow-medium: 0 8px 30px -8px hsl(240 50% 65% / 0.25);
-    --shadow-glow: 0 0 30px hsl(240 60% 75% / 0.4);
+    /* Dark Borders & Inputs - More refined */
+    --border: 240 20% 18%;
+    --border-soft: 240 15% 15%;
+    --input: 240 20% 12%;
+    --input-focus: 240 25% 14%;
+    --ring: 260 45% 72%;
+
+    /* Dark Safe Mode Colors - Enhanced */
+    --safe-light: 55 55% 65%;
+    --safe-deep: 285 35% 65%;
+    --safe-learning: 165 45% 65%;
+
+    /* Enhanced Dark Gradients - More sophisticated */
+    --gradient-primary: linear-gradient(135deg, hsl(260 45% 72%) 0%, hsl(260 55% 80%) 50%, hsl(270 50% 85%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(210 65% 68%) 0%, hsl(210 75% 76%) 50%, hsl(220 70% 82%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(15 60% 68%) 0%, hsl(25 65% 75%) 50%, hsl(35 60% 80%) 100%);
+    --gradient-tertiary: linear-gradient(135deg, hsl(140 35% 65%) 0%, hsl(150 40% 72%) 50%, hsl(160 35% 78%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(260 45% 72%) 0%, hsl(210 65% 68%) 25%, hsl(15 60% 68%) 50%, hsl(140 35% 65%) 75%, hsl(270 50% 85%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(240 20% 9% / 0.8) 0%, hsl(240 25% 12% / 0.6) 100%);
+    --gradient-mesh: conic-gradient(from 0deg at 50% 50%, hsl(260 45% 72%), hsl(210 65% 68%), hsl(15 60% 68%), hsl(140 35% 65%), hsl(260 45% 72%));
+
+    /* Enhanced Dark Shadows - More depth and sophistication */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.25), 0 4px 16px -4px hsl(0 0% 0% / 0.15);
+    --shadow-medium: 0 4px 16px -4px hsl(0 0% 0% / 0.35), 0 8px 32px -8px hsl(0 0% 0% / 0.25);
+    --shadow-large: 0 8px 32px -8px hsl(0 0% 0% / 0.45), 0 16px 64px -16px hsl(0 0% 0% / 0.35);
+    --shadow-glow: 0 0 32px hsl(260 55% 80% / 0.35), 0 0 64px hsl(260 55% 80% / 0.25);
+    --shadow-colored: 0 4px 16px -4px hsl(var(--primary) / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 hsl(0 0% 0% / 0.15);
+
+    /* Glass Morphism (Dark) */
+    --glass-bg: hsl(240 20% 9% / 0.8);
+    --glass-border: hsl(240 20% 18% / 0.3);
+    --glass-backdrop: blur(16px) saturate(180%);
 
     --sidebar-background: 240 25% 10%;
 
@@ -159,7 +272,74 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "kern" 1, "liga" 1;
+    font-variant-numeric: oldstyle-nums;
+    
+    /* Mobile-first optimizations */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    
+    /* Enhanced typography */
+    line-height: var(--line-height-normal);
+    letter-spacing: -0.01em;
+  }
+
+  /* Enhanced Typography Classes */
+  .text-display-1 {
+    font-size: var(--font-size-4xl);
+    line-height: var(--line-height-tight);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+
+  .text-display-2 {
+    font-size: var(--font-size-3xl);
+    line-height: var(--line-height-tight);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .text-heading-1 {
+    font-size: var(--font-size-2xl);
+    line-height: var(--line-height-snug);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .text-heading-2 {
+    font-size: var(--font-size-xl);
+    line-height: var(--line-height-snug);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .text-body-large {
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-relaxed);
+    font-weight: 400;
+  }
+
+  .text-body {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    font-weight: 400;
+  }
+
+  .text-body-small {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    font-weight: 400;
+  }
+
+  .text-caption {
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-snug);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
   }
 }
 
@@ -209,21 +389,236 @@
   }
 }
 
-/* Chat room specific styles */
-.chat-room-header {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
+/* Enhanced Utility Classes */
+
+/* Glass Morphism Effects */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
 }
 
-.dark .chat-room-header {
-  background: rgba(0, 0, 0, 0.95);
+.glass-strong {
+  background: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.glass-subtle {
+  background: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid hsl(var(--border) / 0.3);
+}
+
+/* Enhanced Shadow Classes */
+.shadow-glow-primary {
+  box-shadow: 0 0 24px hsl(var(--primary) / 0.3);
+}
+
+.shadow-glow-secondary {
+  box-shadow: 0 0 24px hsl(var(--secondary) / 0.3);
+}
+
+.shadow-glow-accent {
+  box-shadow: 0 0 24px hsl(var(--accent) / 0.3);
+}
+
+.shadow-inner-soft {
+  box-shadow: var(--shadow-inner);
+}
+
+/* Animation Classes */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Transition Classes */
+.transition-smooth {
+  transition: var(--transition-smooth);
+}
+
+.transition-bounce {
+  transition: var(--transition-bounce);
+}
+
+.transition-spring {
+  transition: var(--transition-spring);
+}
+
+.transition-snappy {
+  transition: var(--transition-snappy);
+}
+
+/* Gradient Text */
+.gradient-text-primary {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-secondary {
+  background: var(--gradient-secondary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-hero {
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Interactive States */
+.interactive {
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-soft);
+}
+
+.interactive-scale {
+  transition: var(--transition-spring);
+}
+
+.interactive-scale:hover {
+  transform: scale(1.02);
+}
+
+.interactive-scale:active {
+  transform: scale(0.98);
+}
+
+/* Chat room specific styles */
+.chat-room-header {
+  backdrop-filter: blur(16px) saturate(180%);
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 /* Smooth transitions for chat elements */
 .chat-message {
-  transition: all 0.2s ease-in-out;
+  transition: var(--transition-smooth);
 }
 
 .chat-message:hover {
   transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Keyframe Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Mesh Gradient Background */
+.mesh-gradient {
+  background: var(--gradient-mesh);
+  background-size: 400% 400%;
+  animation: mesh-animation 15s ease infinite;
+}
+
+@keyframes mesh-animation {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Mobile-first utilities */
+@media (max-width: 768px) {
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improved touch interactions */
+  button, [role="button"] {
+    touch-action: manipulation;
+  }
+  
+  /* Better focus visibility on mobile */
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
 }

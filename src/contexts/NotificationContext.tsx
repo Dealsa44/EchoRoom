@@ -195,10 +195,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           browserNotification.close();
         };
 
-        // Auto close after 5 seconds
+        // Auto close after 3 seconds
         setTimeout(() => {
           browserNotification.close();
-        }, 5000);
+        }, 3000);
       } catch (error) {
         console.error('Failed to show notification:', error);
       }

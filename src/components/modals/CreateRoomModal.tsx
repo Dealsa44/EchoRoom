@@ -58,7 +58,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm mx-auto rounded-xl">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto rounded-xl">
         <DialogHeader>
           <DialogTitle>Create a New Room</DialogTitle>
           <DialogDescription>

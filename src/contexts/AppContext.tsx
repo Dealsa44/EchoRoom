@@ -31,6 +31,42 @@ export type AttractionPreference = 'women' | 'men' | 'non-binary' | 'all-genders
 
 export type RelationshipIntent = 'relationship' | 'friendship' | 'both';
 
+// Helper function to derive attraction preferences from gender and orientation
+export const getAttractionPreferences = (genderIdentity: GenderIdentity, orientation: Orientation): AttractionPreference[] => {
+  // Handle custom orientations as 'other'
+  const normalizedOrientation = typeof orientation === 'string' && 
+    !['heterosexual', 'homosexual', 'bisexual', 'asexual', 'pansexual', 'queer'].includes(orientation) 
+    ? 'other' : orientation;
+
+  switch (normalizedOrientation) {
+    case 'heterosexual':
+      if (genderIdentity === 'male') return ['women'];
+      if (genderIdentity === 'female') return ['men'];
+      if (genderIdentity === 'non-binary') return ['all-genders']; // Non-binary hetero is complex, default to all
+      return ['all-genders'];
+      
+    case 'homosexual':
+      if (genderIdentity === 'male') return ['men'];
+      if (genderIdentity === 'female') return ['women'];
+      if (genderIdentity === 'non-binary') return ['non-binary'];
+      return ['all-genders'];
+      
+    case 'bisexual':
+      return ['women', 'men'];
+      
+    case 'pansexual':
+    case 'queer':
+      return ['all-genders'];
+      
+    case 'asexual':
+      return []; // Asexual people may not be sexually attracted to anyone, but could be romantically attracted
+      
+    case 'other':
+    default:
+      return ['all-genders']; // Default to all genders for unknown orientations
+  }
+};
+
 export interface User {
   id: string;
   username: string;
@@ -44,10 +80,9 @@ export interface User {
   safeMode: SafeMode;
   anonymousMode: boolean;
   aiAssistant: boolean;
-  // New fields for gender and orientation
+  // Fields for gender and orientation
   genderIdentity: GenderIdentity;
   orientation: Orientation;
-  attractionPreferences: AttractionPreference[];
   lookingForRelationship: boolean;
   customGender?: string; // For custom gender identity
   customOrientation?: string; // For custom orientation

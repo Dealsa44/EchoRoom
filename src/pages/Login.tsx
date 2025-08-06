@@ -65,56 +65,69 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-secondary flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen mesh-gradient flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-25">
+        <div className="absolute top-32 left-12 w-28 h-28 bg-gradient-secondary rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-40 right-8 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-1/3 right-20 w-20 h-20 bg-gradient-accent rounded-full blur-xl animate-float" style={{ animationDelay: '3s' }} />
+      </div>
+
+      <div className="w-full max-w-sm relative z-10 animate-scale-in">
         {/* Back Button */}
         <Button
-          variant="ghost"
+          variant="glass"
           onClick={() => navigate('/')}
-          className="mb-6 p-2"
+          className="mb-8 shadow-medium hover:scale-105 transition-spring"
         >
-          <ArrowLeft size={20} />
-          <span className="ml-2">Back</span>
+          <ArrowLeft size={18} />
+          <span className="ml-2 font-medium">Back</span>
         </Button>
 
-        <Card className="shadow-medium">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <p className="text-muted-foreground">Sign in to your safe space</p>
+        <Card className="shadow-large glass animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <CardHeader className="text-center pb-6">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow animate-pulse-soft">
+              <span className="text-2xl font-bold text-primary-foreground">ER</span>
+            </div>
+            <CardTitle className="text-display-2 font-bold gradient-text-hero">Welcome Back</CardTitle>
+            <p className="text-body-small text-muted-foreground mt-2">Sign in to your safe space for meaningful conversations</p>
           </CardHeader>
           
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+          <CardContent className="pt-0">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-body font-medium">Email Address</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="Enter your email..."
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   required
+                  className="animate-slide-up"
+                  style={{ animationDelay: '0.3s' }}
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
+              <div className="space-y-3">
+                <Label htmlFor="password" className="text-body font-medium">Password</Label>
+                <div className="relative animate-slide-up" style={{ animationDelay: '0.4s' }}>
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Your password"
+                    placeholder="Enter your password..."
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     required
+                    className="pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                    size="icon-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 hover:scale-110 transition-spring"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -124,19 +137,28 @@ const Login = () => {
 
               <Button
                 type="submit"
-                variant="cozy"
+                variant="gradient"
                 size="lg"
-                className="w-full"
+                className="w-full shadow-glow-primary animate-slide-up"
+                style={{ animationDelay: '0.5s' }}
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    Signing in...
+                  </>
+                ) : (
+                  <span className="font-semibold">Sign In</span>
+                )}
               </Button>
 
               <Button
                 type="button"
-                variant="link"
+                variant="ghost"
                 onClick={handleForgotPassword}
-                className="w-full"
+                className="w-full hover:scale-105 transition-spring animate-slide-up"
+                style={{ animationDelay: '0.6s' }}
               >
                 Forgot password?
               </Button>

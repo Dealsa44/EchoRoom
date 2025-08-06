@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -28,8 +29,11 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
     getLevelDisplayName,
     isLearningModeActive,
     autoCorrect,
+    setAutoCorrect,
     grammarCheckEnabled,
+    setGrammarCheckEnabled,
     translationEnabled,
+    setTranslationEnabled,
     speakingConfidence,
     listeningComprehension,
     writingAccuracy,
@@ -46,8 +50,6 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
 
   const [activeTab, setActiveTab] = useState('overview');
   const [testText, setTestText] = useState('');
-
-  if (!isOpen) return null;
 
   const insights = getLearningInsights();
   const vocabProgress = getVocabularyProgress();
@@ -129,18 +131,19 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
   };
 
   return (
-    <Card className="border-t border-border bg-card">
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Languages className="w-4 h-4 text-primary" />
-            <span className="font-medium text-sm">Language Practice</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ×
-          </Button>
-        </div>
-
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Languages className="w-5 h-5 text-primary" />
+            Language Practice
+          </DialogTitle>
+          <DialogDescription>
+            Enhance your language learning with AI-powered tools and practice sessions.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="overflow-y-auto max-h-[calc(85vh-120px)] space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
@@ -180,6 +183,21 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Target Language for Translation</Label>
+                <Select defaultValue="georgian">
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="georgian">🇬🇪 Georgian</SelectItem>
+                    <SelectItem value="english">🇺🇸 English</SelectItem>
+                    <SelectItem value="spanish">🇪🇸 Spanish</SelectItem>
+                    <SelectItem value="french">🇫🇷 French</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -193,6 +211,20 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
                 id="practice-mode"
                 checked={practiceMode}
                 onCheckedChange={setPracticeMode}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="auto-translate" className="text-sm">
+                Auto-Translate
+                <span className="block text-xs text-muted-foreground">
+                  Automatically show translations for messages
+                </span>
+              </Label>
+              <Switch
+                id="auto-translate"
+                checked={translationEnabled}
+                onCheckedChange={setTranslationEnabled}
               />
             </div>
 
@@ -379,8 +411,9 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
             )}
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

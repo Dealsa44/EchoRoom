@@ -132,39 +132,47 @@ const Forum = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-15">
+        <div className="absolute top-20 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-32 left-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }} />
+      </div>
+
       <TopBar title="Deep Discussions" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Header */}
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Safe and slow conversations</p>
+        <div className="text-center animate-fade-in">
+          <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Community Forum</h1>
+          <p className="text-body-small text-muted-foreground">Safe and slow conversations that matter</p>
         </div>
 
         {/* Search and Filters */}
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="relative glass rounded-2xl p-1 shadow-medium">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
             <Input
               id="forumSearch"
               name="forumSearch"
-              placeholder="Search discussions..."
+              placeholder="Search discussions, topics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 glass border-border-soft hover:border-border transition-smooth h-12 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-border-soft shadow-large">
                 {categories.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>
+                  <SelectItem key={cat.value} value={cat.value} className="hover:bg-primary/10 transition-smooth">
                     <span className="flex items-center gap-2">
-                      <span>{cat.icon}</span>
+                      <span className="text-lg">{cat.icon}</span>
                       {cat.label}
                     </span>
                   </SelectItem>
@@ -173,95 +181,99 @@ const Forum = () => {
             </Select>
             
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-28">
+              <SelectTrigger className="w-32 glass border-border-soft hover:border-border transition-smooth h-12 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Recent</SelectItem>
-                <SelectItem value="popular">Popular</SelectItem>
-                <SelectItem value="replies">Most Replies</SelectItem>
+              <SelectContent className="glass border-border-soft shadow-large">
+                <SelectItem value="recent" className="hover:bg-primary/10 transition-smooth">Recent</SelectItem>
+                <SelectItem value="popular" className="hover:bg-primary/10 transition-smooth">Popular</SelectItem>
+                <SelectItem value="replies" className="hover:bg-primary/10 transition-smooth">Most Replies</SelectItem>
               </SelectContent>
             </Select>
             
             <Button
-              variant="cozy"
+              variant="gradient"
+              size="icon-lg"
               onClick={() => setShowCreateModal(true)}
-              className="px-3"
+              className="shadow-glow-primary hover:scale-110 transition-spring"
             >
-              <Plus size={20} />
+              <Plus size={22} />
             </Button>
           </div>
         </div>
 
         {/* Threads List */}
-        <div className="space-y-3">
-          {sortedThreads.map((thread) => (
+        <div className="space-y-4">
+          {sortedThreads.map((thread, index) => (
             <Card 
               key={thread.id} 
-              className="cursor-pointer transition-all hover:shadow-medium hover:scale-[1.01]"
+              className="cursor-pointer interactive-scale shadow-medium hover:shadow-large group animate-slide-up"
+              style={{ animationDelay: `${0.2 + index * 0.05}s` }}
               onClick={() => navigate(`/forum/thread/${thread.id}`)}
             >
-              <CardContent className="p-4">
-                <div className="space-y-3">
+              <CardContent className="p-6">
+                <div className="space-y-4">
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-3">
                         {thread.isStickied && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="warning" size="sm" className="animate-pulse-soft">
                             📌 Pinned
                           </Badge>
                         )}
-                        <Badge className={getCategoryColor(thread.category)} variant="secondary">
-                          {categories.find(c => c.value === thread.category)?.icon} 
+                        <Badge className={getCategoryColor(thread.category)} variant="glass" size="sm">
+                          <span className="text-base mr-1">{categories.find(c => c.value === thread.category)?.icon}</span>
                           {categories.find(c => c.value === thread.category)?.label}
                         </Badge>
                       </div>
-                      <h3 className="font-medium line-clamp-2 mb-2">{thread.title}</h3>
+                      <h3 className="text-heading-2 font-semibold line-clamp-2 group-hover:text-primary transition-smooth">{thread.title}</h3>
                     </div>
                     {thread.hasNewReplies && (
-                      <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></div>
+                      <div className="w-3 h-3 bg-gradient-primary rounded-full flex-shrink-0 mt-2 animate-ping shadow-glow-primary/30"></div>
                     )}
                   </div>
 
                   {/* Excerpt */}
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-body-small text-muted-foreground line-clamp-2 leading-relaxed">
                     {thread.excerpt}
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-2">
                     {thread.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <Badge key={tag} variant="ghost" size="sm" className="hover:scale-105 transition-spring">
                         {tag}
                       </Badge>
                     ))}
                   </div>
 
                   {/* Footer */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{thread.authorAvatar}</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl p-2 bg-gradient-primary/10 rounded-xl group-hover:scale-110 transition-spring">
+                          {thread.authorAvatar}
+                        </div>
                         <div>
-                          <div className="font-medium text-foreground">{thread.author}</div>
-                          <div className="text-muted-foreground">Community Helper</div>
+                          <div className="text-body font-medium text-foreground">{thread.author}</div>
+                          <div className="text-caption text-muted-foreground">Community Helper</div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-3 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Heart size={12} />
-                          <span>{thread.upvotes}</span>
+                      <div className="flex items-center gap-4 text-caption text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Heart size={14} className="group-hover:text-accent transition-smooth" />
+                          <span className="font-medium">{thread.upvotes}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MessageCircle size={12} />
-                          <span>{thread.replies}</span>
+                        <div className="flex items-center gap-1.5">
+                          <MessageCircle size={14} className="group-hover:text-secondary transition-smooth" />
+                          <span className="font-medium">{thread.replies}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock size={10} />
+                    <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
+                      <Clock size={12} />
                       <span>Last activity {thread.lastActivity}</span>
                     </div>
                   </div>

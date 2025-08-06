@@ -297,8 +297,7 @@ const SmartConversationStarters = ({ profile, onSelectStarter, onClose }: SmartC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999]">
-      <Card className="w-full max-w-sm mx-auto max-h-[85vh] overflow-hidden" ref={modalRef}>
+    <Card className="w-full max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl shadow-xl bg-background border" ref={modalRef}>
         <CardHeader className="pb-3 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -401,7 +400,6 @@ const SmartConversationStarters = ({ profile, onSelectStarter, onClose }: SmartC
           </CardContent>
         </div>
       </Card>
-    </div>
   );
 };
 

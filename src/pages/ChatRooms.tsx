@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Search, Plus, Users, Lock, Globe, LogIn } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import CreateRoomModal from '@/components/modals/CreateRoomModal';
+import { ChatRoomSkeleton } from '@/components/ui/SkeletonLoader';
 
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
@@ -20,6 +21,17 @@ const ChatRooms = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
+
+  // Simulate loading delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const categories = [
     { value: 'all', label: 'All Rooms' },
@@ -43,8 +55,14 @@ const ChatRooms = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleJoinRoom = (roomId: string) => {
+  const handleJoinRoom = async (roomId: string) => {
+    setJoiningRoom(roomId);
+    
+    // Simulate join delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     joinRoom(roomId);
+    setJoiningRoom(null);
     
     toast({
       title: "Joined room!",
@@ -58,32 +76,45 @@ const ChatRooms = () => {
 
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-15">
+        <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
+        <div className="absolute bottom-32 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-1/2 right-6 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '3s' }} />
+      </div>
+
       <TopBar title="Chat Rooms" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
+        {/* Header */}
+        <div className="text-center animate-fade-in">
+          <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Discover Conversations</h1>
+          <p className="text-body-small text-muted-foreground">Join meaningful discussions with like-minded people</p>
+        </div>
+
         {/* Search and Filters */}
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="relative glass rounded-2xl p-1 shadow-medium">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
             <Input
               id="roomSearch"
               name="roomSearch"
-              placeholder="Search rooms..."
+              placeholder="Search rooms by topic, interest..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 glass border-border-soft hover:border-border transition-smooth h-12 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-border-soft shadow-large">
                 {categories.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>
+                  <SelectItem key={cat.value} value={cat.value} className="hover:bg-primary/10 transition-smooth">
                     {cat.label}
                   </SelectItem>
                 ))}
@@ -91,11 +122,12 @@ const ChatRooms = () => {
             </Select>
             
             <Button
-              variant="cozy"
+              variant="gradient"
+              size="icon-lg"
               onClick={() => setShowCreateModal(true)}
-              className="px-3"
+              className="shadow-glow-primary hover:scale-110 transition-spring"
             >
-              <Plus size={20} />
+              <Plus size={22} />
             </Button>
           </div>
         </div>
@@ -103,47 +135,75 @@ const ChatRooms = () => {
         {/* Joined Rooms - Hidden as they should appear in ChatInbox instead */}
 
         {/* Available Room List */}
-        <div className="space-y-3">
-          {filteredRooms.length > 0 && (
-            <h3 className="text-sm font-medium text-muted-foreground">Available Rooms</h3>
-          )}
-          {filteredRooms.map((room) => (
+        <div className="space-y-4">
+          {loading ? (
+            <>
+              <h3 className="text-heading-2 font-semibold gradient-text-primary animate-fade-in">Available Rooms</h3>
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <Card className="shadow-medium">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-muted rounded-2xl"></div>
+                        <div className="flex-1 space-y-3">
+                          <div className="h-4 bg-muted rounded-lg w-3/4"></div>
+                          <div className="h-3 bg-muted rounded-lg w-full"></div>
+                          <div className="flex gap-2">
+                            <div className="h-6 bg-muted rounded-full w-16"></div>
+                            <div className="h-6 bg-muted rounded-full w-20"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              {filteredRooms.length > 0 && (
+                <h3 className="text-heading-2 font-semibold gradient-text-primary animate-fade-in">Available Rooms</h3>
+              )}
+              {filteredRooms.map((room, index) => (
             <Card 
               key={room.id} 
-              className="transition-all hover:shadow-medium hover:scale-[1.02]"
+              className="interactive-scale shadow-medium hover:shadow-large group animate-slide-up"
+              style={{ animationDelay: `${0.1 + index * 0.05}s` }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">{room.icon}</div>
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="text-3xl p-3 bg-gradient-primary/10 rounded-2xl group-hover:scale-110 transition-spring">
+                    {room.icon}
+                  </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{room.title}</h3>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-heading-2 font-semibold group-hover:text-primary transition-smooth">{room.title}</h3>
                       {room.isPrivate ? (
-                        <Lock size={14} className="text-muted-foreground" />
+                        <Lock size={16} className="text-muted-foreground group-hover:text-primary transition-smooth" />
                       ) : (
-                        <Globe size={14} className="text-muted-foreground" />
+                        <Globe size={16} className="text-muted-foreground group-hover:text-primary transition-smooth" />
                       )}
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-body-small text-muted-foreground mb-4 leading-relaxed">
                       {room.description}
                     </p>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users size={12} />
-                          {room.members}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4 text-caption text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Users size={14} />
+                          <span className="font-medium">{room.members}</span>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          {room.activeNow} active
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 bg-success rounded-full animate-pulse-soft"></div>
+                          <span className="font-medium">{room.activeNow} active</span>
                         </span>
                       </div>
                       
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         {room.tags.slice(0, 2).map(tag => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge key={tag} variant="glass" size="sm" className="hover:scale-105 transition-spring">
                             {tag}
                           </Badge>
                         ))}
@@ -153,19 +213,30 @@ const ChatRooms = () => {
                 </div>
                 
                 {/* Join Button */}
-                <div className="mt-3 pt-3 border-t border-border">
+                <div className="pt-4 border-t border-border-soft">
                   <Button 
                     onClick={() => handleJoinRoom(room.id)}
-                    className="w-full"
-                    size="sm"
+                    className="w-full shadow-glow-primary/20"
+                    size="lg"
+                    variant="gradient"
+                    disabled={joiningRoom === room.id}
                   >
-                    <LogIn size={16} className="mr-2" />
-                    Join Chat
+                    <LogIn size={18} className="mr-2" />
+                    {joiningRoom === room.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Joining...
+                      </>
+                    ) : (
+                      'Join Conversation'
+                    )}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
+            </>
+          )}
         </div>
 
         {filteredRooms.length === 0 && availableRooms.length > 0 && (

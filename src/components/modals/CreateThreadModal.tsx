@@ -61,7 +61,7 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="max-w-sm mx-auto rounded-xl bg-background border shadow-xl"
+        className="w-[calc(100vw-2rem)] max-w-sm mx-auto rounded-xl bg-background border shadow-xl"
         onInteractOutside={(e) => {
           // Prevent accidental closing when interacting with select dropdown
           const target = e.target as Element;

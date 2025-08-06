@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock } from 'lucide-react';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,8 @@ import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
+import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
+import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 
 const PrivateChat = () => {
   const { userId } = useParams();
@@ -33,6 +35,9 @@ const PrivateChat = () => {
   const [showAttachments, setShowAttachments] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
+  const [showCompatibilityDashboard, setShowCompatibilityDashboard] = useState(false);
+  const [showMoodThemeSelector, setShowMoodThemeSelector] = useState(false);
+  const [currentMoodTheme, setCurrentMoodTheme] = useState('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Mock user data - in real app this would come from API
@@ -571,7 +576,7 @@ const PrivateChat = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-card border-b border-border shadow-soft">
+      <div className="sticky top-0 z-30 bg-card border-b border-border shadow-soft">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto">
           <div className="flex items-center gap-3">
             <Button
@@ -597,6 +602,28 @@ const PrivateChat = () => {
           </div>
           
           <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => {
+                setShowCompatibilityDashboard(false); // Close other modal first
+                setShowMoodThemeSelector(true);
+              }}
+              className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
+            >
+              <Palette size={16} />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => {
+                setShowMoodThemeSelector(false); // Close other modal first
+                setShowCompatibilityDashboard(true);
+              }}
+              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            >
+              <BarChart3 size={16} />
+            </Button>
             <Button variant="ghost" size="icon" onClick={handleReport}>
               <Flag size={16} />
             </Button>
@@ -607,71 +634,7 @@ const PrivateChat = () => {
         </div>
       </div>
 
-      {/* Language Settings */}
-      <div className="bg-muted/50 border-b border-border p-3">
-        <div className="max-w-md mx-auto space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Languages size={16} className="text-primary" />
-              <span className="text-sm">Learning: {chatPartner.languageLearning}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-                <SelectTrigger className="w-20 h-6 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="georgian">🇬🇪</SelectItem>
-                  <SelectItem value="english">🇺🇸</SelectItem>
-                  <SelectItem value="spanish">🇪🇸</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-4">
-              <AITooltip 
-                title="Practice Mode"
-                description="AI will actively help you improve your language skills while chatting"
-              >
-                <div className="flex items-center gap-1">
-                  <Switch
-                    checked={practiceMode}
-                    onCheckedChange={setPracticeMode}
-                    className="scale-75"
-                  />
-                  <Label className="text-xs">Practice Mode</Label>
-                </div>
-              </AITooltip>
-              
-              <AITooltip 
-                title="Auto-Translate"
-                description="Automatically show translations for incoming messages"
-              >
-                <div className="flex items-center gap-1">
-                  <Switch
-                    checked={autoTranslateEnabled}
-                    onCheckedChange={setAutoTranslateEnabled}
-                    className="scale-75"
-                  />
-                  <Label className="text-xs">Auto-Translate</Label>
-                </div>
-              </AITooltip>
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLanguagePanel(!showLanguagePanel)}
-              className="h-6 px-2 text-xs"
-            >
-              <Target size={12} className="mr-1" />
-              {userLevel.toUpperCase()}
-            </Button>
-          </div>
-        </div>
-      </div>
+
 
       {/* Language Practice Panel */}
       <LanguagePracticePanel
@@ -983,8 +946,10 @@ const PrivateChat = () => {
         </div>
       </div>
 
+
+
       {/* Message Input */}
-      <div className="sticky bottom-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
+      <div className="sticky bottom-0 bg-card p-4 max-w-md mx-auto w-full">
         {/* Reply indicator */}
         {replyingTo && (
           <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">
@@ -1094,6 +1059,21 @@ const PrivateChat = () => {
             </Button>
           </AITooltip>
 
+          <AITooltip 
+            title="Language Tools"
+            description="Access language practice, pronunciation challenges, and vocabulary tracking"
+          >
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowLanguagePanel(true)}
+              className={showLanguagePanel ? 'text-primary' : ''}
+            >
+              <BookOpen size={14} />
+              <span className="ml-1 text-xs">Language Tools</span>
+            </Button>
+          </AITooltip>
+
           {practiceMode && (
             <Badge variant="secondary" className="text-xs px-2 py-1">
               <Zap size={10} className="mr-1" />
@@ -1154,6 +1134,26 @@ const PrivateChat = () => {
           isOpen={showAIModal}
           onClose={() => setShowAIModal(false)}
           onSendSuggestion={handleSuggestionFromAI}
+        />
+
+        {/* Compatibility Dashboard */}
+        <CompatibilityDashboard
+          partnerId={userId || '1'}
+          partnerName={userInfo.name}
+          isOpen={showCompatibilityDashboard}
+          onClose={() => setShowCompatibilityDashboard(false)}
+        />
+
+        {/* Mood Theme Selector */}
+        <MoodThemeSelector
+          currentTheme={currentMoodTheme}
+          messages={messages.map(msg => ({ 
+            content: msg.content, 
+            timestamp: new Date() 
+          }))}
+          onThemeChange={setCurrentMoodTheme}
+          isOpen={showMoodThemeSelector}
+          onClose={() => setShowMoodThemeSelector(false)}
         />
       </div>
     </div>

@@ -9,7 +9,7 @@ import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users } from 'lu
 import { useApp } from '@/contexts/AppContext';
 import { updateUserProfile } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
-import { GenderIdentity, Orientation, AttractionPreference } from '@/contexts/AppContext';
+import { GenderIdentity, Orientation } from '@/contexts/AppContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -29,7 +29,7 @@ const ProfileEdit = () => {
     // New fields for identity and preferences
     genderIdentity: user?.genderIdentity || 'prefer-not-to-say' as GenderIdentity,
     orientation: user?.orientation || 'other' as Orientation,
-    attractionPreferences: user?.attractionPreferences || [] as AttractionPreference[],
+
     lookingForRelationship: user?.lookingForRelationship || false,
     customGender: user?.customGender || '',
     customOrientation: user?.customOrientation || '',
@@ -49,7 +49,7 @@ const ProfileEdit = () => {
         // New fields for identity and preferences
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
-        attractionPreferences: formData.attractionPreferences,
+
         lookingForRelationship: formData.lookingForRelationship,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
@@ -221,28 +221,7 @@ const ProfileEdit = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Who are you attracted to?</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {(['women', 'men', 'non-binary', 'all-genders'] as AttractionPreference[]).map((pref) => (
-                        <Badge
-                          key={pref}
-                          variant={formData.attractionPreferences.includes(pref) ? "default" : "outline"}
-                          className="cursor-pointer hover:scale-105 transition-transform duration-200 select-none"
-                          onClick={() => {
-                            const newPrefs = formData.attractionPreferences.includes(pref)
-                              ? formData.attractionPreferences.filter(p => p !== pref)
-                              : [...formData.attractionPreferences, pref];
-                            setFormData(prev => ({ ...prev, attractionPreferences: newPrefs }));
-                          }}
-                        >
-                          {pref === 'women' ? 'Women' : 
-                           pref === 'men' ? 'Men' : 
-                           pref === 'non-binary' ? 'Non-binary' : 'All genders'}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+
 
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">

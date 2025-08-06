@@ -9,6 +9,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 import PublicGuard from "@/components/auth/PublicGuard";
 import ScrollToTop from "@/components/ScrollToTop";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Pages
 import Welcome from "./pages/Welcome";
@@ -32,20 +33,21 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <NotificationProvider>
-        <LanguageAIProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <ScrollToTop />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <NotificationProvider>
+          <LanguageAIProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+                <ScrollToTop />
           <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={
@@ -80,16 +82,16 @@ const App = () => (
                 <Match />
               </AuthGuard>
             } />
-                      <Route path="/matches" element={
-            <AuthGuard>
-              <Matches />
-            </AuthGuard>
-          } />
-          <Route path="/chat-inbox" element={
-            <AuthGuard>
-              <ChatInbox />
-            </AuthGuard>
-          } />
+            <Route path="/matches" element={
+              <AuthGuard>
+                <Matches />
+              </AuthGuard>
+            } />
+            <Route path="/chat-inbox" element={
+              <AuthGuard>
+                <ChatInbox />
+              </AuthGuard>
+            } />
             <Route path="/private-chat/:userId" element={
               <AuthGuard>
                 <PrivateChat />
@@ -106,6 +108,11 @@ const App = () => (
               </AuthGuard>
             } />
             <Route path="/profile" element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } />
+            <Route path="/profile/:userId" element={
               <AuthGuard>
                 <Profile />
               </AuthGuard>
@@ -135,6 +142,7 @@ const App = () => (
       </NotificationProvider>
     </AppProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

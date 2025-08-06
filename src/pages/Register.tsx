@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { registerUser, RegisterData } from '@/lib/auth';
-import { GenderIdentity, Orientation, AttractionPreference } from '@/contexts/AppContext';
+import { GenderIdentity, Orientation } from '@/contexts/AppContext';
 
 type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'preferences';
 
@@ -28,10 +28,9 @@ const Register = () => {
     languageProficiency: '',
     chatStyle: '',
     interests: [] as string[],
-    // New fields for gender and orientation
+    // Fields for gender and orientation
     genderIdentity: 'prefer-not-to-say' as GenderIdentity,
     orientation: 'other' as Orientation,
-    attractionPreferences: [] as AttractionPreference[],
     lookingForRelationship: false,
     customGender: '',
     customOrientation: ''
@@ -128,10 +127,9 @@ const Register = () => {
         languageProficiency: formData.languageProficiency,
         chatStyle: formData.chatStyle as 'introverted' | 'balanced' | 'outgoing',
         interests: formData.interests,
-        // New fields for gender and orientation
+        // Fields for gender and orientation
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
-        attractionPreferences: formData.attractionPreferences,
         lookingForRelationship: formData.lookingForRelationship,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
@@ -298,9 +296,6 @@ const Register = () => {
         if (!formData.orientation) {
           newErrors.orientation = 'Please select your orientation';
         }
-        if (formData.attractionPreferences.length === 0) {
-          newErrors.attractionPreferences = 'Please select who you\'re attracted to';
-        }
         break;
       case 'preferences':
         if (!formData.chatStyle) {
@@ -329,7 +324,7 @@ const Register = () => {
       case 'interests':
         return formData.interests.length >= 3;
       case 'identity':
-        return formData.genderIdentity && formData.orientation && formData.attractionPreferences.length > 0;
+        return formData.genderIdentity && formData.orientation;
       case 'preferences':
         return formData.chatStyle;
       default:
@@ -574,32 +569,7 @@ const Register = () => {
                )}
              </div>
 
-             <div className="space-y-2">
-               <Label>Who are you attracted to?</Label>
-               <div className="flex flex-wrap gap-2">
-                 {(['women', 'men', 'non-binary', 'all-genders'] as AttractionPreference[]).map((pref) => (
-                   <Badge
-                     key={pref}
-                     variant={formData.attractionPreferences.includes(pref) ? "default" : "outline"}
-                     className="cursor-pointer hover:scale-105 transition-transform duration-200 select-none"
-                     onClick={() => {
-                       const newPrefs = formData.attractionPreferences.includes(pref)
-                         ? formData.attractionPreferences.filter(p => p !== pref)
-                         : [...formData.attractionPreferences, pref];
-                       setFormData(prev => ({ ...prev, attractionPreferences: newPrefs }));
-                       validateField('attractionPreferences', newPrefs);
-                     }}
-                   >
-                     {pref === 'women' ? 'Women' : 
-                      pref === 'men' ? 'Men' : 
-                      pref === 'non-binary' ? 'Non-binary' : 'All genders'}
-                   </Badge>
-                 ))}
-               </div>
-               {errors.attractionPreferences && (
-                 <p className="text-sm text-red-500">{errors.attractionPreferences}</p>
-               )}
-             </div>
+
 
              <div className="space-y-2">
                <Label className="flex items-center gap-2">

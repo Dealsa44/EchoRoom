@@ -38,47 +38,58 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Subtle background elements */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-32 right-8 w-20 h-20 bg-gradient-primary rounded-full blur-2xl animate-float" />
+        <div className="absolute bottom-40 left-6 w-16 h-16 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '2s' }} />
+      </div>
+      
       <TopBar title="EchoRoom" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Welcome Section */}
-        <Card className={`shadow-soft transition-all duration-700 ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        <Card className={`shadow-medium hover:shadow-large transition-smooth interactive-scale ${
+          isLoaded ? 'opacity-100 translate-y-0 animate-scale-in' : 'opacity-0 translate-y-4'
         }`}>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`transition-all duration-500 delay-200 ${
+            <div className="flex items-center justify-between mb-6">
+              <div className={`transition-smooth delay-200 ${
                 isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
               }`}>
-                <h2 className="text-lg font-semibold">
+                <h2 className="text-heading-2 font-semibold gradient-text-primary">
                   {getGreeting()}, {user?.username || 'Explorer'}! 
                 </h2>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-body-small text-muted-foreground leading-relaxed mt-1">
                   Ready for some meaningful conversations?
                 </p>
               </div>
-              <div className={`text-3xl transition-all duration-500 delay-300 ${
-                isLoaded ? 'opacity-100 scale-100 animate-pulse' : 'opacity-0 scale-75'
+              <div className={`text-4xl transition-spring delay-300 animate-pulse-soft hover:scale-110 cursor-pointer ${
+                isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
               }`}>
                 {user?.avatar || '🌟'}
               </div>
             </div>
             
-            <div className={`flex items-center gap-2 transition-all duration-500 delay-500 ${
+            <div className={`flex items-center gap-2 flex-wrap transition-smooth delay-500 ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}>
-              <Badge className={`${getSafeModeColor()} hover:scale-105 transition-transform duration-200`}>
+              <Badge 
+                variant="gradient" 
+                size="lg"
+                className={`${getSafeModeColor()} hover:scale-110 transition-spring shadow-glow-primary/30`}
+              >
                 {safeMode} mode
               </Badge>
               {user?.interests.slice(0, 2).map((interest, index) => (
                 <Badge 
                   key={interest} 
-                  variant="outline" 
-                  className={`text-xs hover:scale-105 transition-all duration-200 ${
-                    isLoaded ? 'opacity-100' : 'opacity-0'
+                  variant="glass" 
+                  size="default"
+                  className={`hover:scale-105 transition-spring ${
+                    isLoaded ? 'opacity-100 animate-slide-up' : 'opacity-0'
                   }`}
-                  style={{ transitionDelay: `${600 + index * 100}ms` }}
+                  style={{ animationDelay: `${600 + index * 100}ms` }}
                 >
                   {interest}
                 </Badge>
@@ -88,61 +99,66 @@ const Home = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className={`grid grid-cols-3 gap-3 transition-all duration-700 delay-300 ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+        <div className={`grid grid-cols-3 gap-4 transition-smooth delay-300 ${
+          isLoaded ? 'opacity-100 translate-y-0 animate-slide-up' : 'opacity-0 translate-y-6'
         }`}>
           <Button
-            variant="outline"
-            className="h-20 flex-col gap-2 hover:scale-105 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+            variant="glass"
+            className="h-24 flex-col gap-3 interactive-scale shadow-medium hover:shadow-glow-secondary/20 group relative overflow-hidden border-border-soft"
             onClick={() => navigate('/chat-rooms')}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 to-cyan-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <MessageCircle size={20} className="group-hover:rotate-12 group-hover:text-blue-600 transition-all duration-300 relative z-10" />
-            <span className="text-xs relative z-10 group-hover:text-blue-600 transition-colors duration-300">Join Rooms</span>
+            <div className="absolute inset-0 bg-gradient-secondary/10 opacity-0 group-hover:opacity-100 transition-smooth"></div>
+            <MessageCircle size={22} className="group-hover:rotate-12 group-hover:text-secondary transition-spring relative z-10" />
+            <span className="text-caption relative z-10 group-hover:text-secondary transition-smooth font-medium">Join Rooms</span>
           </Button>
           
           <Button
-            variant="outline"
-            className="h-20 flex-col gap-2 hover:scale-105 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+            variant="glass"
+            className="h-24 flex-col gap-3 interactive-scale shadow-medium hover:shadow-glow-accent/20 group relative overflow-hidden border-border-soft"
             onClick={() => navigate('/matches')}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-rose-500/15 to-pink-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Heart size={20} className="group-hover:animate-pulse group-hover:text-rose-600 transition-all duration-300 relative z-10" />
-            <span className="text-xs relative z-10 group-hover:text-rose-600 transition-colors duration-300">Find Match</span>
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute top-2 left-2 w-1 h-1 bg-rose-400 rounded-full animate-ping"></div>
-              <div className="absolute bottom-3 right-3 w-1 h-1 bg-pink-400 rounded-full animate-ping delay-200"></div>
+            <div className="absolute inset-0 bg-gradient-accent/10 opacity-0 group-hover:opacity-100 transition-smooth"></div>
+            <Heart size={22} className="group-hover:animate-pulse group-hover:text-accent transition-spring relative z-10" />
+            <span className="text-caption relative z-10 group-hover:text-accent transition-smooth font-medium">Find Match</span>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-smooth">
+              <div className="absolute top-3 left-3 w-1.5 h-1.5 bg-accent/60 rounded-full animate-ping"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-accent/40 rounded-full animate-ping delay-200"></div>
             </div>
           </Button>
 
           <Button
-            variant="outline"
-            className="h-20 flex-col gap-2 hover:scale-105 hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+            variant="glass"
+            className="h-24 flex-col gap-3 interactive-scale shadow-medium hover:shadow-glow-tertiary/20 group relative overflow-hidden border-border-soft"
             onClick={() => navigate('/forum')}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/15 to-green-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Users2 size={20} className="group-hover:animate-bounce group-hover:text-emerald-600 transition-all duration-300 relative z-10" />
-            <span className="text-xs relative z-10 group-hover:text-emerald-600 transition-colors duration-300">Forum</span>
-            <Sparkles size={10} className="absolute top-2 right-2 text-emerald-600 opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-all duration-300" />
+            <div className="absolute inset-0 bg-gradient-tertiary/10 opacity-0 group-hover:opacity-100 transition-smooth"></div>
+            <Users2 size={22} className="group-hover:animate-bounce group-hover:text-tertiary transition-spring relative z-10" />
+            <span className="text-caption relative z-10 group-hover:text-tertiary transition-smooth font-medium">Forum</span>
+            <Sparkles size={12} className="absolute top-3 right-3 text-tertiary/60 opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-spring" />
           </Button>
         </div>
 
         {/* Daily Inspiration */}
-        <Card className={`shadow-soft bg-gradient-primary text-primary-foreground relative overflow-hidden group hover:shadow-xl transition-all duration-700 delay-500 ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-          <CardContent className="p-6 text-center relative z-10">
-            <div className={`transition-all duration-500 delay-700 ${
+        <Card className={`shadow-glow bg-gradient-hero text-foreground relative overflow-hidden group hover:shadow-large transition-spring interactive-scale ${
+          isLoaded ? 'opacity-100 translate-y-0 animate-scale-in' : 'opacity-0 translate-y-8'
+        }`} style={{ animationDelay: '0.5s' }}>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+          <div className="absolute top-4 left-4 w-2 h-2 bg-white/30 rounded-full animate-ping"></div>
+          <div className="absolute bottom-4 right-4 w-1.5 h-1.5 bg-white/20 rounded-full animate-ping delay-500"></div>
+          <CardContent className="p-8 text-center relative z-10">
+            <div className={`transition-spring delay-700 ${
               isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}>
-              <h3 className="font-semibold mb-2 flex items-center justify-center gap-2">
-                <Sparkles size={16} className="animate-pulse" />
-                Daily Reflection
-                <Sparkles size={16} className="animate-pulse" />
+              <h3 className="text-heading-2 font-semibold mb-4 flex items-center justify-center gap-3">
+                <Sparkles size={18} className="animate-pulse text-primary-glow" />
+                <span className="gradient-text-primary">Daily Reflection</span>
+                <Sparkles size={18} className="animate-pulse text-primary-glow" />
               </h3>
-              <p className="text-sm opacity-90">
-                "In the depth of winter, I finally learned that within me there lay an invincible summer." - Albert Camus
+              <p className="text-body leading-relaxed opacity-90 italic">
+                "In the depth of winter, I finally learned that within me there lay an invincible summer." 
+              </p>
+              <p className="text-body-small mt-2 opacity-70 font-medium">
+                — Albert Camus
               </p>
             </div>
           </CardContent>
