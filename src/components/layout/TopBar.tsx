@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { useState } from 'react';
@@ -13,6 +13,7 @@ interface TopBarProps {
   showDarkModeToggle?: boolean;
   showAIAssistant?: boolean;
   showBack?: boolean;
+  showProfile?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
 }
@@ -24,6 +25,7 @@ const TopBar = ({
   showDarkModeToggle = true,
   showAIAssistant = true,
   showBack = false,
+  showProfile = true,
   onBack,
   rightAction
 }: TopBarProps) => {
@@ -69,15 +71,25 @@ const TopBar = ({
           <div className="flex items-center gap-1 flex-shrink-0">
             {rightAction && rightAction}
             
+            {showProfile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/profile')}
+                className="group hover:scale-110 transition-spring hover:bg-primary/10 relative"
+              >
+                <User size={20} className="group-hover:text-primary transition-smooth" />
+              </Button>
+            )}
+            
             {showAIAssistant && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowAIModal(true)}
-                className="group hover:scale-110 transition-spring hover:bg-primary/10 relative"
+                className="group hover:scale-110 transition-spring hover:bg-primary/10"
               >
                 <Bot size={20} className="group-hover:text-primary transition-smooth" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-primary rounded-full animate-ping opacity-60"></div>
               </Button>
             )}
             
@@ -89,7 +101,7 @@ const TopBar = ({
                 className="relative hover:scale-110 transition-spring hover:bg-accent/10"
               >
                 <Bell size={20} className="hover:text-accent transition-smooth" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-accent rounded-full animate-pulse shadow-glow-accent/30"></span>
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white/20"></span>
               </Button>
             )}
             

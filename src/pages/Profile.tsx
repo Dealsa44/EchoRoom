@@ -51,7 +51,7 @@ const Profile = () => {
             description: "The user profile you're looking for doesn't exist.",
             variant: "destructive",
           });
-          navigate('/home');
+          navigate('/match');
         }
         setLoading(false);
       }, 800);
@@ -280,7 +280,13 @@ const Profile = () => {
                   <div>
                     <p className="text-muted-foreground">Looking for</p>
                     <p className="font-medium">
-                      {profileData.lookingForRelationship ? 'Relationship' : 'Friendship'}
+                      {profileData.lookingForRelationship && profileData.lookingForFriendship 
+                        ? 'Relationship, Friendship' 
+                        : profileData.lookingForRelationship 
+                        ? 'Relationship' 
+                        : profileData.lookingForFriendship 
+                        ? 'Friendship' 
+                        : 'Not specified'}
                     </p>
                   </div>
                   <div>
@@ -343,6 +349,14 @@ const Profile = () => {
                 <span className="text-sm">Looking for relationship</span>
                 <Switch 
                   checked={user?.lookingForRelationship || false} 
+                  disabled 
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Looking for friendship</span>
+                <Switch 
+                  checked={user?.lookingForFriendship || false} 
                   disabled 
                 />
               </div>

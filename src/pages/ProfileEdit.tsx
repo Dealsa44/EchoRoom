@@ -31,6 +31,7 @@ const ProfileEdit = () => {
     orientation: user?.orientation || 'other' as Orientation,
 
     lookingForRelationship: user?.lookingForRelationship || false,
+    lookingForFriendship: user?.lookingForFriendship || false,
     customGender: user?.customGender || '',
     customOrientation: user?.customOrientation || '',
   });
@@ -51,6 +52,7 @@ const ProfileEdit = () => {
         orientation: formData.orientation,
 
         lookingForRelationship: formData.lookingForRelationship,
+        lookingForFriendship: formData.lookingForFriendship,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
       };
@@ -122,6 +124,7 @@ const ProfileEdit = () => {
                   name="username"
                   value={formData.username}
                   onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  autoComplete="username"
                   required
                 />
               </div>
@@ -134,6 +137,7 @@ const ProfileEdit = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -142,9 +146,11 @@ const ProfileEdit = () => {
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
+                  name="bio"
                   value={formData.bio}
                   onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                   placeholder="Tell us about yourself..."
+                  autoComplete="off"
                 />
               </div>
 
@@ -184,6 +190,7 @@ const ProfileEdit = () => {
                         placeholder="Please specify your gender identity"
                         value={formData.customGender}
                         onChange={(e) => setFormData(prev => ({ ...prev, customGender: e.target.value }))}
+                        autoComplete="off"
                         className="mt-2"
                       />
                     )}
@@ -216,6 +223,7 @@ const ProfileEdit = () => {
                         placeholder="Please specify your orientation"
                         value={formData.customOrientation}
                         onChange={(e) => setFormData(prev => ({ ...prev, customOrientation: e.target.value }))}
+                        autoComplete="off"
                         className="mt-2"
                       />
                     )}
@@ -233,6 +241,19 @@ const ProfileEdit = () => {
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       This will help others understand your intentions and improve your matches.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <span>Looking for friendship?</span>
+                      <Switch
+                        checked={formData.lookingForFriendship}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForFriendship: checked }))}
+                      />
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Connect with people for meaningful friendships and language practice.
                     </p>
                   </div>
                 </div>
@@ -255,6 +276,7 @@ const ProfileEdit = () => {
                         value={formData.currentPassword}
                         onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
                         placeholder="Enter current password"
+                        autoComplete="current-password"
                       />
                       <Button
                         type="button"
@@ -278,6 +300,7 @@ const ProfileEdit = () => {
                         value={formData.newPassword}
                         onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
                         placeholder="Enter new password (optional)"
+                        autoComplete="new-password"
                       />
                       <Button
                         type="button"

@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Heart, Brain, User, Mail } from 'lucide-react';
+import { MessageCircle, Heart, Brain, User, Mail, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BottomNavigation = () => {
@@ -7,14 +7,21 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { icon: Home, label: 'Home', path: '/home' },
     { icon: Mail, label: 'Messages', path: '/chat-inbox' },
     { icon: Heart, label: 'Match', path: '/match' },
-    { icon: Brain, label: 'Forum', path: '/forum' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Users, label: 'Community', path: '/community' },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/community') {
+      // Community is active for community, chat-rooms, forum, and their sub-pages
+      return location.pathname === '/community' || 
+             location.pathname === '/chat-rooms' || 
+             location.pathname === '/forum' ||
+             location.pathname.startsWith('/forum/thread/');
+    }
+    return location.pathname === path;
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 glass border-t border-border-soft/50 shadow-large z-30 backdrop-blur-lg">

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette } from 'lucide-react';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette, Square, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -34,11 +34,13 @@ const PrivateChat = () => {
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [showAttachments, setShowAttachments] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
   const [showCompatibilityDashboard, setShowCompatibilityDashboard] = useState(false);
   const [showMoodThemeSelector, setShowMoodThemeSelector] = useState(false);
   const [currentMoodTheme, setCurrentMoodTheme] = useState('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mock user data - in real app this would come from API
   const getUserById = (id: string) => {
@@ -205,6 +207,15 @@ const PrivateChat = () => {
     return () => clearTimeout(typingTimer);
   }, [isTyping]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
+
   // Message reaction handlers
   const handleReaction = (messageId: number, emoji: string) => {
     setMessages(prev => prev.map(msg => {
@@ -319,51 +330,52 @@ const PrivateChat = () => {
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
-      toast({
-        title: "Recording started",
-        description: "Tap to stop recording",
-      });
+      setRecordingTime(0);
       
-      // Simulate recording
-      setTimeout(() => {
-        if (isRecording) {
-          setIsRecording(false);
-          const newMessage = {
-            id: messages.length + 1,
-            sender: 'me' as const,
-            content: '🎵 Voice message',
-            timestamp: 'now',
-            translated: false,
-            corrected: false,
-            originalContent: '',
-            translatedContent: '',
-            hasErrors: false,
-            corrections: [],
-            type: 'voice' as const,
-            reactions: [],
-            isEdited: false,
-            isDeleted: false,
-            replyTo: replyingTo,
-            deliveryStatus: 'sent' as const,
-            isEncrypted: true,
-            voiceData: {
-              duration: Math.floor(Math.random() * 30) + 5,
-              waveform: Array.from({ length: 20 }, () => Math.random())
-            }
-          };
-
-          setMessages(prev => [...prev, newMessage]);
-          setReplyingTo(null);
-          
-          toast({
-            title: "Voice message sent",
-            description: "Your voice message has been shared",
-          });
-        }
-      }, 3000);
-    } else {
-      setIsRecording(false);
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
     }
+  };
+
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    setRecordingTime(0);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
+  const handleSendRecording = () => {
+    const newMessage = {
+      id: messages.length + 1,
+      sender: 'me' as const,
+      content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
+      timestamp: 'now',
+      translated: false,
+      corrected: false,
+      originalContent: '',
+      translatedContent: '',
+      hasErrors: false,
+      corrections: [],
+      type: 'voice' as const,
+      reactions: [],
+      isEdited: false,
+      isDeleted: false,
+      replyTo: replyingTo,
+      deliveryStatus: 'sent' as const,
+      isEncrypted: true,
+      voiceData: {
+        duration: recordingTime,
+        waveform: Array.from({ length: 20 }, () => Math.random())
+      }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    handleStopRecording();
   };
 
   const handleFileUpload = () => {
@@ -679,9 +691,12 @@ const PrivateChat = () => {
                       {editingMessageId === msg.id ? (
                         <div className="space-y-2">
                           <Input
+                            id="editMessage"
+                            name="editMessage"
                             value={editingText}
                             onChange={(e) => setEditingText(e.target.value)}
                             className="text-sm"
+                            autoComplete="off"
                             autoFocus
                           />
                           <div className="flex gap-2">
@@ -1099,6 +1114,7 @@ const PrivateChat = () => {
             value={message}
             onChange={handleInputChange}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            autoComplete="off"
             className="flex-1"
           />
           
@@ -1123,9 +1139,33 @@ const PrivateChat = () => {
 
         {/* Recording indicator */}
         {isRecording && (
-          <div className="mt-2 flex items-center gap-2 text-red-600">
-            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-            <span className="text-xs">Recording... Tap to stop</span>
+          <div className="mt-2 flex items-center justify-between bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 text-red-600">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStopRecording}
+                className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Square size={14} />
+                <span className="ml-1 text-xs">Stop</span>
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSendRecording}
+                className="h-8 px-3 bg-red-600 hover:bg-red-700"
+              >
+                <Send size={14} />
+                <span className="ml-1 text-xs">Send</span>
+              </Button>
+            </div>
           </div>
         )}
 

@@ -7,7 +7,7 @@ interface PublicGuardProps {
   fallbackPath?: string;
 }
 
-const PublicGuard = ({ children, fallbackPath = '/home' }: PublicGuardProps) => {
+const PublicGuard = ({ children, fallbackPath = '/match' }: PublicGuardProps) => {
   const { isAuthenticated, user } = useApp();
 
   if (isAuthenticated && user) {

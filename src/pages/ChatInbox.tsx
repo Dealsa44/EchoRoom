@@ -225,7 +225,7 @@ const ChatInbox = () => {
     if (conversation.type === 'private') {
       navigate(`/private-chat/${conversation.participant.id}`);
     } else if (conversation.type === 'group') {
-      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}`);
+      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}?from=messages`);
     }
     
     // Mark as read
@@ -318,6 +318,7 @@ const ChatInbox = () => {
               placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
               className="pl-10"
             />
         </div>
@@ -339,6 +340,16 @@ const ChatInbox = () => {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Discover Rooms Button */}
+        <Button
+          variant="outline"
+          className="w-full border-dashed border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
+          onClick={() => navigate('/chat-rooms')}
+        >
+          <Users size={16} className="mr-2" />
+          Discover New Chat Rooms
+        </Button>
 
         {/* Conversations List */}
         <div className="space-y-2">

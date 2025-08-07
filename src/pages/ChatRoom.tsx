@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLanguageAI } from '@/contexts/LanguageAIContext';
 import { toast } from '@/hooks/use-toast';
@@ -53,7 +53,16 @@ const ChatRoom = () => {
   const [showModTools, setShowModTools] = useState(false);
   const [mutedUsers, setMutedUsers] = useState<Set<string>>(new Set());
   const [pinnedMessages, setPinnedMessages] = useState<Set<number>>(new Set());
+  const [showAttachments, setShowAttachments] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState('en');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Find the actual room data based on the ID
   const room = chatRooms.find(r => r.id === id);
@@ -69,6 +78,15 @@ const ChatRoom = () => {
       navigate('/chat-rooms');
     }
   }, [room, navigate]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!room) {
     return <div>Loading...</div>;
@@ -194,6 +212,23 @@ const ChatRoom = () => {
           replies: [],
           isPinned: false,
           reactions: [{ emoji: '❤️', count: 2, users: ['user4', 'user5'] }]
+        },
+        {
+          id: 3,
+          user: { name: 'Maya', avatar: '🎨', isAnonymous: false, role: 'member' },
+          content: '🎵 Voice message (0:15)',
+          timestamp: '30 sec ago',
+          isAI: false,
+          channel: 'general',
+          replyTo: null,
+          replies: [],
+          isPinned: false,
+          reactions: [],
+          type: 'voice',
+          voiceData: {
+            duration: 15,
+            waveform: [0.2, 0.5, 0.8, 0.3, 0.7, 0.4, 0.9, 0.1, 0.6, 0.3, 0.8, 0.2, 0.4, 0.7, 0.5, 0.9, 0.3, 0.6, 0.1, 0.8]
+          }
         }
       ],
       'philosophy': [
@@ -452,14 +487,100 @@ const ChatRoom = () => {
   };
 
   const handleDeleteMessage = (messageId: number) => {
-    if (!isUserModerator) return;
+    const msg = messages.find(m => m.id === messageId);
+    const isMyMessage = msg?.user.name === (anonymousMode ? 'Anonymous' : (user?.username || 'Guest'));
+    
+    if (!isUserModerator && !isMyMessage) return;
     
     setMessages(prev => prev.filter(msg => msg.id !== messageId));
     toast({
       title: "Message deleted",
-      description: "Moderator action completed",
+      description: isUserModerator ? "Moderator action completed" : "Your message has been deleted",
       variant: "destructive",
     });
+  };
+
+  const handleEditMessage = (messageId: number) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg) return;
+    
+    setEditingMessageId(messageId);
+    setEditingText(msg.content);
+  };
+
+  const saveEditedMessage = () => {
+    if (!editingText.trim() || !editingMessageId) return;
+    
+    setMessages(prev => prev.map(msg => 
+      msg.id === editingMessageId 
+        ? { ...msg, content: editingText, isEdited: true }
+        : msg
+    ));
+    
+    setEditingMessageId(null);
+    setEditingText('');
+    
+    toast({
+      title: "Message updated",
+      description: "Your message has been edited",
+    });
+  };
+
+  const handleTranslate = (messageId: number) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId) {
+        const translation = simulateTranslation(msg.content, targetLanguage);
+        return {
+          ...msg,
+          translated: !msg.translated,
+          translatedContent: translation
+        };
+      }
+      return msg;
+    }));
+  };
+
+  const handleGrammarCheck = (messageId: number) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg) return;
+    
+    const corrections = simulateGrammarCheck(msg.content);
+    
+    if (corrections.length > 0) {
+      corrections.forEach(correction => {
+        addCorrection(
+          correction.originalText,
+          correction.correctedText,
+          correction.explanation,
+          correction.rule,
+          correction.example,
+          correction.severity
+        );
+      });
+      
+      setMessages(prev => prev.map(m => 
+        m.id === messageId ? { ...m, corrected: true, hasErrors: false } : m
+      ));
+      
+      toast({
+        title: "Grammar Check Complete",
+        description: `Found ${corrections.length} issue(s). Check the language panel for details.`,
+      });
+    } else {
+      setMessages(prev => prev.map(m => 
+        m.id === messageId ? { ...m, corrected: true, hasErrors: false } : m
+      ));
+      
+      toast({
+        title: "Grammar Check Complete",
+        description: "No grammar issues found!",
+      });
+    }
+  };
+
+  const renderMessageContent = (msg: any) => {
+    // Simple message rendering - can be enhanced with grammar highlighting
+    return <p className="text-sm">{msg.content}</p>;
   };
 
   const handleMuteUser = (username: string) => {
@@ -632,6 +753,136 @@ const ChatRoom = () => {
     }, 1500 + Math.random() * 1000); // Random delay for more realistic feel
   };
 
+  const handleVoiceRecord = () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    setRecordingTime(0);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
+  const handleSendRecording = () => {
+    const newMessage = {
+      id: messages.length + 1,
+      user: {
+        name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
+        avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
+        isAnonymous: anonymousMode,
+        role: 'member'
+      },
+      content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
+      timestamp: 'now',
+      isAI: false,
+      channel: activeChannel,
+      replyTo: replyingTo,
+      replies: [],
+      isPinned: false,
+      reactions: [],
+      type: 'voice',
+      voiceData: {
+        duration: recordingTime,
+        waveform: Array.from({ length: 20 }, () => Math.random())
+      }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    handleStopRecording();
+  };
+
+  const handleVoicePlay = (messageId: number) => {
+    if (playingVoiceId === messageId) {
+      setPlayingVoiceId(null);
+    } else {
+      setPlayingVoiceId(messageId);
+      // Simulate playing for demo
+      setTimeout(() => {
+        setPlayingVoiceId(null);
+      }, 3000);
+    }
+  };
+
+  const handleImageUpload = () => {
+    // Simulate image upload
+    const newMessage = {
+      id: messages.length + 1,
+      user: {
+        name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
+        avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
+        isAnonymous: anonymousMode,
+        role: 'member'
+      },
+      content: '📷 Photo',
+      timestamp: 'now',
+      isAI: false,
+      channel: activeChannel,
+      replyTo: replyingTo,
+      replies: [],
+      isPinned: false,
+      reactions: [],
+      type: 'image',
+      imageUrl: 'https://picsum.photos/300/200?random=' + Math.random()
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    setShowAttachments(false);
+    
+    toast({
+      title: "Photo sent",
+      description: "Your photo has been shared",
+    });
+  };
+
+  const handleFileUpload = () => {
+    // Simulate file upload
+    const newMessage = {
+      id: messages.length + 1,
+      user: {
+        name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
+        avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
+        isAnonymous: anonymousMode,
+        role: 'member'
+      },
+      content: '📄 Document.pdf',
+      timestamp: 'now',
+      isAI: false,
+      channel: activeChannel,
+      replyTo: replyingTo,
+      replies: [],
+      isPinned: false,
+      reactions: [],
+      type: 'file',
+      fileData: {
+        name: 'Language_Practice_Notes.pdf',
+        size: '2.4 MB',
+        type: 'application/pdf'
+      }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setReplyingTo(null);
+    setShowAttachments(false);
+    
+    toast({
+      title: "File sent",
+      description: "Your file has been shared",
+    });
+  };
+
   const handleLeaveRoom = () => {
     if (currentSession) {
       endLearningSession();
@@ -642,7 +893,18 @@ const ChatRoom = () => {
       leaveRoom(id);
     }
     
-    navigate(-1);
+    // Smart navigation: check where user came from
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from');
+    
+    if (from === 'messages') {
+      navigate('/messages');
+    } else if (from === 'community') {
+      navigate('/community');
+    } else {
+      // Default fallback: try to go back in history, or go to community
+      navigate(-1);
+    }
   };
 
   const sendSuggestedMessage = (suggestion: string) => {
@@ -684,28 +946,310 @@ const ChatRoom = () => {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
         <div className="space-y-4">
-          {messages.map((msg) => (
-            <Card 
-              key={msg.id} 
-              className={`${msg.isAI ? 'bg-primary/5 border-primary/20' : 'bg-card'} ${msg.user.isAnonymous ? 'opacity-90' : ''}`}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start gap-2">
-                  <div className="text-lg">{msg.user.avatar}</div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`font-medium text-sm ${msg.user.isAnonymous ? 'text-muted-foreground' : ''}`}>
-                        {msg.user.name}
-                      </span>
-                      {msg.isAI && <Badge variant="secondary" className="text-xs">AI</Badge>}
-                      <span className="text-xs text-muted-foreground">{msg.timestamp}</span>
+          {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
+            const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
+            const isMyMessage = msg.user.name === (anonymousMode ? 'Anonymous' : (user?.username || 'Guest'));
+            
+            return (
+              <div
+                key={msg.id}
+                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                <Card className={`max-w-[80%] relative group ${
+                  isMyMessage 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-card'
+                } ${msg.user?.isAnonymous ? 'opacity-90' : ''}`}>
+                  <CardContent className="p-3">
+                    {/* User info at top for public chat (except for own messages) */}
+                    {!isMyMessage && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="text-sm">{msg.user.avatar}</div>
+                        <span className={`font-medium text-sm ${msg.user?.isAnonymous ? 'text-muted-foreground' : ''}`}>
+                          {msg.user.name}
+                        </span>
+                        {msg.isAI && <Badge variant="secondary" className="text-xs">AI</Badge>}
+                      </div>
+                    )}
+
+                    {/* Reply indicator */}
+                    {replyToMessage && (
+                      <div className="text-xs p-2 mb-2 bg-black/10 rounded border-l-2 border-primary/50">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Reply size={10} />
+                          <span className="font-medium">
+                            {isMyMessage ? 'You' : replyToMessage.user.name}
+                          </span>
+                        </div>
+                        <div className="truncate opacity-80">
+                          {replyToMessage.content}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Message content */}
+                    <div className="text-sm mb-2">
+                      {editingMessageId === msg.id ? (
+                        <div className="space-y-2">
+                          <Input
+                            id="editMessage"
+                            name="editMessage"
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="text-sm"
+                            autoComplete="off"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={saveEditedMessage}>Save</Button>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              setEditingMessageId(null);
+                              setEditingText('');
+                            }}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {msg.type === 'image' && (
+                            <div className="mb-2">
+                              <img 
+                                src={msg.imageUrl} 
+                                alt="Shared image" 
+                                className="rounded-lg max-w-full h-auto"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'https://picsum.photos/300/200?random=fallback';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          {msg.type === 'voice' && msg.voiceData && (
+                            <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  if (playingVoiceId === msg.id) {
+                                    setPlayingVoiceId(null);
+                                  } else {
+                                    setPlayingVoiceId(msg.id);
+                                    setTimeout(() => setPlayingVoiceId(null), msg.voiceData!.duration * 1000);
+                                  }
+                                }}
+                              >
+                                {playingVoiceId === msg.id ? <Pause size={14} /> : <Play size={14} />}
+                              </Button>
+                              <div className="flex-1 flex items-center gap-1">
+                                {msg.voiceData.waveform.map((height, i) => (
+                                  <div
+                                    key={i}
+                                    className={`w-1 bg-current rounded ${
+                                      playingVoiceId === msg.id ? 'animate-pulse' : ''
+                                    }`}
+                                    style={{ height: `${Math.max(height * 20, 4)}px` }}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs">{msg.voiceData.duration}s</span>
+                            </div>
+                          )}
+
+                          {msg.type === 'file' && msg.fileData && (
+                            <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
+                              <File size={16} />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium">{msg.fileData.name}</div>
+                                <div className="text-xs opacity-70">{msg.fileData.size}</div>
+                              </div>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <Download size={12} />
+                              </Button>
+                            </div>
+                          )}
+
+                          {(msg.type === 'text' || !msg.type) && (
+                            <>
+                              {renderMessageContent(msg)}
+                              {msg.isEdited && (
+                                <span className="text-xs opacity-50 ml-2">(edited)</span>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <p className="text-sm">{msg.content}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                    {/* Reactions */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="flex gap-1 mb-2">
+                        {msg.reactions.map((reaction, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 px-2 py-1 bg-black/10 rounded-full text-xs"
+                          >
+                            <span>{reaction.emoji}</span>
+                            <span>{reaction.userName || reaction.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {(msg.translated || (autoTranslateEnabled && !isMyMessage)) && (
+                      <div className="text-xs opacity-80 mt-2 p-2 bg-primary/10 rounded">
+                        <Languages size={12} className="inline mr-1" />
+                        Translation: {msg.translatedContent || `[${targetLanguage?.toUpperCase() || 'EN'}] ${msg.content}`}
+                      </div>
+                    )}
+
+                    {practiceMode && msg.hasErrors && (
+                      <div className="text-xs mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                        <BookOpen size={12} className="inline mr-1 text-yellow-600" />
+                        <span className="text-yellow-800">Click underlined words for grammar help!</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs opacity-70">{msg.timestamp}</span>
+                        {msg.isEncrypted && (
+                          <Lock size={10} className="opacity-50" />
+                        )}
+                        {isMyMessage && (
+                          <div className="flex items-center">
+                            {msg.deliveryStatus === 'sent' && <CheckCircle size={10} className="opacity-50" />}
+                            {msg.deliveryStatus === 'delivered' && <CheckCircle size={10} className="text-blue-500" />}
+                            {msg.deliveryStatus === 'read' && <CheckCheck size={10} className="text-blue-500" />}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Quick reactions */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '❤️')}
+                        >
+                          ❤️
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '👍')}
+                        >
+                          👍
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-xs"
+                          onClick={() => handleReaction(msg.id, '😊')}
+                        >
+                          😊
+                        </Button>
+
+                        {/* Message actions */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1"
+                          onClick={() => handleReplyToMessage(msg.id)}
+                        >
+                          <Reply size={10} />
+                        </Button>
+
+                        {isMyMessage && !msg.isDeleted && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleEditMessage(msg.id)}
+                            >
+                              <Edit3 size={10} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1 text-red-500"
+                              onClick={() => handleDeleteMessage(msg.id)}
+                            >
+                              <Trash2 size={10} />
+                            </Button>
+                          </>
+                        )}
+
+                        {/* Other actions */}
+                        {isMyMessage && practiceMode && (
+                          <AITooltip 
+                            title="Grammar Check"
+                            description="Check this message for grammar and spelling errors"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleGrammarCheck(msg.id)}
+                            >
+                              {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
+                            </Button>
+                          </AITooltip>
+                        )}
+                        
+                        {!autoTranslateEnabled && (
+                          <AITooltip 
+                            title="Translate Message"
+                            description="See this message in your learning language"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handleTranslate(msg.id)}
+                            >
+                              <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
+                            </Button>
+                          </AITooltip>
+                        )}
+
+                        {!isMyMessage && (
+                          <AITooltip 
+                            title="Ask AI for Help"
+                            description="Get AI suggestions for how to respond to this message"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => setShowAIModal(true)}
+                            >
+                              <HelpCircle size={10} />
+                            </Button>
+                          </AITooltip>
+                        )}
+
+                        {isUserModerator && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1"
+                              onClick={() => handlePinMessage(msg.id)}
+                            >
+                              <Pin size={10} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -755,53 +1299,182 @@ const ChatRoom = () => {
         )}
         <div className="flex gap-2 mb-2">
           <AITooltip 
-            title="Quick Suggestions"
-            description="Get conversation starters and thoughtful questions for this room"
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAIPanel(!showAIPanel)}
-              className={showAIPanel ? 'text-primary' : ''}
-            >
-              <Bot size={14} />
-              <span className="ml-1 text-xs">Quick Help</span>
-            </Button>
-          </AITooltip>
-          
-          <AITooltip 
-            title="Full AI Assistant"
-            description="Access comprehensive language learning and conversation support"
+            title="AI Assistant"
+            description="Get conversation help, grammar checks, and language practice support"
           >
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowAIModal(true)}
             >
-              <Languages size={14} />
-              <span className="ml-1 text-xs">AI Assistant</span>
+              <Bot size={14} />
+              <span className="ml-1 text-xs">AI Help</span>
             </Button>
           </AITooltip>
+          
+          <AITooltip 
+            title="Quick Translate"
+            description="Translate your message before sending"
+          >
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                if (message.trim()) {
+                  const translation = simulateTranslation(message, learningLanguage);
+                  toast({
+                    title: "Translation",
+                    description: `"${message}" → ${translation}`,
+                  });
+                }
+              }}
+            >
+              <Languages size={14} />
+              <span className="ml-1 text-xs">Translate</span>
+            </Button>
+          </AITooltip>
+
+          <AITooltip 
+            title="Language Tools"
+            description="Access language practice, pronunciation challenges, and vocabulary tracking"
+          >
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowLanguagePanel(true)}
+              className={showLanguagePanel ? 'text-primary' : ''}
+            >
+              <BookOpen size={14} />
+              <span className="ml-1 text-xs">Language Tools</span>
+            </Button>
+          </AITooltip>
+
+          {practiceMode && (
+            <Badge variant="secondary" className="text-xs px-2 py-1">
+              <Zap size={10} className="mr-1" />
+              Practice Active
+            </Badge>
+          )}
         </div>
         
+        {/* Attachment panel */}
+        {showAttachments && (
+          <div className="mb-3 p-3 bg-muted/50 rounded-lg">
+            <div className="grid grid-cols-4 gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImageUpload}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <Image size={20} />
+                <span className="text-xs">Photo</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Simulate camera
+                  handleImageUpload();
+                }}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <Camera size={20} />
+                <span className="text-xs">Camera</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFileUpload}
+                className="flex-col h-auto p-3 gap-1"
+              >
+                <File size={20} />
+                <span className="text-xs">File</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVoiceRecord}
+                className={`flex-col h-auto p-3 gap-1 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+              >
+                <Mic size={20} />
+                <span className="text-xs">{isRecording ? 'Stop' : 'Voice'}</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAttachments(!showAttachments)}
+            className={`p-2 ${showAttachments ? 'text-primary' : ''}`}
+          >
+            <Paperclip size={16} />
+          </Button>
+          
           <Input
             id="messageInput"
             name="messageInput"
-            placeholder="Share your thoughts..."
+            placeholder="Type a thoughtful message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            autoComplete="off"
             className="flex-1"
           />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim()}
-            variant="cozy"
-          >
-            <Send size={16} />
-          </Button>
+          
+          {message.trim() ? (
+            <Button
+              onClick={handleSendMessage}
+              variant="cozy"
+              className="px-3"
+            >
+              <Send size={16} />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleVoiceRecord}
+              variant="ghost"
+              className={`px-3 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+            >
+              <Mic size={16} />
+            </Button>
+          )}
         </div>
+
+        {/* Recording indicator */}
+        {isRecording && (
+          <div className="mt-2 flex items-center justify-between bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 text-red-600">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStopRecording}
+                className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Square size={14} />
+                <span className="ml-1 text-xs">Stop</span>
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSendRecording}
+                className="h-8 px-3 bg-red-600 hover:bg-red-700"
+              >
+                <Send size={14} />
+                <span className="ml-1 text-xs">Send</span>
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Language Practice Panel */}

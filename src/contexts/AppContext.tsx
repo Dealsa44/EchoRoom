@@ -84,6 +84,7 @@ export interface User {
   genderIdentity: GenderIdentity;
   orientation: Orientation;
   lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
   customGender?: string; // For custom gender identity
   customOrientation?: string; // For custom orientation
 }

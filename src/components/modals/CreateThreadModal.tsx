@@ -86,6 +86,7 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
               placeholder="What would you like to discuss?"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              autoComplete="off"
               required
             />
           </div>
@@ -122,6 +123,7 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
               placeholder="Share your thoughts, questions, or insights..."
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              autoComplete="off"
               className="min-h-24"
               required
             />

@@ -217,9 +217,9 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
               <Card>
                 <CardContent className="p-3 space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-xs">Select AI Feature</Label>
+                    <Label htmlFor="aiFeature" className="text-xs">Select AI Feature</Label>
                     <Select name="aiFeature" value={selectedFeature} onValueChange={setSelectedFeature}>
-                      <SelectTrigger className="h-8">
+                      <SelectTrigger id="aiFeature" className="h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -233,7 +233,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs">Your Message</Label>
+                    <Label htmlFor="aiMessage" className="text-xs">Your Message</Label>
                     <Input
                       id="aiMessage"
                       name="aiMessage"
@@ -241,6 +241,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
                       onChange={(e) => setUserInput(e.target.value)}
                       placeholder="Type your message here..."
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      autoComplete="off"
                       className="h-8"
                     />
                   </div>
@@ -412,9 +413,9 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
               <Card>
                 <CardContent className="p-3 space-y-2">
                   <div className="space-y-2">
-                    <Label className="text-xs">AI Personality</Label>
+                    <Label htmlFor="aiPersonality" className="text-xs">AI Personality</Label>
                     <Select value={aiPersonality} onValueChange={setAIPersonality}>
-                      <SelectTrigger className="h-8">
+                      <SelectTrigger id="aiPersonality" className="h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

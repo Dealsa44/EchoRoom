@@ -406,8 +406,10 @@ const Settings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Volume ({sounds.volume}%)</Label>
+                <Label htmlFor="volumeSlider" className="text-sm font-medium">Volume ({sounds.volume}%)</Label>
                 <input
+                  id="volumeSlider"
+                  name="volumeSlider"
                   type="range"
                   min="0"
                   max="100"

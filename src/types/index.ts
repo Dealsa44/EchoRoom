@@ -17,6 +17,7 @@ export interface Profile {
   genderIdentity: string;
   orientation: string;
   lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
   photos: string[];
   isVerified: boolean;
   profileCompletion: number;

@@ -140,7 +140,11 @@ const Forum = () => {
         <div className="absolute top-1/2 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }} />
       </div>
 
-      <TopBar title="Deep Discussions" />
+      <TopBar 
+        title="Deep Discussions" 
+        showBack={true}
+        onBack={() => navigate('/community')}
+      />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Header */}
@@ -159,6 +163,7 @@ const Forum = () => {
               placeholder="Search discussions, topics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
               className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
             />
           </div>
@@ -209,7 +214,15 @@ const Forum = () => {
               key={thread.id} 
               className="cursor-pointer interactive-scale shadow-medium hover:shadow-large group animate-slide-up"
               style={{ animationDelay: `${0.2 + index * 0.05}s` }}
-              onClick={() => navigate(`/forum/thread/${thread.id}`)}
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const from = urlParams.get('from');
+                if (from === 'community') {
+                  navigate(`/forum/thread/${thread.id}?from=community`);
+                } else {
+                  navigate(`/forum/thread/${thread.id}`);
+                }
+              }}
             >
               <CardContent className="p-6">
                 <div className="space-y-4">

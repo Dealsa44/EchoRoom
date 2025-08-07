@@ -38,7 +38,7 @@ const Login = () => {
           title: "Welcome back!",
           description: "You've successfully signed in to EchoRoom.",
         });
-        navigate('/home');
+        navigate('/match');
       } else {
         toast({
           title: "Login Failed",
@@ -65,12 +65,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen mesh-gradient flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Elements */}
-      <div className="absolute inset-0 opacity-25">
+      <div className="absolute inset-0 opacity-40">
         <div className="absolute top-32 left-12 w-28 h-28 bg-gradient-secondary rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-40 right-8 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" style={{ animationDelay: '1.5s' }} />
-        <div className="absolute top-1/3 right-20 w-20 h-20 bg-gradient-accent rounded-full blur-xl animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/3 right-20 w-20 h-20 bg-gradient-tertiary rounded-full blur-xl animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
       <div className="w-full max-w-sm relative z-10 animate-scale-in">
@@ -104,6 +104,7 @@ const Login = () => {
                   placeholder="Enter your email..."
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  autoComplete="email"
                   required
                   className="animate-slide-up"
                   style={{ animationDelay: '0.3s' }}
@@ -120,6 +121,7 @@ const Login = () => {
                     placeholder="Enter your password..."
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    autoComplete="current-password"
                     required
                     className="pr-12"
                   />
@@ -165,6 +167,19 @@ const Login = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Account Link */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <button
+              onClick={() => navigate('/register')}
+              className="text-primary hover:text-primary/80 font-medium underline underline-offset-2 transition-colors"
+            >
+              Register
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

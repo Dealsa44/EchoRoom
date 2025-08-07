@@ -32,6 +32,7 @@ const Register = () => {
     genderIdentity: 'prefer-not-to-say' as GenderIdentity,
     orientation: 'other' as Orientation,
     lookingForRelationship: false,
+    lookingForFriendship: false,
     customGender: '',
     customOrientation: ''
   });
@@ -131,6 +132,7 @@ const Register = () => {
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
         lookingForRelationship: formData.lookingForRelationship,
+      lookingForFriendship: formData.lookingForFriendship,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
       };
@@ -144,7 +146,7 @@ const Register = () => {
           title: "Welcome to EchoRoom!",
           description: "Your account has been created successfully.",
         });
-        navigate('/home');
+        navigate('/match');
       } else {
         // Handle server-side validation errors
         if (result.errors) {
@@ -355,6 +357,7 @@ const Register = () => {
                    setTouched(prev => ({ ...prev, username: true }));
                    validateField('username', formData.username);
                  }}
+                 autoComplete="username"
                  required
                  className={errors.username ? 'border-red-500' : ''}
                />
@@ -382,6 +385,7 @@ const Register = () => {
                    setTouched(prev => ({ ...prev, email: true }));
                    validateField('email', formData.email);
                  }}
+                 autoComplete="email"
                  required
                  className={errors.email ? 'border-red-500' : ''}
                />
@@ -410,6 +414,7 @@ const Register = () => {
                      setTouched(prev => ({ ...prev, password: true }));
                      validateField('password', formData.password);
                    }}
+                   autoComplete="new-password"
                    required
                    className={errors.password ? 'border-red-500' : ''}
                  />
@@ -467,12 +472,12 @@ const Register = () => {
            <div className="space-y-4">
              <div className="space-y-2">
                <Label>Interests (Select 3-5)</Label>
-               <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-2">
+               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 max-h-48 overflow-y-auto pr-2">
                  {availableInterests.map((interest) => (
                    <Badge
                      key={interest}
                      variant={formData.interests.includes(interest) ? "default" : "outline"}
-                     className="cursor-pointer hover:scale-105 transition-transform duration-200 select-none"
+                     className="cursor-pointer hover:scale-105 transition-transform duration-200 select-none text-xs sm:text-sm justify-center"
                      onClick={() => toggleInterest(interest)}
                    >
                      {interest}
@@ -523,6 +528,7 @@ const Register = () => {
                    placeholder="Please specify your gender identity"
                    value={formData.customGender}
                    onChange={(e) => setFormData(prev => ({ ...prev, customGender: e.target.value }))}
+                   autoComplete="off"
                    className="mt-2"
                  />
                )}
@@ -561,6 +567,7 @@ const Register = () => {
                    placeholder="Please specify your orientation"
                    value={formData.customOrientation}
                    onChange={(e) => setFormData(prev => ({ ...prev, customOrientation: e.target.value }))}
+                   autoComplete="off"
                    className="mt-2"
                  />
                )}
@@ -571,16 +578,29 @@ const Register = () => {
 
 
 
-             <div className="space-y-2">
-               <Label className="flex items-center gap-2">
-                 <span>Looking for a relationship?</span>
+             <div className="space-y-3">
+               <div className="flex items-center justify-between">
+                 <Label className="text-sm sm:text-base">Looking for a relationship?</Label>
                  <Switch
                    checked={formData.lookingForRelationship}
                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForRelationship: checked }))}
                  />
-               </Label>
+               </div>
                <p className="text-xs text-muted-foreground">
                  This will help others understand your intentions and improve your matches.
+               </p>
+             </div>
+
+             <div className="space-y-3">
+               <div className="flex items-center justify-between">
+                 <Label className="text-sm sm:text-base">Looking for friendship?</Label>
+                 <Switch
+                   checked={formData.lookingForFriendship}
+                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForFriendship: checked }))}
+                 />
+               </div>
+               <p className="text-xs text-muted-foreground">
+                 Connect with people for meaningful friendships and language practice.
                </p>
              </div>
            </div>
@@ -621,8 +641,15 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-accent flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-40">
+        <div className="absolute top-24 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-32 left-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Back Button */}
         <Button
           variant="ghost"
@@ -640,11 +667,11 @@ const Register = () => {
           </CardHeader>
           
           {/* Progress Indicator */}
-          <div className="px-6 pb-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="px-4 sm:px-6 pb-4">
+            <div className="flex items-center justify-between mb-4 overflow-x-auto">
               {stages.map((stage, index) => (
-                <div key={stage.key} className="flex items-center">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 ${
+                <div key={stage.key} className="flex items-center flex-shrink-0">
+                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-300 ${
                     index < currentStageIndex 
                       ? 'bg-primary border-primary text-primary-foreground' 
                       : index === currentStageIndex
@@ -652,13 +679,13 @@ const Register = () => {
                       : 'border-muted-foreground text-muted-foreground'
                   }`}>
                     {index < currentStageIndex ? (
-                      <Check size={16} />
+                      <Check size={14} className="sm:w-4 sm:h-4" />
                     ) : (
-                      stage.icon
+                      <div className="w-4 h-4 sm:w-5 sm:h-5">{stage.icon}</div>
                     )}
                   </div>
                   {index < stages.length - 1 && (
-                    <div className={`w-12 h-0.5 mx-2 transition-all duration-300 ${
+                    <div className={`w-6 sm:w-12 h-0.5 mx-1 sm:mx-2 transition-all duration-300 ${
                       index < currentStageIndex ? 'bg-primary' : 'bg-muted'
                     }`} />
                   )}
@@ -668,14 +695,14 @@ const Register = () => {
             
             {/* Stage Title */}
             <div className="text-center mb-4">
-              <h3 className="font-semibold text-lg">{stages[currentStageIndex].title}</h3>
-              <p className="text-sm text-muted-foreground">{stages[currentStageIndex].description}</p>
+              <h3 className="font-semibold text-lg sm:text-xl">{stages[currentStageIndex].title}</h3>
+              <p className="text-sm text-muted-foreground px-2">{stages[currentStageIndex].description}</p>
             </div>
           </div>
           
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit}>
-              <div className="min-h-[200px] flex items-center justify-center">
+              <div className="min-h-[180px] sm:min-h-[200px] flex items-start justify-center py-2">
                 <div className="w-full animate-in fade-in duration-300">
                   {renderStageContent()}
                 </div>
@@ -729,6 +756,19 @@ const Register = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Account Link */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <button
+              onClick={() => navigate('/login')}
+              className="text-primary hover:text-primary/80 font-medium underline underline-offset-2 transition-colors"
+            >
+              Login
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

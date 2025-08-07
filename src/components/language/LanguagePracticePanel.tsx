@@ -153,9 +153,9 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label className="text-xs">Learning Language</Label>
+                <Label htmlFor="learningLanguage" className="text-xs">Learning Language</Label>
                 <Select name="learningLanguage" value={learningLanguage} onValueChange={setLearningLanguage}>
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger id="learningLanguage" className="h-8">
                     <SelectValue placeholder={getLanguageDisplayName(learningLanguage)} />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,9 +168,9 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs">Your Level</Label>
+                <Label htmlFor="languageLevel" className="text-xs">Your Level</Label>
                 <Select name="languageLevel" value={languageLevel} onValueChange={setLanguageLevel}>
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger id="languageLevel" className="h-8">
                     <SelectValue placeholder={getLevelDisplayName(languageLevel)} />
                   </SelectTrigger>
                   <SelectContent>
@@ -185,9 +185,9 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs">Target Language for Translation</Label>
-                <Select defaultValue="georgian">
-                  <SelectTrigger className="h-8">
+                <Label htmlFor="targetLanguage" className="text-xs">Target Language for Translation</Label>
+                <Select name="targetLanguage" defaultValue="georgian">
+                  <SelectTrigger id="targetLanguage" className="h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

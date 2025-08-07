@@ -11,7 +11,7 @@ const Welcome = () => {
   // Redirect authenticated users to home
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/home');
+      navigate('/match');
     }
   }, [isAuthenticated, navigate]);
 
@@ -30,29 +30,29 @@ const Welcome = () => {
   }, [slogans.length]);
 
   return (
-    <div className="min-h-screen mesh-gradient flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Elements */}
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 opacity-40">
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-primary rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-32 right-16 w-24 h-24 bg-gradient-secondary rounded-full blur-2xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-accent rounded-full blur-xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-gradient-tertiary rounded-full blur-xl animate-float" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-md space-y-6 relative z-10 animate-scale-in">
         {/* Title */}
         <div className="w-full max-w-sm mx-auto">
-          <div className="glass rounded-2xl p-6 backdrop-blur-lg bg-gradient-to-br from-white/15 to-white/5 border border-white/25 shadow-2xl">
-            <h1 className="text-4xl font-bold gradient-text-hero mb-3 animate-fade-in drop-shadow-2xl tracking-wide text-center">EchoRoom</h1>
-            <div className="w-20 h-0.5 bg-gradient-primary rounded-full mx-auto opacity-90 shadow-glow-primary" />
+          <div className="glass-strong rounded-2xl p-6 shadow-large border border-border-soft/50">
+            <h1 className="text-4xl font-bold gradient-text-hero mb-3 animate-fade-in drop-shadow-lg tracking-wide text-center">EchoRoom</h1>
+            <div className="w-20 h-0.5 bg-gradient-primary rounded-full mx-auto shadow-glow-primary" />
           </div>
         </div>
 
         {/* Slogan Carousel */}
         <div className="w-full max-w-sm mx-auto">
-          <div className="glass rounded-xl p-5 backdrop-blur-lg bg-gradient-to-br from-white/10 to-white/5 border border-white/20 shadow-xl">
+          <div className="glass rounded-xl p-5 shadow-medium border border-border-soft/30">
             <p 
               key={currentSlogan}
-              className="text-center text-sm text-foreground/95 italic animate-fade-in leading-relaxed font-medium drop-shadow-lg"
+              className="text-center text-sm text-foreground italic animate-fade-in leading-relaxed font-medium"
             >
               "{slogans[currentSlogan]}"
             </p>
@@ -77,7 +77,7 @@ const Welcome = () => {
           <Button
             variant="glass"
             size="lg"
-            className="w-full h-12 animate-slide-up backdrop-blur-lg bg-gradient-to-br from-white/20 to-white/10 border border-white/30 hover:from-white/30 hover:to-white/15 hover:scale-105 transition-all duration-300 font-semibold text-base rounded-xl shadow-xl"
+            className="w-full h-12 animate-slide-up hover:scale-105 transition-all duration-300 font-semibold text-base rounded-xl shadow-large"
             onClick={() => navigate('/register')}
             style={{ animationDelay: '0.2s' }}
           >

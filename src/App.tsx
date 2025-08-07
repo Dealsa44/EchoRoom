@@ -15,7 +15,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Home from "./pages/Home";
 import ChatRooms from "./pages/ChatRooms";
 import ChatRoom from "./pages/ChatRoom";
 import Match from "./pages/Match";
@@ -24,6 +23,7 @@ import ChatInbox from "./pages/ChatInbox";
 import PrivateChat from "./pages/PrivateChat";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
+import Community from "./pages/Community";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import ProfileStats from "./pages/ProfileStats";
@@ -62,9 +62,9 @@ const App = () => (
             } />
             
             {/* Protected Routes */}
-            <Route path="/home" element={
+            <Route path="/community" element={
               <AuthGuard>
-                <Home />
+                <Community />
               </AuthGuard>
             } />
             <Route path="/chat-rooms" element={

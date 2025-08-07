@@ -344,6 +344,7 @@ const VocabularyTracker = () => {
                 placeholder="Search vocabulary..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                autoComplete="off"
                 className="pl-10"
               />
             </div>

@@ -4,8 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarContent } from '@/components/ui/avatar';
-import { ArrowLeft, Heart, MessageCircle, Share, MoreHorizontal, Reply, Calendar, Clock, User, ChevronDown, ChevronUp, Minus, Plus, Filter, SortAsc, SortDesc, MessageSquare } from 'lucide-react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Reply, Calendar, Clock, User, ChevronDown, ChevronUp, Minus, Plus, Filter, SortAsc, SortDesc, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
+import TopBar from '@/components/layout/TopBar';
+import BottomNavigation from '@/components/layout/BottomNavigation';
 
 const ForumThread = () => {
   const { id } = useParams();
@@ -404,6 +406,7 @@ const ForumThread = () => {
                     placeholder={`Reply to ${comment.author}...`}
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
+                    autoComplete="off"
                     className="min-h-[80px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
                   <div className="flex gap-2">
@@ -473,13 +476,12 @@ const ForumThread = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-40 bg-card border-b border-border p-4">
-        <Button variant="ghost" onClick={() => navigate('/forum')}>
-          <ArrowLeft size={20} />
-          <span className="ml-2">Back to Forum</span>
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <TopBar 
+        title="Deep Discussions" 
+        showBack={true}
+        onBack={() => navigate('/forum')}
+      />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         {/* Thread Post */}
@@ -545,6 +547,7 @@ const ForumThread = () => {
                 placeholder="Share your thoughtful response..."
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
+                autoComplete="off"
                 className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
               <div className="flex gap-2">
@@ -668,6 +671,8 @@ const ForumThread = () => {
           </Button>
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };

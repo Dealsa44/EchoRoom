@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Portal } from '@radix-ui/react-portal';
 import SwipeableCard from '@/components/ui/SwipeableCard';
 import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Users, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
@@ -43,6 +44,8 @@ const Match = () => {
   const [isCardAnimating, setIsCardAnimating] = useState(false);
   const [matchAnimation, setMatchAnimation] = useState(false);
   const [cardStack, setCardStack] = useState<Profile[]>([]);
+  const [swipeProgress, setSwipeProgress] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [filters, setFilters] = useState<Filters>({
     interests: [],
     languageLevel: 'all',
@@ -65,7 +68,17 @@ const Match = () => {
         setShowConversationStarters(false);
       }
       if (filtersExpanded && filtersModalRef.current && !filtersModalRef.current.contains(event.target as Node)) {
-        setFiltersExpanded(false);
+        // Check if the click is on a dropdown content (which is rendered in a portal)
+        const target = event.target as Element;
+        const isDropdownContent = target.closest('[data-radix-popper-content-wrapper]') || 
+                                  target.closest('[data-radix-select-content]') ||
+                                  target.closest('[role="listbox"]') ||
+                                  target.closest('[data-radix-select-viewport]') ||
+                                  target.closest('[data-radix-select-item]');
+        
+        if (!isDropdownContent) {
+          setFiltersExpanded(false);
+        }
       }
     };
 
@@ -116,29 +129,44 @@ const Match = () => {
             return false;
           }
         } else if (filters.relationshipIntent === 'friendship') {
-          if (profile.lookingForRelationship) {
+          if (!profile.lookingForFriendship) {
             return false;
           }
         } else if (filters.relationshipIntent === 'both') {
           // Show all profiles regardless of their relationship preference
         }
-      } else {
-        // No filter selected - use user's profile setting as default
-        if (user?.lookingForRelationship) {
-          // User wants relationships - show only people looking for relationships
-          if (!profile.lookingForRelationship) {
-            return false;
-          }
-        } else {
-          // User wants friendship - show only people looking for friendship
-          if (profile.lookingForRelationship) {
+              } else {
+          // No filter selected - use user's profile settings as default
+          const userWantsRelationship = user?.lookingForRelationship || false;
+          const userWantsFriendship = user?.lookingForFriendship || false;
+          
+          if (userWantsRelationship && !userWantsFriendship) {
+            // User only wants relationships - show only people looking for relationships
+            if (!profile.lookingForRelationship) {
+              return false;
+            }
+          } else if (userWantsFriendship && !userWantsRelationship) {
+            // User only wants friendship - show only people looking for friendship
+            if (!profile.lookingForFriendship) {
+              return false;
+            }
+          } else if (userWantsRelationship && userWantsFriendship) {
+            // User wants both - show people looking for either
+            if (!profile.lookingForRelationship && !profile.lookingForFriendship) {
+              return false;
+            }
+          } else {
+            // User wants neither - show no one
             return false;
           }
         }
-      }
 
       // Check mutual attraction based on gender identity and orientation
-      if (user?.genderIdentity && user?.orientation && profile.genderIdentity && profile.orientation) {
+      // Only apply attraction filter if both parties are looking for relationships
+      const userWantsRelationship = user?.lookingForRelationship || false;
+      const profileWantsRelationship = profile.lookingForRelationship || false;
+      
+      if (userWantsRelationship && profileWantsRelationship && user?.genderIdentity && user?.orientation && profile.genderIdentity && profile.orientation) {
         const userAttractionPrefs = getAttractionPreferences(user.genderIdentity, user.orientation);
         const profileAttractionPrefs = getAttractionPreferences(profile.genderIdentity, profile.orientation);
         
@@ -230,8 +258,13 @@ const Match = () => {
 
   // Update card stack when filtered profiles change
   useEffect(() => {
-    const nextProfiles = filteredProfiles.slice(currentProfileIndex, currentProfileIndex + 3);
-    setCardStack(nextProfiles);
+    if (currentProfileIndex >= filteredProfiles.length) {
+      // We're beyond the available profiles - show empty stack
+      setCardStack([]);
+    } else {
+      const nextProfiles = filteredProfiles.slice(currentProfileIndex, currentProfileIndex + 3);
+      setCardStack(nextProfiles);
+    }
   }, [currentProfileIndex, filteredProfiles]);
 
   const handleLike = () => {
@@ -242,6 +275,13 @@ const Match = () => {
     // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate([50, 100, 50]);
+    }
+    
+    // Add haptic feedback class for visual feedback
+    const button = document.querySelector('.like-button');
+    if (button) {
+      button.classList.add('haptic-feedback');
+      setTimeout(() => button.classList.remove('haptic-feedback'), 100);
     }
     
     // Add to matches automatically
@@ -262,6 +302,17 @@ const Match = () => {
     }, 1500);
   };
 
+  const handleSwipeProgress = (progress: number, direction: 'left' | 'right') => {
+    setSwipeProgress(progress);
+    setSwipeDirection(direction);
+  };
+
+  const handleSwipeEnd = () => {
+    // Reset progress when swipe ends
+    setSwipeProgress(0);
+    setSwipeDirection(null);
+  };
+
   const handleDislike = () => {
     if (!currentProfile || isCardAnimating) return;
     
@@ -270,6 +321,13 @@ const Match = () => {
     // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(30);
+    }
+    
+    // Add haptic feedback class for visual feedback
+    const button = document.querySelector('.dislike-button');
+    if (button) {
+      button.classList.add('haptic-feedback');
+      setTimeout(() => button.classList.remove('haptic-feedback'), 100);
     }
     
     setTimeout(() => {
@@ -321,14 +379,14 @@ const Match = () => {
       setShowIceBreakers(false);
       setSelectedIceBreaker('');
       setCustomMessage('');
-    } else {
-      toast({
-        title: "That's everyone for now!",
-        description: "Check back later for new matches.",
-      });
-      setCurrentProfileIndex(0);
-      setCurrentPhotoIndex(0);
-    }
+          } else {
+        // We're at the last profile - set index beyond the array to trigger "no profiles" state
+        setCurrentProfileIndex(filteredProfiles.length);
+        setCurrentPhotoIndex(0);
+        setShowIceBreakers(false);
+        setSelectedIceBreaker('');
+        setCustomMessage('');
+      }
   };
 
   const handleRelationshipFilterChange = (value: string) => {
@@ -424,25 +482,27 @@ const Match = () => {
     <>
       {/* Photo Gallery */}
       <div 
-        className="relative h-80 bg-gradient-to-br from-muted/50 to-muted cursor-pointer"
+        className="relative h-80 bg-gradient-to-br from-muted/50 to-muted cursor-pointer overflow-hidden"
         onClick={onPhotoTap}
       >
         <img 
           src={profile.photos[currentPhotoIndex]} 
           alt={profile.name}
-          className="w-full h-full object-cover transition-smooth"
+          className="w-full h-full object-cover transition-all duration-500 ease-out"
           onError={onPhotoError}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
         
         {/* Photo Navigation Dots */}
         {profile.photos.length > 1 && !isPreview && (
-          <div className="absolute top-4 left-4 flex gap-1.5">
+          <div className="absolute top-4 left-4 flex gap-2 z-30">
             {profile.photos.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full transition-smooth ${
-                  index === currentPhotoIndex ? 'bg-white shadow-glow' : 'bg-white/40'
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  index === currentPhotoIndex 
+                    ? 'bg-white shadow-lg scale-110' 
+                    : 'bg-white/50 backdrop-blur-sm'
                 }`}
               />
             ))}
@@ -459,10 +519,10 @@ const Match = () => {
               e.preventDefault();
               navigate(`/profile/${profile.id}`);
             }}
-            className="absolute top-4 right-4 h-8 px-3 text-white hover:scale-110 transition-spring backdrop-blur-md z-30"
+            className="absolute top-4 right-4 h-9 px-3 text-white hover:scale-110 transition-spring backdrop-blur-md z-30 border-white/20"
           >
-            <UserCheck size={14} className="mr-1" />
-            <span className="text-xs font-medium">Info</span>
+            <UserCheck size={16} className="mr-1.5" />
+            <span className="text-sm font-medium">Info</span>
           </Button>
         )}
 
@@ -474,57 +534,71 @@ const Match = () => {
           </>
         )}
 
-        {/* Simplified Profile Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-20">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">{profile.name}</h2>
-              <span className="text-lg font-medium">{profile.age}</span>
+        {/* Enhanced Profile Info Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 text-white z-20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-2xl font-bold drop-shadow-lg">{profile.name}</h2>
+              <span className="text-lg font-semibold text-white/90">{profile.age}</span>
               {profile.isVerified && (
-                <Shield size={18} className="text-blue-400" />
+                <div className="flex items-center justify-center w-6 h-6 bg-blue-500/80 backdrop-blur-sm rounded-full">
+                  <Shield size={14} className="text-white" />
+                </div>
               )}
             </div>
             {profile.isOnline && (
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium">Online</span>
+              <div className="flex items-center gap-1.5 bg-green-500/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs font-semibold">Online</span>
               </div>
             )}
           </div>
           
-          <div className="flex items-center gap-1 text-sm mb-3">
-            <MapPin size={14} />
-            <span>{profile.location.split(',')[0]} • {profile.distance}km away</span>
+          <div className="flex items-center gap-1.5 text-sm mb-3 text-white/90">
+            <MapPin size={16} className="text-white/80" />
+            <span className="font-medium">{profile.location.split(',')[0]}</span>
+            <span className="text-white/60">•</span>
+            <span className="text-white/80">{profile.distance}km away</span>
           </div>
 
-          {/* Essential info only */}
-          <div className="flex items-center gap-2">
-            <Badge className="bg-white/20 backdrop-blur-sm text-white text-sm border-white/30 h-6 px-3">
+          {/* Enhanced badges */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
               {profile.languageLevel}
             </Badge>
-            <Badge className="bg-white/20 backdrop-blur-sm text-white text-sm border-white/30 h-6 px-3">
+            <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
               {profile.sharedInterests} shared
             </Badge>
+            {profile.lookingForRelationship && (
+              <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
+                💕 Relationship
+              </Badge>
+            )}
+            {profile.lookingForFriendship && (
+              <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
+                🤝 Friendship
+              </Badge>
+            )}
           </div>
         </div>
       </div>
       
-      {/* Minimal bottom content - only for main card */}
+      {/* Enhanced bottom content - only for main card */}
       {!isPreview && (
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+        <CardContent className="p-5">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4 font-medium">
             {profile.bio}
           </p>
           
-          {/* Top 3 interests only */}
-          <div className="flex items-center gap-1.5">
+          {/* Enhanced interests display */}
+          <div className="flex items-center gap-2">
             {profile.interests.slice(0, 3).map(interest => (
-              <Badge key={interest} variant="secondary" className="text-xs h-6 px-2 rounded-full">
+              <Badge key={interest} variant="secondary" className="text-xs h-7 px-3 rounded-full font-medium bg-muted/50">
                 {interest}
               </Badge>
             ))}
             {profile.interests.length > 3 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground font-medium">
                 +{profile.interests.length - 3} more
               </span>
             )}
@@ -565,90 +639,102 @@ const Match = () => {
       />
       
       {/* Header Section */}
-      <div className="px-4 py-4 relative z-10">
-        <div className="flex items-center justify-between">
-          <div className="animate-fade-in">
-            <h1 className="text-display-2 font-bold gradient-text-hero">Discover</h1>
-            <p className="text-body-small text-muted-foreground">Find your perfect conversation partner</p>
+      <div className="py-5 relative z-10">
+        <div className="max-w-md mx-auto px-5">
+          <div className="flex items-center justify-between">
+            <div className="animate-fade-in">
+              <h1 className="text-2xl font-bold gradient-text-hero mb-1">Discover</h1>
+              <p className="text-sm text-muted-foreground font-medium">Find your perfect conversation partner</p>
+            </div>
+            <Button
+              variant="glass"
+              size="lg"
+              onClick={() => navigate('/matches')}
+              className="shadow-glow-accent/20 hover:scale-110 transition-spring animate-slide-up h-11 px-4"
+              style={{ animationDelay: '0.2s' }}
+            >
+              <Users size={18} className="mr-2" />
+              <span className="font-semibold text-sm">Matches</span>
+            </Button>
           </div>
-          <Button
-            variant="glass"
-            size="lg"
-            onClick={() => navigate('/matches')}
-            className="shadow-glow-accent/20 hover:scale-110 transition-spring animate-slide-up"
-            style={{ animationDelay: '0.2s' }}
-          >
-            <Users size={18} className="mr-2" />
-            <span className="font-medium">Matches</span>
-          </Button>
         </div>
       </div>
       
-      <div className="px-4 py-3 max-w-md mx-auto space-y-4 relative z-10 pb-32">
-        {/* Quick Stats */}
-        <div className="text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground">
-            {filteredProfiles.length} profile{filteredProfiles.length !== 1 ? 's' : ''} found
-            {activeFiltersCount > 0 && (
-              <span className="ml-2">
-                • <span className="text-primary font-medium">{activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} active</span>
-              </span>
-            )}
-          </p>
-        </div>
-
-        {/* No Matches Message */}
-        {filteredProfiles.length === 0 && (
-          <Card className="shadow-medium">
-            <CardContent className="p-6 text-center">
-              <div className="text-4xl mb-4">🔍</div>
-              <h3 className="font-semibold mb-2">No matches found</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+      <div className="px-5 py-3 max-w-md mx-auto space-y-4 relative z-10 pb-32">
+        {/* No Matches Message - With Filters Active */}
+        {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
+          <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted">
+            <CardContent className="p-8 text-center">
+              <div className="text-5xl mb-6 animate-pulse">🔍</div>
+              <h3 className="font-bold mb-3 text-lg gradient-text-hero">No matches found</h3>
+              <p className="text-sm text-muted-foreground mb-6 font-medium">
                 Try adjusting your filters or check back later for new profiles.
               </p>
               <Button 
-                variant="outline" 
-                onClick={resetFilters}
+                variant="gradient" 
+                onClick={() => setFiltersExpanded(true)}
+                className="shadow-glow-primary"
               >
-                Reset Filters
+                Modify Filters
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* All Caught Up Message - No Filters Active */}
+        {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
+          <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted">
+            <CardContent className="p-8 text-center">
+              <div className="text-6xl mb-6 animate-bounce">🎉</div>
+              <h3 className="text-xl font-bold mb-3 gradient-text-hero">You're all caught up!</h3>
+              <p className="text-muted-foreground mb-6 text-sm">Check back later for new profiles</p>
+              <Button 
+                onClick={() => setCurrentProfileIndex(0)} 
+                variant="gradient"
+                className="shadow-glow-primary"
+              >
+                <RotateCcw size={16} className="mr-2" />
+                Start Over
               </Button>
             </CardContent>
           </Card>
         )}
 
         {/* Card Stack */}
-        <div className="relative h-[500px] max-w-sm mx-auto mb-6">
+        <div className="relative h-[520px] max-w-sm mx-auto mb-6">
           {cardStack.map((profile, stackIndex) => {
             const isCurrentCard = stackIndex === 0;
             const zIndex = cardStack.length - stackIndex;
-            const scale = 1 - (stackIndex * 0.05);
-            const translateY = stackIndex * 8;
-            const opacity = 1 - (stackIndex * 0.3);
+            const scale = 1 - (stackIndex * 0.04);
+            const translateY = stackIndex * 6;
+            const opacity = 1 - (stackIndex * 0.25);
             
             return (
               <div
                 key={`${profile.id}-${stackIndex}`}
-                className="absolute inset-0 transition-all duration-300 ease-out"
+                className="absolute inset-0 transition-all duration-500 ease-out card-stack-item"
                 style={{
                   zIndex,
                   transform: `scale(${scale}) translateY(${translateY}px)`,
-                  opacity: opacity > 0.1 ? opacity : 0.1
+                  opacity: opacity > 0.15 ? opacity : 0.15
                 }}
               >
                 {isCurrentCard ? (
                   <SwipeableCard
                     leftAction={{
                       icon: X,
-                      color: '#ef4444',
+                      color: '#dc2626',
                       action: handleDislike
                     }}
                     rightAction={{
                       icon: Heart,
-                      color: '#10b981',
+                      color: '#16a34a',
                       action: handleLike
                     }}
-                    className="h-full shadow-2xl border-0 overflow-hidden"
+                    className="h-full border-0 overflow-hidden rounded-2xl [&>div]:border-0"
                     disabled={isCardAnimating}
+                    onSwipeProgress={handleSwipeProgress}
+                    onSwipeEnd={handleSwipeEnd}
                   >
                     <ProfileCardContent 
                       profile={profile} 
@@ -661,52 +747,52 @@ const Match = () => {
                     />
                   </SwipeableCard>
                 ) : (
-                  <Card className="h-full shadow-xl border-0 overflow-hidden bg-card/80 backdrop-blur-sm">
-                    <ProfileCardContent 
-                      profile={profile} 
-                      currentPhotoIndex={0}
-                      onPhotoTap={() => {}}
-                      onPhotoChange={() => {}}
-                      onPhotoError={handlePhotoError}
-                      getChatStyleColor={getChatStyleColor}
-                      navigate={navigate}
-                      isPreview={true}
-                    />
+                  <Card className="h-full shadow-xl border-0 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/50 rounded-2xl">
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-muted/40 rounded-full mx-auto mb-4 flex items-center justify-center">
+                          <Users size={24} className="text-muted-foreground/60" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted/40 rounded w-24 mx-auto"></div>
+                          <div className="h-3 bg-muted/30 rounded w-32 mx-auto"></div>
+                        </div>
+                      </div>
+                    </div>
                   </Card>
                 )}
               </div>
             );
           })}
           
-          {cardStack.length === 0 && (
-            <Card className="h-full shadow-xl flex items-center justify-center">
-              <CardContent className="text-center p-8">
-                <div className="text-6xl mb-4">🎉</div>
-                <h3 className="text-xl font-bold mb-2">You're all caught up!</h3>
-                <p className="text-muted-foreground mb-4">Check back later for new profiles</p>
-                <Button onClick={() => setCurrentProfileIndex(0)} variant="outline">
-                  <RotateCcw size={16} className="mr-2" />
-                  Start Over
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+
         </div>
 
         {/* Mobile Action Buttons */}
         {currentProfile && (
-          <div className="fixed bottom-20 left-0 right-0 z-20 bg-gradient-to-t from-background via-background/90 to-transparent pt-4">
-            <div className="flex justify-center items-center gap-4 px-6">
+          <div className="fixed bottom-28 left-0 right-0 z-20 pt-2 pb-0">
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none"></div>
+            <div className="relative flex justify-center items-center gap-3 px-6">
               {/* Pass Button */}
-              <Button
-                variant="glass"
-                size="icon-lg"
-                onClick={handleDislike}
-                disabled={isCardAnimating}
-                className="h-14 w-14 border-2 border-destructive/30 text-destructive hover:border-destructive hover:shadow-glow-destructive/30 interactive-scale disabled:opacity-50 disabled:scale-100"
-              >
-                <X size={20} />
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="glass"
+                  size="icon-lg"
+                  onClick={handleDislike}
+                  disabled={isCardAnimating}
+                  className="h-14 w-14 border-2 border-red-500/30 text-red-500 hover:border-red-500 hover:shadow-glow-destructive/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden dislike-button"
+                >
+                  <X size={20} className="relative z-10" />
+                  {/* Fill animation for dislike */}
+                  <div 
+                    className="absolute inset-0 bg-red-500 transition-all duration-300 ease-out action-button-fill"
+                    style={{
+                      transform: swipeDirection === 'left' && swipeProgress > 0 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
+                      transformOrigin: 'left center'
+                    }}
+                  />
+                </Button>
+              </div>
               
               {/* Super Like Button */}
               <Button
@@ -714,9 +800,10 @@ const Match = () => {
                 size="icon-lg"
                 onClick={handleSuperLike}
                 disabled={isCardAnimating}
-                className="h-12 w-12 border-2 border-blue-400/30 text-blue-400 hover:border-blue-400 hover:shadow-glow-blue/30 interactive-scale disabled:opacity-50 disabled:scale-100"
+                className="h-12 w-12 border-2 border-blue-400/30 text-blue-400 hover:border-blue-400 hover:shadow-glow-blue/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
-                <Star size={18} />
+                <Star size={18} className="relative z-10" />
+                <div className="absolute inset-0 bg-blue-400/20 rounded-full scale-0 hover:scale-100 transition-transform duration-300" />
               </Button>
               
               {/* Message Button */}
@@ -727,7 +814,7 @@ const Match = () => {
                 disabled={isCardAnimating}
                 className="h-16 w-16 shadow-glow-primary hover:scale-110 transition-spring relative overflow-hidden group disabled:opacity-50 disabled:scale-100"
               >
-                <MessageCircle size={22} className="group-hover:scale-110 transition-spring" />
+                <MessageCircle size={22} className="group-hover:scale-110 transition-spring relative z-10" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </Button>
               
@@ -737,30 +824,32 @@ const Match = () => {
                 size="icon-lg"
                 onClick={() => setShowConversationStarters(true)}
                 disabled={isCardAnimating}
-                className="h-12 w-12 border-2 border-purple-400/30 text-purple-400 hover:border-purple-400 hover:shadow-glow-purple/30 interactive-scale disabled:opacity-50 disabled:scale-100"
+                className="h-12 w-12 border-2 border-purple-400/30 text-purple-400 hover:border-purple-400 hover:shadow-glow-purple/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
-                <Zap size={18} />
+                <Zap size={18} className="relative z-10" />
+                <div className="absolute inset-0 bg-purple-400/20 rounded-full scale-0 hover:scale-100 transition-transform duration-300" />
               </Button>
               
               {/* Like Button */}
-              <Button
-                variant="glass"
-                size="icon-lg"
-                onClick={handleLike}
-                disabled={isCardAnimating}
-                className="h-14 w-14 border-2 border-green-400/30 text-green-400 hover:border-green-400 hover:shadow-glow-green/30 interactive-scale disabled:opacity-50 disabled:scale-100"
-              >
-                <Heart size={20} />
-              </Button>
-            </div>
-            
-            {/* Action Labels */}
-            <div className="flex justify-center items-center gap-4 px-6 mt-2">
-              <span className="text-xs text-muted-foreground w-14 text-center">Pass</span>
-              <span className="text-xs text-muted-foreground w-12 text-center">Super</span>
-              <span className="text-xs text-muted-foreground w-16 text-center">Message</span>
-              <span className="text-xs text-muted-foreground w-12 text-center">AI</span>
-              <span className="text-xs text-muted-foreground w-14 text-center">Like</span>
+              <div className="relative">
+                <Button
+                  variant="glass"
+                  size="icon-lg"
+                  onClick={handleLike}
+                  disabled={isCardAnimating}
+                  className="h-14 w-14 border-2 border-green-500/30 text-green-500 hover:border-green-500 hover:shadow-glow-green/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden like-button"
+                >
+                  <Heart size={20} className="relative z-10" />
+                  {/* Fill animation for like */}
+                  <div 
+                    className="absolute inset-0 bg-green-500 transition-all duration-300 ease-out action-button-fill"
+                    style={{
+                      transform: swipeDirection === 'right' && swipeProgress > 0 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
+                      transformOrigin: 'right center'
+                    }}
+                  />
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -819,8 +908,22 @@ const Match = () => {
 
       {/* Ice Breakers Modal */}
       {showIceBreakers && currentProfile && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[9998]" ref={iceBreakerModalRef}>
-          <Card className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl shadow-xl">
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[9998]" 
+          onClick={(e) => {
+            // Close modal if clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setShowIceBreakers(false);
+              setSelectedIceBreaker('');
+              setCustomMessage('');
+            }
+          }}
+        >
+          <Card 
+            ref={iceBreakerModalRef}
+            className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Choose an Ice Breaker</h3>
@@ -890,27 +993,49 @@ const Match = () => {
 
       {/* Smart Conversation Starters Modal */}
       {showConversationStarters && currentProfile && (
-        <div className="fixed inset-0 bg-black/80 z-[9998] flex items-center justify-center p-4" ref={conversationStartersModalRef}>
-          <div className="w-[calc(100vw-2rem)] max-w-sm max-h-[90vh] overflow-y-auto">
-            <SmartConversationStarters
-              profile={currentProfile}
-              onSelectStarter={(starter) => {
-                setCustomMessage(starter);
-                setShowConversationStarters(false);
-                handleSayHi();
-              }}
-              onClose={() => setShowConversationStarters(false)}
-            />
+        <div 
+          className="fixed inset-0 bg-black/80 z-[9998] flex items-center justify-center p-4" 
+          onClick={(e) => {
+            // Close modal if clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setShowConversationStarters(false);
+            }
+          }}
+        >
+          <div 
+            ref={conversationStartersModalRef}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-[calc(100vw-2rem)] max-w-sm max-h-[90vh] overflow-y-auto">
+              <SmartConversationStarters
+                profile={currentProfile}
+                onSelectStarter={(starter) => {
+                  setCustomMessage(starter);
+                  setShowConversationStarters(false);
+                  handleSayHi();
+                }}
+                onClose={() => setShowConversationStarters(false)}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* Filters Modal */}
       {filtersExpanded && (
-        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4"
+          onClick={(e) => {
+            // Close modal if clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setFiltersExpanded(false);
+            }
+          }}
+        >
           <Card 
             ref={filtersModalRef}
-            className="w-full max-w-md max-h-[85vh] overflow-hidden rounded-2xl animate-scale-in"
+            className="w-full max-w-md max-h-[85vh] overflow-hidden rounded-2xl animate-scale-in relative"
+            onClick={(e) => e.stopPropagation()}
           >
             <CardHeader className="pb-4 border-b">
               <div className="flex items-center justify-between">
@@ -920,9 +1045,6 @@ const Match = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">Smart Filters</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredProfiles.length} profiles found
-                    </p>
                   </div>
                 </div>
                 <Button
@@ -974,13 +1096,15 @@ const Match = () => {
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Ages</SelectItem>
-                        <SelectItem value="18-25">18-25</SelectItem>
-                        <SelectItem value="26-35">26-35</SelectItem>
-                        <SelectItem value="36-45">36-45</SelectItem>
-                        <SelectItem value="45+">45+</SelectItem>
-                      </SelectContent>
+                      <Portal>
+                        <SelectContent className="z-[999999]">
+                          <SelectItem value="all">All Ages</SelectItem>
+                          <SelectItem value="18-25">18-25</SelectItem>
+                          <SelectItem value="26-35">26-35</SelectItem>
+                          <SelectItem value="36-45">36-45</SelectItem>
+                          <SelectItem value="45+">45+</SelectItem>
+                        </SelectContent>
+                      </Portal>
                     </Select>
                   </div>
                   
@@ -993,13 +1117,15 @@ const Match = () => {
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any Distance</SelectItem>
-                        <SelectItem value="5">Within 5km</SelectItem>
-                        <SelectItem value="10">Within 10km</SelectItem>
-                        <SelectItem value="25">Within 25km</SelectItem>
-                        <SelectItem value="50">Within 50km</SelectItem>
-                      </SelectContent>
+                      <Portal>
+                        <SelectContent className="z-[999999]">
+                          <SelectItem value="all">Any Distance</SelectItem>
+                          <SelectItem value="5">Within 5km</SelectItem>
+                          <SelectItem value="10">Within 10km</SelectItem>
+                          <SelectItem value="25">Within 25km</SelectItem>
+                          <SelectItem value="50">Within 50km</SelectItem>
+                        </SelectContent>
+                      </Portal>
                     </Select>
                   </div>
                 </div>
@@ -1015,12 +1141,14 @@ const Match = () => {
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Levels</SelectItem>
-                        <SelectItem value="beginner">Beginner (A1-A2)</SelectItem>
-                        <SelectItem value="intermediate">Intermediate (B1-B2)</SelectItem>
-                        <SelectItem value="advanced">Advanced (C1-C2)</SelectItem>
-                      </SelectContent>
+                      <Portal>
+                        <SelectContent className="z-[999999]">
+                          <SelectItem value="all">All Levels</SelectItem>
+                          <SelectItem value="beginner">Beginner (A1-A2)</SelectItem>
+                          <SelectItem value="intermediate">Intermediate (B1-B2)</SelectItem>
+                          <SelectItem value="advanced">Advanced (C1-C2)</SelectItem>
+                        </SelectContent>
+                      </Portal>
                     </Select>
                   </div>
                   
@@ -1033,12 +1161,14 @@ const Match = () => {
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Styles</SelectItem>
-                        <SelectItem value="introverted">Introverted</SelectItem>
-                        <SelectItem value="balanced">Balanced</SelectItem>
-                        <SelectItem value="outgoing">Outgoing</SelectItem>
-                      </SelectContent>
+                      <Portal>
+                        <SelectContent className="z-[999999]">
+                          <SelectItem value="all">All Styles</SelectItem>
+                          <SelectItem value="introverted">Introverted</SelectItem>
+                          <SelectItem value="balanced">Balanced</SelectItem>
+                          <SelectItem value="outgoing">Outgoing</SelectItem>
+                        </SelectContent>
+                      </Portal>
                     </Select>
                   </div>
                 </div>
@@ -1053,12 +1183,13 @@ const Match = () => {
                     <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Default Setting</SelectItem>
-                      <SelectItem value="friendship">Friendship</SelectItem>
-                      <SelectItem value="relationship">Relationship</SelectItem>
-                      <SelectItem value="both">Both</SelectItem>
-                    </SelectContent>
+                    <Portal>
+                      <SelectContent className="z-[999999]">
+                        <SelectItem value="all">Both</SelectItem>
+                        <SelectItem value="friendship">Friendship</SelectItem>
+                        <SelectItem value="relationship">Relationship</SelectItem>
+                      </SelectContent>
+                    </Portal>
                   </Select>
                 </div>
 
@@ -1085,19 +1216,21 @@ const Match = () => {
                     <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Add interests" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Interests</SelectItem>
-                      <SelectItem value="Philosophy">Philosophy</SelectItem>
-                      <SelectItem value="Books">Books</SelectItem>
-                      <SelectItem value="Mindfulness">Mindfulness</SelectItem>
-                      <SelectItem value="Art">Art</SelectItem>
-                      <SelectItem value="Fitness">Fitness</SelectItem>
-                      <SelectItem value="Music">Music</SelectItem>
-                      <SelectItem value="Gaming">Gaming</SelectItem>
-                      <SelectItem value="Cooking">Cooking</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Travel">Travel</SelectItem>
-                    </SelectContent>
+                    <Portal>
+                      <SelectContent className="z-[999999]">
+                        <SelectItem value="all">All Interests</SelectItem>
+                        <SelectItem value="Philosophy">Philosophy</SelectItem>
+                        <SelectItem value="Books">Books</SelectItem>
+                        <SelectItem value="Mindfulness">Mindfulness</SelectItem>
+                        <SelectItem value="Art">Art</SelectItem>
+                        <SelectItem value="Fitness">Fitness</SelectItem>
+                        <SelectItem value="Music">Music</SelectItem>
+                        <SelectItem value="Gaming">Gaming</SelectItem>
+                        <SelectItem value="Cooking">Cooking</SelectItem>
+                        <SelectItem value="Technology">Technology</SelectItem>
+                        <SelectItem value="Travel">Travel</SelectItem>
+                      </SelectContent>
+                    </Portal>
                   </Select>
                   {filters.interests.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">

@@ -14,6 +14,7 @@ export interface RegisterData {
   genderIdentity: GenderIdentity;
   orientation: Orientation;
   lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
   customGender?: string;
   customOrientation?: string;
 }
@@ -148,6 +149,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       orientation: data.orientation,
 
       lookingForRelationship: data.lookingForRelationship,
+      lookingForFriendship: data.lookingForFriendship,
       customGender: data.customGender,
       customOrientation: data.customOrientation,
     };

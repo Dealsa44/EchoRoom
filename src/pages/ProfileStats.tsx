@@ -3,18 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Award, Languages, MessageCircle, Zap, Target, Heart, Calendar, Clock, Star, TrendingUp } from 'lucide-react';
+import TopBar from '@/components/layout/TopBar';
+import BottomNavigation from '@/components/layout/BottomNavigation';
 
 const ProfileStats = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-40 bg-card border-b border-border p-4">
-        <Button variant="ghost" onClick={() => navigate('/profile')}>
-          <ArrowLeft size={20} />
-          <span className="ml-2">Back to Profile</span>
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <TopBar title="Your Journey" showBack onBack={() => navigate('/profile')} />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         <Card>
@@ -173,6 +170,8 @@ const ProfileStats = () => {
           </CardContent>
         </Card>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };

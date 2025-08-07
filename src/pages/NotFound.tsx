@@ -18,7 +18,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   const handleGoHome = () => {
-    navigate(isAuthenticated ? '/home' : '/');
+    navigate(isAuthenticated ? '/match' : '/');
   };
 
   const handleGoBack = () => {

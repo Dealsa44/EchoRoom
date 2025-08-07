@@ -6,93 +6,93 @@
 
 @layer base {
   :root {
-    /* Core Background & Text - Enhanced with depth */
-    --background: 250 40% 98%;
-    --foreground: 240 15% 12%;
-    --surface: 250 35% 96%;
-    --surface-elevated: 250 45% 99%;
+    /* Core Background & Text - Enhanced with depth and better contrast */
+    --background: 250 30% 96%;
+    --foreground: 240 25% 8%;
+    --surface: 250 25% 92%;
+    --surface-elevated: 250 35% 98%;
 
-    /* Card & Surface Colors - More sophisticated layering */
-    --card: 250 50% 97%;
-    --card-foreground: 240 15% 12%;
-    --card-hover: 250 55% 99%;
+    /* Card & Surface Colors - More sophisticated layering with better contrast */
+    --card: 250 40% 94%;
+    --card-foreground: 240 25% 8%;
+    --card-hover: 250 45% 96%;
 
-    --popover: 250 50% 97%;
-    --popover-foreground: 240 15% 12%;
+    --popover: 250 40% 94%;
+    --popover-foreground: 240 25% 8%;
 
-    /* Enhanced Primary Palette - Dreamy Purple */
-    --primary: 260 55% 68%;
-    --primary-foreground: 260 15% 15%;
-    --primary-glow: 260 65% 78%;
-    --primary-soft: 260 45% 88%;
-    --primary-muted: 260 25% 92%;
+    /* Enhanced Primary Palette - Vibrant Purple with proper contrast */
+    --primary: 260 70% 55%;
+    --primary-foreground: 260 15% 98%;
+    --primary-glow: 260 80% 65%;
+    --primary-soft: 260 55% 82%;
+    --primary-muted: 260 35% 88%;
 
-    /* Secondary - Ethereal Blue */
-    --secondary: 210 75% 72%;
-    --secondary-foreground: 210 30% 18%;
-    --secondary-soft: 210 65% 85%;
-    --secondary-muted: 210 35% 90%;
+    /* Secondary - Vibrant Blue with better contrast */
+    --secondary: 210 85% 58%;
+    --secondary-foreground: 210 15% 98%;
+    --secondary-soft: 210 75% 78%;
+    --secondary-muted: 210 45% 85%;
 
-    /* Accent - Warm Coral */
-    --accent: 15 70% 75%;
-    --accent-foreground: 15 30% 20%;
-    --accent-soft: 15 60% 88%;
-    --accent-muted: 15 40% 92%;
+    /* Accent - Rich Coral with proper contrast */
+    --accent: 15 85% 62%;
+    --accent-foreground: 15 15% 98%;
+    --accent-soft: 15 75% 80%;
+    --accent-muted: 15 50% 87%;
 
-    /* Tertiary - Sage Green */
-    --tertiary: 140 45% 70%;
-    --tertiary-foreground: 140 30% 20%;
-    --tertiary-soft: 140 35% 85%;
-    --tertiary-muted: 140 25% 90%;
+    /* Tertiary - Rich Sage Green */
+    --tertiary: 140 60% 52%;
+    --tertiary-foreground: 140 15% 98%;
+    --tertiary-soft: 140 50% 75%;
+    --tertiary-muted: 140 35% 82%;
 
-    /* Muted Colors - Enhanced hierarchy */
-    --muted: 240 20% 90%;
-    --muted-foreground: 240 12% 42%;
-    --muted-soft: 240 15% 94%;
+    /* Muted Colors - Enhanced hierarchy with better contrast */
+    --muted: 240 30% 82%;
+    --muted-foreground: 240 20% 35%;
+    --muted-soft: 240 25% 88%;
 
-    /* Destructive - Gentle Red */
-    --destructive: 0 45% 65%;
-    --destructive-foreground: 0 20% 18%;
-    --destructive-soft: 0 35% 85%;
+    /* Destructive - Rich Red with proper contrast */
+    --destructive: 0 70% 52%;
+    --destructive-foreground: 0 15% 98%;
+    --destructive-soft: 0 55% 78%;
 
-    /* Success - Natural Green */
-    --success: 145 50% 65%;
-    --success-foreground: 145 30% 18%;
-    --success-soft: 145 40% 85%;
+    /* Success - Rich Green with proper contrast */
+    --success: 145 70% 48%;
+    --success-foreground: 145 15% 98%;
+    --success-soft: 145 60% 75%;
 
-    /* Warning - Warm Amber */
-    --warning: 45 85% 70%;
-    --warning-foreground: 45 30% 18%;
-    --warning-soft: 45 75% 85%;
+    /* Warning - Rich Amber with proper contrast */
+    --warning: 45 95% 58%;
+    --warning-foreground: 45 20% 15%;
+    --warning-soft: 45 85% 78%;
 
-    /* Borders & Inputs - More refined */
-    --border: 240 25% 85%;
-    --border-soft: 240 20% 90%;
-    --input: 240 35% 94%;
-    --input-focus: 240 40% 96%;
-    --ring: 260 55% 68%;
+    /* Borders & Inputs - More defined with better contrast */
+    --border: 240 35% 75%;
+    --border-soft: 240 25% 82%;
+    --input: 240 45% 88%;
+    --input-focus: 240 50% 90%;
+    --ring: 260 70% 55%;
 
-    /* Safe Mode Colors - Enhanced */
-    --safe-light: 55 75% 82%;
-    --safe-deep: 285 45% 75%;
-    --safe-learning: 165 55% 75%;
+    /* Safe Mode Colors - Enhanced with better contrast */
+    --safe-light: 55 80% 68%;
+    --safe-deep: 285 60% 62%;
+    --safe-learning: 165 70% 58%;
 
-    /* Enhanced Gradients - More sophisticated */
-    --gradient-primary: linear-gradient(135deg, hsl(260 55% 68%) 0%, hsl(260 65% 78%) 50%, hsl(270 60% 85%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 75% 72%) 0%, hsl(210 85% 82%) 50%, hsl(220 80% 90%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(15 70% 75%) 0%, hsl(25 75% 82%) 50%, hsl(35 70% 88%) 100%);
-    --gradient-tertiary: linear-gradient(135deg, hsl(140 45% 70%) 0%, hsl(150 50% 78%) 50%, hsl(160 45% 85%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(260 55% 68%) 0%, hsl(210 75% 72%) 25%, hsl(15 70% 75%) 50%, hsl(140 45% 70%) 75%, hsl(270 60% 85%) 100%);
-    --gradient-glass: linear-gradient(135deg, hsl(250 50% 97% / 0.8) 0%, hsl(250 45% 99% / 0.6) 100%);
-    --gradient-mesh: conic-gradient(from 0deg at 50% 50%, hsl(260 55% 68%), hsl(210 75% 72%), hsl(15 70% 75%), hsl(140 45% 70%), hsl(260 55% 68%));
+    /* Enhanced Gradients - More vibrant and sophisticated */
+    --gradient-primary: linear-gradient(135deg, hsl(260 70% 55%) 0%, hsl(260 80% 65%) 50%, hsl(270 75% 75%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(210 85% 58%) 0%, hsl(210 95% 68%) 50%, hsl(220 90% 78%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(15 85% 62%) 0%, hsl(25 90% 70%) 50%, hsl(35 85% 78%) 100%);
+    --gradient-tertiary: linear-gradient(135deg, hsl(140 60% 52%) 0%, hsl(150 70% 62%) 50%, hsl(160 65% 72%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(260 70% 55%) 0%, hsl(210 85% 58%) 25%, hsl(15 85% 62%) 50%, hsl(140 60% 52%) 75%, hsl(270 75% 75%) 100%);
+    --gradient-glass: linear-gradient(135deg, hsl(250 40% 94% / 0.85) 0%, hsl(250 35% 98% / 0.75) 100%);
+    --gradient-mesh: conic-gradient(from 0deg at 50% 50%, hsl(260 70% 55%), hsl(210 85% 58%), hsl(15 85% 62%), hsl(140 60% 52%), hsl(260 70% 55%));
 
-    /* Enhanced Shadows - More depth and sophistication */
-    --shadow-soft: 0 2px 8px -2px hsl(260 55% 68% / 0.08), 0 4px 16px -4px hsl(260 55% 68% / 0.06);
-    --shadow-medium: 0 4px 16px -4px hsl(260 55% 68% / 0.12), 0 8px 32px -8px hsl(260 55% 68% / 0.08);
-    --shadow-large: 0 8px 32px -8px hsl(260 55% 68% / 0.16), 0 16px 64px -16px hsl(260 55% 68% / 0.12);
-    --shadow-glow: 0 0 32px hsl(260 65% 78% / 0.25), 0 0 64px hsl(260 65% 78% / 0.15);
-    --shadow-colored: 0 4px 16px -4px hsl(var(--primary) / 0.15);
-    --shadow-inner: inset 0 2px 4px 0 hsl(260 55% 68% / 0.06);
+    /* Enhanced Shadows - More depth and better visibility */
+    --shadow-soft: 0 2px 8px -2px hsl(240 25% 8% / 0.12), 0 4px 16px -4px hsl(240 25% 8% / 0.08);
+    --shadow-medium: 0 4px 16px -4px hsl(240 25% 8% / 0.18), 0 8px 32px -8px hsl(240 25% 8% / 0.12);
+    --shadow-large: 0 8px 32px -8px hsl(240 25% 8% / 0.24), 0 16px 64px -16px hsl(240 25% 8% / 0.16);
+    --shadow-glow: 0 0 32px hsl(260 80% 65% / 0.35), 0 0 64px hsl(260 80% 65% / 0.25);
+    --shadow-colored: 0 4px 16px -4px hsl(var(--primary) / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 hsl(240 25% 8% / 0.08);
 
     /* Advanced Animation Curves */
     --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -101,9 +101,9 @@
     --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --transition-snappy: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Glass Morphism */
-    --glass-bg: hsl(250 50% 97% / 0.8);
-    --glass-border: hsl(250 30% 88% / 0.3);
+    /* Glass Morphism - Enhanced for better visibility */
+    --glass-bg: hsl(250 40% 94% / 0.85);
+    --glass-border: hsl(240 35% 75% / 0.4);
     --glass-backdrop: blur(16px) saturate(180%);
 
     /* Typography Scale */
@@ -396,18 +396,21 @@
   background: var(--glass-bg);
   backdrop-filter: var(--glass-backdrop);
   border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
 }
 
 .glass-strong {
-  background: hsl(var(--card) / 0.9);
+  background: hsl(var(--card) / 0.92);
   backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid hsl(var(--border) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: var(--shadow-medium);
 }
 
 .glass-subtle {
-  background: hsl(var(--card) / 0.6);
+  background: hsl(var(--card) / 0.7);
   backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid hsl(var(--border) / 0.3);
+  border: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Enhanced Shadow Classes */
@@ -421,6 +424,22 @@
 
 .shadow-glow-accent {
   box-shadow: 0 0 24px hsl(var(--accent) / 0.3);
+}
+
+.shadow-glow-destructive {
+  box-shadow: 0 0 24px hsl(var(--destructive) / 0.3);
+}
+
+.shadow-glow-green {
+  box-shadow: 0 0 24px hsl(var(--success) / 0.3);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 24px hsl(var(--secondary) / 0.3);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 24px hsl(var(--primary) / 0.3);
 }
 
 .shadow-inner-soft {
@@ -589,12 +608,36 @@
   animation: mesh-animation 15s ease infinite;
 }
 
+/* Subtle App-themed Background */
+.app-gradient-bg {
+  background: linear-gradient(135deg, 
+    hsl(var(--background)) 0%, 
+    hsl(var(--surface)) 25%, 
+    hsl(var(--card)) 50%, 
+    hsl(var(--surface-elevated)) 75%, 
+    hsl(var(--background)) 100%);
+  background-size: 400% 400%;
+  animation: app-gradient-animation 20s ease infinite;
+}
+
 @keyframes mesh-animation {
   0%, 100% {
     background-position: 0% 50%;
   }
   50% {
     background-position: 100% 50%;
+  }
+}
+
+@keyframes app-gradient-animation {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  33% {
+    background-position: 100% 50%;
+  }
+  66% {
+    background-position: 50% 100%;
   }
 }
 
@@ -614,6 +657,8 @@
   /* Improved touch interactions */
   button, [role="button"] {
     touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
   }
   
   /* Better focus visibility on mobile */
@@ -621,4 +666,43 @@
     outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
   }
+
+  /* Enhanced mobile swipe animations */
+  .swipe-card {
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Mobile button press effects */
+  .mobile-button-press {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+  }
+
+  .mobile-button-press:active {
+    transform: scale(0.9);
+  }
+
+  /* Mobile card stack animations */
+  .card-stack-item {
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Mobile action button animations */
+  .action-button-fill {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Mobile haptic feedback simulation */
+  .haptic-feedback {
+    animation: haptic-pulse 0.1s ease-out;
+  }
+}
+
+@keyframes haptic-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
 }

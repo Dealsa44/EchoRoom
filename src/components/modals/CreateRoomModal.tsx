@@ -75,6 +75,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
               placeholder="e.g., Midnight Philosophers"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              autoComplete="off"
               required
             />
           </div>
@@ -103,6 +104,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
               placeholder="What will you discuss in this room?"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              autoComplete="off"
               className="min-h-20"
               required
             />

@@ -69,8 +69,10 @@ const ChatRooms = () => {
       description: "You can now access this room from your messages.",
     });
     
-    // Auto-navigate to the joined room
-    navigate(`/chat-room/${roomId}`);
+    // Auto-navigate to the joined room with source parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from') || 'community';
+    navigate(`/chat-room/${roomId}?from=${from}`);
   };
 
 
@@ -84,7 +86,19 @@ const ChatRooms = () => {
         <div className="absolute top-1/2 right-6 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
-      <TopBar title="Chat Rooms" />
+      <TopBar 
+        title="Chat Rooms" 
+        showBack={true}
+        onBack={() => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const from = urlParams.get('from');
+          if (from === 'community') {
+            navigate('/community');
+          } else {
+            navigate(-1);
+          }
+        }}
+      />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Header */}
@@ -103,6 +117,7 @@ const ChatRooms = () => {
               placeholder="Search rooms by topic, interest..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              autoComplete="off"
               className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
             />
           </div>
