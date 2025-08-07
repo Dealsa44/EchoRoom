@@ -7,8 +7,9 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  dateOfBirth: string; // ISO date string (YYYY-MM-DD)
   languageProficiency: string;
-  chatStyle: 'introverted' | 'balanced' | 'outgoing';
+  chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   interests: string[];
   // Fields for gender and orientation
   genderIdentity: GenderIdentity;
@@ -23,6 +24,25 @@ export interface LoginData {
   email: string;
   password: string;
 }
+
+// Utility functions
+export const calculateAge = (dateOfBirth: string): number => {
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+export const validateAge = (dateOfBirth: string): boolean => {
+  const age = calculateAge(dateOfBirth);
+  return age >= 18;
+};
 
 // Validation functions
 export const validateEmail = (email: string): boolean => {
@@ -105,8 +125,9 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
     const usernameErrors = validateUsername(data.username);
     const emailErrors = validateEmail(data.email) ? [] : ['Please enter a valid email address'];
     const passwordErrors = validatePassword(data.password);
+    const ageErrors = validateAge(data.dateOfBirth) ? [] : ['You must be at least 18 years old to register'];
     
-    errors.push(...usernameErrors, ...emailErrors, ...passwordErrors);
+    errors.push(...usernameErrors, ...emailErrors, ...passwordErrors, ...ageErrors);
     
     if (data.interests.length < 3) {
       errors.push('Please select at least 3 interests');
@@ -144,6 +165,9 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       safeMode: 'light',
       anonymousMode: false,
       aiAssistant: true,
+      // Date of birth and calculated age
+      dateOfBirth: data.dateOfBirth,
+      age: calculateAge(data.dateOfBirth),
       // New fields for gender and orientation
       genderIdentity: data.genderIdentity,
       orientation: data.orientation,

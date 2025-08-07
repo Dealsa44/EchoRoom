@@ -10,7 +10,7 @@ export interface Profile {
   bio: string;
   interests: string[];
   languageLevel: string;
-  chatStyle: 'introverted' | 'balanced' | 'outgoing';
+  chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   lastActive: string;
   isOnline: boolean;
   sharedInterests: number;

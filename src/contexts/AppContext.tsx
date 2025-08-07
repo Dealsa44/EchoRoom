@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
 
 type SafeMode = 'light' | 'deep' | 'learning';
-type ChatStyle = 'introverted' | 'balanced' | 'outgoing';
+type ChatStyle = 'introvert' | 'ambievert' | 'extrovert';
 type Language = 'en' | 'ka';
 
 // New types for gender and orientation features
@@ -80,6 +80,9 @@ export interface User {
   safeMode: SafeMode;
   anonymousMode: boolean;
   aiAssistant: boolean;
+  // Date of birth and calculated age
+  dateOfBirth: string; // ISO date string (YYYY-MM-DD)
+  age: number; // Calculated from dateOfBirth
   // Fields for gender and orientation
   genderIdentity: GenderIdentity;
   orientation: Orientation;

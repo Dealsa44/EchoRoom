@@ -13,6 +13,8 @@ import { GenderIdentity, Orientation } from '@/contexts/AppContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import TopBar from '@/components/layout/TopBar';
+import BottomNavigation from '@/components/layout/BottomNavigation';
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ const ProfileEdit = () => {
     username: user?.username || '',
     email: user?.email || '',
     bio: user?.bio || '',
+    interests: user?.interests || [] as string[],
     currentPassword: '',
     newPassword: '',
     // New fields for identity and preferences
@@ -47,6 +50,7 @@ const ProfileEdit = () => {
         username: formData.username,
         email: formData.email,
         bio: formData.bio,
+        interests: formData.interests,
         // New fields for identity and preferences
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
@@ -100,12 +104,7 @@ const ProfileEdit = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="sticky top-0 z-40 bg-card border-b border-border p-4">
-        <Button variant="ghost" onClick={() => navigate('/profile')}>
-          <ArrowLeft size={20} />
-          <span className="ml-2">Back</span>
-        </Button>
-      </div>
+      <TopBar title="Edit Profile" showBack onBack={() => navigate('/profile')} />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         <Card>
@@ -152,6 +151,59 @@ const ProfileEdit = () => {
                   placeholder="Tell us about yourself..."
                   autoComplete="off"
                 />
+              </div>
+
+              {/* Interests Section */}
+              <div className="space-y-2">
+                <Label>Interests</Label>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {['Philosophy', 'Books', 'Art', 'Science', 'Technology', 'Music', 
+                      'Travel', 'Mindfulness', 'Languages', 'Psychology', 'Nature', 'Culture'].map((interest) => (
+                      <Button
+                        key={interest}
+                        type="button"
+                        variant={formData.interests.includes(interest) ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            interests: prev.interests.includes(interest)
+                              ? prev.interests.filter(i => i !== interest)
+                              : [...prev.interests, interest]
+                          }));
+                        }}
+                        className="text-xs"
+                      >
+                        {interest}
+                      </Button>
+                    ))}
+                  </div>
+                  {formData.interests.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Selected ({formData.interests.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.interests.map((interest) => (
+                          <Badge
+                            key={interest}
+                            variant="secondary"
+                            className="text-xs cursor-pointer hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                interests: prev.interests.filter(i => i !== interest)
+                              }));
+                            }}
+                          >
+                            {interest} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Identity & Preferences Section */}
@@ -338,6 +390,8 @@ const ProfileEdit = () => {
           </CardContent>
         </Card>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };

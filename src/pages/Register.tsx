@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
-import { registerUser, RegisterData } from '@/lib/auth';
+import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
 import { GenderIdentity, Orientation } from '@/contexts/AppContext';
 
 type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'preferences';
@@ -25,6 +25,7 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
+    dateOfBirth: '',
     languageProficiency: '',
     chatStyle: '',
     interests: [] as string[],
@@ -71,7 +72,7 @@ const Register = () => {
     },
     {
       key: 'preferences',
-      title: 'Chat Style',
+      title: 'Personality',
       description: 'Choose how you prefer to communicate',
       icon: <MessageCircle className="w-5 h-5" />
     }
@@ -125,8 +126,9 @@ const Register = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        dateOfBirth: formData.dateOfBirth,
         languageProficiency: formData.languageProficiency,
-        chatStyle: formData.chatStyle as 'introverted' | 'balanced' | 'outgoing',
+        chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
         interests: formData.interests,
         // Fields for gender and orientation
         genderIdentity: formData.genderIdentity,
@@ -219,6 +221,17 @@ const Register = () => {
         }
         break;
         
+      case 'dateOfBirth':
+        if (!value) {
+          newErrors.dateOfBirth = 'Date of birth is required';
+        } else if (!validateAge(value)) {
+          const age = calculateAge(value);
+          newErrors.dateOfBirth = `You must be at least 18 years old to register (you are ${age} years old)`;
+        } else {
+          delete newErrors.dateOfBirth;
+        }
+        break;
+        
       case 'languageProficiency':
         if (!value) {
           newErrors.languageProficiency = 'Please select your language proficiency level';
@@ -237,7 +250,7 @@ const Register = () => {
         
       case 'chatStyle':
         if (!value) {
-          newErrors.chatStyle = 'Please select your preferred chat style';
+          newErrors.chatStyle = 'Please select your personality type';
         } else {
           delete newErrors.chatStyle;
         }
@@ -277,6 +290,13 @@ const Register = () => {
         } else if (!/\d/.test(formData.password)) {
           newErrors.password = 'Password must contain at least one number';
         }
+        
+        if (!formData.dateOfBirth) {
+          newErrors.dateOfBirth = 'Date of birth is required';
+        } else if (!validateAge(formData.dateOfBirth)) {
+          const age = calculateAge(formData.dateOfBirth);
+          newErrors.dateOfBirth = `You must be at least 18 years old to register (you are ${age} years old)`;
+        }
         break;
         
       case 'profile':
@@ -301,7 +321,7 @@ const Register = () => {
         break;
       case 'preferences':
         if (!formData.chatStyle) {
-          newErrors.chatStyle = 'Please select your preferred chat style';
+          newErrors.chatStyle = 'Please select your personality type';
         }
         break;
     }
@@ -313,11 +333,12 @@ const Register = () => {
   const canProceed = () => {
     switch (currentStage) {
       case 'account':
-        return formData.username && formData.email && formData.password && 
+        return formData.username && formData.email && formData.password && formData.dateOfBirth &&
                formData.username.length >= 3 && 
                /^[a-zA-Z0-9_]+$/.test(formData.username) &&
                /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
                formData.password.length >= 8 &&
+               validateAge(formData.dateOfBirth) &&
                /[A-Z]/.test(formData.password) &&
                /[a-z]/.test(formData.password) &&
                /\d/.test(formData.password);
@@ -431,6 +452,38 @@ const Register = () => {
                              {errors.password && touched.password && (
                  <p className="text-sm text-red-500">{errors.password}</p>
                )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData(prev => ({ ...prev, dateOfBirth: value }));
+                  if (touched.dateOfBirth) {
+                    validateField('dateOfBirth', value);
+                  }
+                }}
+                onBlur={() => {
+                  setTouched(prev => ({ ...prev, dateOfBirth: true }));
+                  validateField('dateOfBirth', formData.dateOfBirth);
+                }}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                required
+                className={errors.dateOfBirth ? 'border-red-500' : ''}
+              />
+              {errors.dateOfBirth && touched.dateOfBirth && (
+                <p className="text-sm text-red-500">{errors.dateOfBirth}</p>
+              )}
+              {formData.dateOfBirth && validateAge(formData.dateOfBirth) && (
+                <p className="text-sm text-green-600">
+                  Age: {calculateAge(formData.dateOfBirth)} years old
+                </p>
+              )}
             </div>
           </div>
         );
@@ -610,7 +663,7 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label>Chat Style</Label>
+               <Label>Personality</Label>
                                <Select 
                   name="chatStyle"
                   value={formData.chatStyle} 
@@ -623,9 +676,9 @@ const Register = () => {
                     <SelectValue placeholder="How do you prefer to chat?" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="introverted">Introverted - Thoughtful & Deep</SelectItem>
-                    <SelectItem value="balanced">Balanced - Mix of Both</SelectItem>
-                    <SelectItem value="outgoing">Outgoing - Social & Fun</SelectItem>
+                    <SelectItem value="introvert">Introvert - Thoughtful & Deep</SelectItem>
+                    <SelectItem value="ambievert">Ambievert - Mix of Both</SelectItem>
+                    <SelectItem value="extrovert">Extrovert - Social & Fun</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.chatStyle && (

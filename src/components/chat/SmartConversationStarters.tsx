@@ -202,20 +202,20 @@ const SmartConversationStarters = ({ profile, onSelectStarter, onClose }: SmartC
       });
     }
 
-    // Personality-based starters based on chat style
+    // Personality-based starters based on personality type
     const personalityStarters = {
-      'introverted': [
+      'introvert': [
         `I appreciate thoughtful conversation too. What's a topic you could discuss for hours?`,
         `Fellow deep thinker! What's something you've been pondering lately?`,
         `I value meaningful exchanges. What's a question that reveals someone's true nature?`
       ],
-      'balanced': [
-        `I love your balanced approach to conversation! What brings out your most animated side?`,
-        `Balanced personalities are fascinating. What's your secret to reading the room?`,
+      'ambievert': [
+        `I love your ambievert approach to conversation! What brings out your most animated side?`,
+        `Ambievert personalities are fascinating. What's your secret to reading the room?`,
         `You seem wonderfully adaptable. What's your favorite type of social setting?`
       ],
-      'outgoing': [
-        `Your outgoing energy is infectious! What's the best conversation you've had recently?`,
+      'extrovert': [
+        `Your extrovert energy is infectious! What's the best conversation you've had recently?`,
         `I love meeting vibrant people! What's your favorite way to connect with others?`,
         `Your social nature intrigues me. What's the most interesting person you've met?`
       ]
@@ -229,7 +229,7 @@ const SmartConversationStarters = ({ profile, onSelectStarter, onClose }: SmartC
         type: 'personality_match',
         category: 'Personality',
         starter: randomStarter,
-        explanation: `Matches your ${profile.chatStyle} style`,
+        explanation: `Matches your ${profile.chatStyle} personality`,
         icon: Heart,
         confidence: 75
       });

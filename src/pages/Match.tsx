@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { Portal } from '@radix-ui/react-portal';
 import SwipeableCard from '@/components/ui/SwipeableCard';
 import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Users, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck } from 'lucide-react';
@@ -21,8 +23,10 @@ interface Filters {
   languageLevel: string;
   chatStyle: string;
   relationshipIntent: string;
-  ageRange: string;
-  distance: string;
+  ageRange: [number, number]; // [min, max] for age range slider
+  anyAge: boolean; // toggle for "any age" option
+  distance: number; // single value for distance slider (0 = any distance)
+  anyDistance: boolean; // toggle for "any distance" option
   onlineOnly: boolean;
 }
 
@@ -51,10 +55,23 @@ const Match = () => {
     languageLevel: 'all',
     chatStyle: 'all',
     relationshipIntent: 'all',
-    ageRange: 'all',
-    distance: 'all',
+    ageRange: [18, 100], // default to full age range
+    anyAge: true, // default to any age
+    distance: 50, // default distance in km
+    anyDistance: true, // default to any distance
     onlineOnly: false
   });
+
+  // Track which select dropdowns are open to prevent modal from closing
+  const [openSelects, setOpenSelects] = useState({
+    languageLevel: false,
+    chatStyle: false,
+    relationshipIntent: false,
+    interests: false
+  });
+
+  // Check if any select is currently open
+  const anySelectOpen = Object.values(openSelects).some(isOpen => isOpen);
 
   // Handle click outside to close modals
   useEffect(() => {
@@ -67,26 +84,14 @@ const Match = () => {
       if (showConversationStarters && conversationStartersModalRef.current && !conversationStartersModalRef.current.contains(event.target as Node)) {
         setShowConversationStarters(false);
       }
-      if (filtersExpanded && filtersModalRef.current && !filtersModalRef.current.contains(event.target as Node)) {
-        // Check if the click is on a dropdown content (which is rendered in a portal)
-        const target = event.target as Element;
-        const isDropdownContent = target.closest('[data-radix-popper-content-wrapper]') || 
-                                  target.closest('[data-radix-select-content]') ||
-                                  target.closest('[role="listbox"]') ||
-                                  target.closest('[data-radix-select-viewport]') ||
-                                  target.closest('[data-radix-select-item]');
-        
-        if (!isDropdownContent) {
-          setFiltersExpanded(false);
-        }
-      }
+      // Filters modal will be handled by its own backdrop click handler
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showIceBreakers, showConversationStarters, filtersExpanded]);
+  }, [showIceBreakers, showConversationStarters, filtersExpanded, anySelectOpen]);
 
   // Prevent body scroll when modals are open
   useEffect(() => {
@@ -191,26 +196,17 @@ const Match = () => {
       }
 
       // Check age filter
-      if (filters.ageRange !== 'all') {
+      if (!filters.anyAge) {
         const age = profile.age;
-        if (filters.ageRange === '18-25' && (age < 18 || age > 25)) {
-          return false;
-        }
-        if (filters.ageRange === '26-35' && (age < 26 || age > 35)) {
-          return false;
-        }
-        if (filters.ageRange === '36-45' && (age < 36 || age > 45)) {
-          return false;
-        }
-        if (filters.ageRange === '45+' && age < 45) {
+        const [minAge, maxAge] = filters.ageRange;
+        if (age < minAge || age > maxAge) {
           return false;
         }
       }
 
       // Check distance filter
-      if (filters.distance !== 'all') {
-        const maxDistance = parseInt(filters.distance);
-        if (profile.distance > maxDistance) {
+      if (!filters.anyDistance) {
+        if (profile.distance > filters.distance) {
           return false;
         }
       }
@@ -396,9 +392,9 @@ const Match = () => {
 
   const getChatStyleColor = (style: string) => {
     switch (style) {
-      case 'introverted': return 'bg-blue-100 text-blue-800';
-      case 'balanced': return 'bg-green-100 text-green-800';
-      case 'outgoing': return 'bg-orange-100 text-orange-800';
+      case 'introvert': return 'bg-blue-100 text-blue-800';
+      case 'ambievert': return 'bg-green-100 text-green-800';
+      case 'extrovert': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -409,16 +405,35 @@ const Match = () => {
       languageLevel: 'all',
       chatStyle: 'all',
       relationshipIntent: 'all',
-      ageRange: 'all',
-      distance: 'all',
+      ageRange: [18, 100],
+      anyAge: true,
+      distance: 50,
+      anyDistance: true,
       onlineOnly: false
     });
     setCurrentProfileIndex(0);
   };
 
-  const activeFiltersCount = Object.values(filters).filter(value => 
-    value !== 'all' && value !== false && (Array.isArray(value) ? value.length > 0 : true)
-  ).length;
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'ageRange') {
+      // Age range is active if anyAge is false
+      return !filters.anyAge;
+    }
+    if (key === 'anyAge') {
+      // Don't count anyAge itself as a filter
+      return false;
+    }
+    if (key === 'distance') {
+      // Distance is active if anyDistance is false
+      return !filters.anyDistance;
+    }
+    if (key === 'anyDistance') {
+      // Don't count anyDistance itself as a filter
+      return false;
+    }
+    // Standard logic for other filters
+    return value !== 'all' && value !== false && (Array.isArray(value) ? value.length > 0 : true);
+  }).length;
 
   const handlePhotoChange = (direction: 'next' | 'prev') => {
     if (!currentProfile) return;
@@ -1026,8 +1041,8 @@ const Match = () => {
         <div 
           className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4"
           onClick={(e) => {
-            // Close modal if clicking on backdrop
-            if (e.target === e.currentTarget) {
+            // Close modal if clicking on backdrop, but not if any select is open
+            if (e.target === e.currentTarget && !anySelectOpen) {
               setFiltersExpanded(false);
             }
           }}
@@ -1086,58 +1101,96 @@ const Match = () => {
                 </div>
 
                 {/* Age and Distance */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-6">
+                  {/* Age Range Slider */}
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-3 block">Age Range</label>
-                    <Select value={filters.ageRange} onValueChange={(value) => {
-                      setFilters(prev => ({ ...prev, ageRange: value }));
-                      setCurrentProfileIndex(0);
-                    }}>
-                      <SelectTrigger className="h-11 rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <Portal>
-                        <SelectContent className="z-[999999]">
-                          <SelectItem value="all">All Ages</SelectItem>
-                          <SelectItem value="18-25">18-25</SelectItem>
-                          <SelectItem value="26-35">26-35</SelectItem>
-                          <SelectItem value="36-45">36-45</SelectItem>
-                          <SelectItem value="45+">45+</SelectItem>
-                        </SelectContent>
-                      </Portal>
-                    </Select>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium text-foreground">
+                        Age Range: {filters.anyAge ? 'Any age' : `${filters.ageRange[0]} - ${filters.ageRange[1]} years`}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Any age</span>
+                        <Switch
+                          checked={filters.anyAge}
+                          onCheckedChange={(checked) => {
+                            setFilters(prev => ({ ...prev, anyAge: checked }));
+                            setCurrentProfileIndex(0);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {!filters.anyAge && (
+                      <div className="px-2">
+                        <Slider
+                          value={filters.ageRange}
+                          onValueChange={(value) => {
+                            setFilters(prev => ({ ...prev, ageRange: value as [number, number] }));
+                            setCurrentProfileIndex(0);
+                          }}
+                          min={18}
+                          max={100}
+                          step={1}
+                          className="mb-2"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>18</span>
+                          <span>100</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
+
+                  {/* Distance Filter */}
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-3 block">Distance</label>
-                    <Select value={filters.distance} onValueChange={(value) => {
-                      setFilters(prev => ({ ...prev, distance: value }));
-                      setCurrentProfileIndex(0);
-                    }}>
-                      <SelectTrigger className="h-11 rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <Portal>
-                        <SelectContent className="z-[999999]">
-                          <SelectItem value="all">Any Distance</SelectItem>
-                          <SelectItem value="5">Within 5km</SelectItem>
-                          <SelectItem value="10">Within 10km</SelectItem>
-                          <SelectItem value="25">Within 25km</SelectItem>
-                          <SelectItem value="50">Within 50km</SelectItem>
-                        </SelectContent>
-                      </Portal>
-                    </Select>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium text-foreground">
+                        Distance: {filters.anyDistance ? 'Any distance' : `Within ${filters.distance} km`}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Any distance</span>
+                        <Switch
+                          checked={filters.anyDistance}
+                          onCheckedChange={(checked) => {
+                            setFilters(prev => ({ ...prev, anyDistance: checked }));
+                            setCurrentProfileIndex(0);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {!filters.anyDistance && (
+                      <div className="px-2">
+                        <Slider
+                          value={[filters.distance]}
+                          onValueChange={(value) => {
+                            setFilters(prev => ({ ...prev, distance: value[0] }));
+                            setCurrentProfileIndex(0);
+                          }}
+                          min={1}
+                          max={300}
+                          step={1}
+                          className="mb-2"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>1 km</span>
+                          <span>300 km</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Language and Chat Style */}
+                {/* Language and Personality */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-foreground mb-3 block">Language Level</label>
-                    <Select value={filters.languageLevel} onValueChange={(value) => {
-                      setFilters(prev => ({ ...prev, languageLevel: value }));
-                      setCurrentProfileIndex(0);
-                    }}>
+                    <Select 
+                      value={filters.languageLevel} 
+                      onValueChange={(value) => {
+                        setFilters(prev => ({ ...prev, languageLevel: value }));
+                        setCurrentProfileIndex(0);
+                      }}
+                      onOpenChange={(open) => setOpenSelects(prev => ({ ...prev, languageLevel: open }))}
+                    >
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
@@ -1153,20 +1206,24 @@ const Match = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-3 block">Chat Style</label>
-                    <Select value={filters.chatStyle} onValueChange={(value) => {
-                      setFilters(prev => ({ ...prev, chatStyle: value }));
-                      setCurrentProfileIndex(0);
-                    }}>
+                    <label className="text-sm font-medium text-foreground mb-3 block">Personality</label>
+                    <Select 
+                      value={filters.chatStyle} 
+                      onValueChange={(value) => {
+                        setFilters(prev => ({ ...prev, chatStyle: value }));
+                        setCurrentProfileIndex(0);
+                      }}
+                      onOpenChange={(open) => setOpenSelects(prev => ({ ...prev, chatStyle: open }))}
+                    >
                       <SelectTrigger className="h-11 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <Portal>
                         <SelectContent className="z-[999999]">
                           <SelectItem value="all">All Styles</SelectItem>
-                          <SelectItem value="introverted">Introverted</SelectItem>
-                          <SelectItem value="balanced">Balanced</SelectItem>
-                          <SelectItem value="outgoing">Outgoing</SelectItem>
+                          <SelectItem value="introvert">Introvert</SelectItem>
+                          <SelectItem value="ambievert">Ambievert</SelectItem>
+                          <SelectItem value="extrovert">Extrovert</SelectItem>
                         </SelectContent>
                       </Portal>
                     </Select>
@@ -1179,7 +1236,11 @@ const Match = () => {
                     Looking for
                     <Info size={14} className="text-muted-foreground" />
                   </label>
-                  <Select value={filters.relationshipIntent} onValueChange={handleRelationshipFilterChange}>
+                  <Select 
+                    value={filters.relationshipIntent} 
+                    onValueChange={handleRelationshipFilterChange}
+                    onOpenChange={(open) => setOpenSelects(prev => ({ ...prev, relationshipIntent: open }))}
+                  >
                     <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
@@ -1212,6 +1273,7 @@ const Match = () => {
                       }
                       setCurrentProfileIndex(0);
                     }}
+                    onOpenChange={(open) => setOpenSelects(prev => ({ ...prev, interests: open }))}
                   >
                     <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Add interests" />

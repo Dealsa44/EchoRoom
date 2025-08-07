@@ -270,11 +270,15 @@ const Profile = () => {
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
+                    <p className="text-muted-foreground">Age</p>
+                    <p className="font-medium">{profileData.age} years old</p>
+                  </div>
+                  <div>
                     <p className="text-muted-foreground">Language Level</p>
                     <p className="font-medium">{profileData.languageLevel}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Chat Style</p>
+                    <p className="text-muted-foreground">Personality</p>
                     <p className="font-medium capitalize">{profileData.chatStyle}</p>
                   </div>
                   <div>
@@ -289,11 +293,21 @@ const Profile = () => {
                         : 'Not specified'}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Profile</p>
-                    <p className="font-medium">{profileData.profileCompletion}% complete</p>
-                  </div>
                 </div>
+                
+                {/* Interests Section */}
+                {profileData.interests && profileData.interests.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Interests</p>
+                    <div className="flex flex-wrap gap-2">
+                      {profileData.interests.map((interest, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {interest}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {profileData.iceBreakerAnswers && Object.keys(profileData.iceBreakerAnswers).length > 0 && (
                   <div>
