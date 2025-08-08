@@ -1,5 +1,12 @@
 // Shared type definitions for EchoRoom app
 
+export interface ProfileQuestion {
+  id: string;
+  question: string;
+  category: 'funny' | 'flirty' | 'deep' | 'casual' | 'creative';
+  answer?: string;
+}
+
 export interface Profile {
   id: number;
   name: string;
@@ -22,6 +29,7 @@ export interface Profile {
   isVerified: boolean;
   profileCompletion: number;
   iceBreakerAnswers: Record<string, string>;
+  profileQuestions: ProfileQuestion[];
 }
 
 export interface ChatMessage {

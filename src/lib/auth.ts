@@ -1,4 +1,5 @@
 import { User, GenderIdentity, Orientation } from '@/contexts/AppContext';
+import { getRandomProfileQuestions } from '@/data/profileQuestions';
 
 const USERS_STORAGE_KEY = 'echoroom_users';
 const CURRENT_USER_KEY = 'echoroom_current_user';
@@ -8,6 +9,7 @@ export interface RegisterData {
   email: string;
   password: string;
   dateOfBirth: string; // ISO date string (YYYY-MM-DD)
+  location: string;
   languageProficiency: string;
   chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   interests: string[];
@@ -18,6 +20,15 @@ export interface RegisterData {
   lookingForFriendship: boolean;
   customGender?: string;
   customOrientation?: string;
+  // Lifestyle fields
+  smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
+  occupation: string;
+  religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
+  politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
+  about: string;
 }
 
 export interface LoginData {
@@ -168,6 +179,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       // Date of birth and calculated age
       dateOfBirth: data.dateOfBirth,
       age: calculateAge(data.dateOfBirth),
+      location: data.location,
       // New fields for gender and orientation
       genderIdentity: data.genderIdentity,
       orientation: data.orientation,
@@ -176,6 +188,17 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       lookingForFriendship: data.lookingForFriendship,
       customGender: data.customGender,
       customOrientation: data.customOrientation,
+      // Lifestyle fields
+      smoking: data.smoking,
+      drinking: data.drinking,
+      hasChildren: data.hasChildren,
+      education: data.education,
+      occupation: data.occupation,
+      religion: data.religion,
+      politicalViews: data.politicalViews,
+      about: data.about,
+      languageProficiency: data.languageProficiency,
+      profileQuestions: getRandomProfileQuestions(5)
     };
     
     // Save user

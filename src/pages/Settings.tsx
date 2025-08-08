@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { 
   Globe, 
@@ -14,23 +15,68 @@ import {
   MessageCircle, 
   Heart,
   Eye,
+  EyeOff,
   Lock,
+  Shield,
   Trash2,
   Download,
   Upload,
   HelpCircle,
   Smartphone,
   Wifi,
-  Database
+  Database,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 
+// CollapsibleSection Component
+interface CollapsibleSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+const CollapsibleSection = ({ title, icon, children, defaultOpen = false }: CollapsibleSectionProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="border rounded-lg">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="font-semibold">{title}</span>
+        </div>
+        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-4 space-y-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Settings = () => {
   const navigate = useNavigate();
-  const { language, setLanguage, toggleDarkMode, isDarkMode } = useApp();
+  const { user, setUser, language, setLanguage, toggleDarkMode, isDarkMode, safeMode, setSafeMode } = useApp();
+  
+  // Password change state
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: ''
+  });
 
   // App-specific settings state
   const [notifications, setNotifications] = useState({
@@ -89,6 +135,49 @@ const Settings = () => {
     });
   };
 
+  const handlePasswordChange = async () => {
+    if (!user) return;
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in both current and new password fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.currentPassword !== user.password) {
+      toast({
+        title: "Current Password Incorrect",
+        description: "Please enter your current password correctly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "New password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Update the user's password
+    const updatedUser = { ...user, password: passwordData.newPassword };
+    setUser(updatedUser);
+    
+    // Clear the form
+    setPasswordData({ currentPassword: '', newPassword: '' });
+    
+    toast({
+      title: "Password Changed",
+      description: "Your password has been updated successfully.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopBar title="Settings" showBack />
@@ -96,156 +185,220 @@ const Settings = () => {
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         
         {/* App Language & Theme */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Appearance & Language
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Globe className="h-4 w-4" />
-                App Language
-              </Label>
-              <Select value={language} onValueChange={(value: 'en' | 'ka') => setLanguage(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">🇺🇸 English</SelectItem>
-                  <SelectItem value="ka">🇬🇪 Georgian (ქართული)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
+        <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />} defaultOpen={true}>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              App Language
+            </Label>
+            <Select value={language} onValueChange={(value: 'en' | 'ka') => setLanguage(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">🇺🇸 English</SelectItem>
+                <SelectItem value="ka">🇬🇪 Georgian (ქართული)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Dark Mode</Label>
+            <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Safe Mode Settings */}
+        <CollapsibleSection title="Safe Mode Settings" icon={<Shield className="h-4 w-4" />}>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Dark Mode</Label>
-              <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
+              <div>
+                <Label className="text-sm font-medium">Light Mode</Label>
+                <p className="text-xs text-muted-foreground">Standard conversation mode</p>
+              </div>
+              <Switch 
+                checked={safeMode === 'light'} 
+                onCheckedChange={() => setSafeMode('light')} 
+              />
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Deep Mode</Label>
+                <p className="text-xs text-muted-foreground">More meaningful conversations</p>
+              </div>
+              <Switch 
+                checked={safeMode === 'deep'} 
+                onCheckedChange={() => setSafeMode('deep')} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Learning Mode</Label>
+                <p className="text-xs text-muted-foreground">Educational and practice conversations</p>
+              </div>
+              <Switch 
+                checked={safeMode === 'learning'} 
+                onCheckedChange={() => setSafeMode('learning')} 
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* Password & Security */}
+        <CollapsibleSection title="Password & Security" icon={<Lock className="h-4 w-4" />}>
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <div className="relative">
+              <Input
+                id="currentPassword"
+                name="currentPassword"
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                placeholder="Enter current password"
+                autoComplete="current-password"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">New Password</Label>
+            <div className="relative">
+              <Input
+                id="newPassword"
+                name="newPassword"
+                type={showNewPassword ? 'text' : 'password'}
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                placeholder="Enter new password"
+                autoComplete="new-password"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </Button>
+            </div>
+          </div>
+
+          <Button 
+            onClick={handlePasswordChange}
+            className="w-full"
+            disabled={!passwordData.currentPassword || !passwordData.newPassword}
+          >
+            Change Password
+          </Button>
+        </CollapsibleSection>
 
         {/* Device & Performance */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Smartphone className="h-4 w-4" />
-              Device & Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Auto-download Images</Label>
-                  <p className="text-xs text-muted-foreground">Download images automatically</p>
-                </div>
-                <Switch 
-                  checked={storage.autoDownloadImages} 
-                  onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadImages: checked}))} 
-                />
+        <CollapsibleSection title="Device & Performance" icon={<Smartphone className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Auto-download Images</Label>
+                <p className="text-xs text-muted-foreground">Download images automatically</p>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Auto-download Videos</Label>
-                  <p className="text-xs text-muted-foreground">Download videos on WiFi only</p>
-                </div>
-                <Switch 
-                  checked={storage.autoDownloadVideos} 
-                  onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadVideos: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Offline Mode</Label>
-                  <p className="text-xs text-muted-foreground">Cache content for offline use</p>
-                </div>
-                <Switch 
-                  checked={storage.offlineMode} 
-                  onCheckedChange={(checked) => setStorage(prev => ({...prev, offlineMode: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Cache Size</Label>
-                  <p className="text-xs text-muted-foreground">Current cache usage</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => {
-                  setStorage(prev => ({...prev, cacheSize: '0 MB'}));
-                  toast({ title: "Cache cleared", description: "App cache has been cleared." });
-                }}>
-                  Clear ({storage.cacheSize})
-                </Button>
-              </div>
+              <Switch 
+                checked={storage.autoDownloadImages} 
+                onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadImages: checked}))} 
+              />
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Auto-download Videos</Label>
+                <p className="text-xs text-muted-foreground">Download videos on WiFi only</p>
+              </div>
+              <Switch 
+                checked={storage.autoDownloadVideos} 
+                onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadVideos: checked}))} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Offline Mode</Label>
+                <p className="text-xs text-muted-foreground">Cache content for offline use</p>
+              </div>
+              <Switch 
+                checked={storage.offlineMode} 
+                onCheckedChange={(checked) => setStorage(prev => ({...prev, offlineMode: checked}))} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Cache Size</Label>
+                <p className="text-xs text-muted-foreground">Current cache usage</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => {
+                setStorage(prev => ({...prev, cacheSize: '0 MB'}));
+                // Cache cleared notification removed - obvious action
+              }}>
+                Clear ({storage.cacheSize})
+              </Button>
+            </div>
+          </div>
+        </CollapsibleSection>
 
         {/* Accessibility */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Accessibility
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">High Contrast</Label>
-                  <p className="text-xs text-muted-foreground">Increase contrast for better visibility</p>
-                </div>
-                <Switch 
-                  checked={accessibility.highContrast} 
-                  onCheckedChange={(checked) => setAccessibility(prev => ({...prev, highContrast: checked}))} 
-                />
+        <CollapsibleSection title="Accessibility" icon={<Eye className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">High Contrast</Label>
+                <p className="text-xs text-muted-foreground">Increase contrast for better visibility</p>
               </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Large Text</Label>
-                  <p className="text-xs text-muted-foreground">Increase text size</p>
-                </div>
-                <Switch 
-                  checked={accessibility.largeText} 
-                  onCheckedChange={(checked) => setAccessibility(prev => ({...prev, largeText: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Reduce Motion</Label>
-                  <p className="text-xs text-muted-foreground">Minimize animations</p>
-                </div>
-                <Switch 
-                  checked={accessibility.reduceMotion} 
-                  onCheckedChange={(checked) => setAccessibility(prev => ({...prev, reduceMotion: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Screen Reader Support</Label>
-                  <p className="text-xs text-muted-foreground">Enhanced screen reader compatibility</p>
-                </div>
-                <Switch 
-                  checked={accessibility.screenReader} 
-                  onCheckedChange={(checked) => setAccessibility(prev => ({...prev, screenReader: checked}))} 
-                />
-              </div>
+              <Switch 
+                checked={accessibility.highContrast} 
+                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, highContrast: checked}))} 
+              />
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Large Text</Label>
+                <p className="text-xs text-muted-foreground">Increase text size</p>
+              </div>
+              <Switch 
+                checked={accessibility.largeText} 
+                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, largeText: checked}))} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Reduce Motion</Label>
+                <p className="text-xs text-muted-foreground">Minimize animations</p>
+              </div>
+              <Switch 
+                checked={accessibility.reduceMotion} 
+                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, reduceMotion: checked}))} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Screen Reader Support</Label>
+                <p className="text-xs text-muted-foreground">Enhanced screen reader compatibility</p>
+              </div>
+              <Switch 
+                checked={accessibility.screenReader} 
+                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, screenReader: checked}))} 
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
 
         {/* Notifications */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <CollapsibleSection title="Notifications" icon={<Bell className="h-4 w-4" />}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -318,18 +471,10 @@ const Settings = () => {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
 
         {/* Privacy & Data */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Privacy & Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <CollapsibleSection title="Privacy & Data" icon={<Lock className="h-4 w-4" />}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -362,18 +507,10 @@ const Settings = () => {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
 
         {/* Sound & Vibration */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Volume2 className="h-4 w-4" />
-              Sound & Vibration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <CollapsibleSection title="Sound & Vibration" icon={<Volume2 className="h-4 w-4" />}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -419,18 +556,10 @@ const Settings = () => {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
 
         {/* Data Management */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Data Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <CollapsibleSection title="Data Management" icon={<Database className="h-4 w-4" />}>
             <div className="space-y-3">
               <Button 
                 variant="outline" 
@@ -471,18 +600,10 @@ const Settings = () => {
                 Clear App Data
               </Button>
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
 
         {/* Help & Support */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              Help & Support
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <CollapsibleSection title="Help & Support" icon={<HelpCircle className="h-4 w-4" />}>
             <Button variant="outline" className="w-full justify-start">
               FAQ & Help Center
             </Button>
@@ -495,20 +616,17 @@ const Settings = () => {
             <Button variant="outline" className="w-full justify-start">
               Terms of Service
             </Button>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
 
         {/* App Version */}
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              EchoRoom v1.0.0
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Made with 💚 for meaningful connections
-            </p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-4">
+          <p className="text-sm text-muted-foreground">
+            EchoRoom v1.0.0
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Made with 💚 for meaningful connections
+          </p>
+        </div>
       </div>
 
       <BottomNavigation />

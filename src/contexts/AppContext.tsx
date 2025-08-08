@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
+import { ProfileQuestion } from '@/types';
 
 type SafeMode = 'light' | 'deep' | 'learning';
 type ChatStyle = 'introvert' | 'ambievert' | 'extrovert';
@@ -74,6 +75,7 @@ export interface User {
   password: string;
   avatar: string;
   bio: string;
+  about: string; // New field for registration answers
   interests: string[];
   languages: string[];
   chatStyle: ChatStyle;
@@ -90,6 +92,17 @@ export interface User {
   lookingForFriendship: boolean;
   customGender?: string; // For custom gender identity
   customOrientation?: string; // For custom orientation
+  // New lifestyle fields
+  smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
+  occupation: string;
+  religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
+  politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
+  languageProficiency: string;
+  // Profile questions for fun and personality insights
+  profileQuestions: ProfileQuestion[];
 }
 
 interface AppState {

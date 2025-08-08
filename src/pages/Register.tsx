@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
 import { GenderIdentity, Orientation } from '@/contexts/AppContext';
 
-type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'preferences';
+type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'lifestyle' | 'preferences';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const Register = () => {
     email: '',
     password: '',
     dateOfBirth: '',
+    location: '',
     languageProficiency: '',
     chatStyle: '',
     interests: [] as string[],
@@ -35,7 +38,16 @@ const Register = () => {
     lookingForRelationship: false,
     lookingForFriendship: false,
     customGender: '',
-    customOrientation: ''
+    customOrientation: '',
+    // Lifestyle fields
+    smoking: 'prefer-not-to-say' as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say',
+    drinking: 'prefer-not-to-say' as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say',
+    hasChildren: 'prefer-not-to-say' as 'no' | 'yes' | 'planning' | 'prefer-not-to-say',
+    education: 'prefer-not-to-say' as 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say',
+    occupation: '',
+    religion: 'prefer-not-to-say' as 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say',
+    politicalViews: 'prefer-not-to-say' as 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say',
+    about: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
@@ -69,6 +81,12 @@ const Register = () => {
       title: 'Identity & Preferences',
       description: 'Tell us about yourself and who you\'re looking for',
       icon: <Heart className="w-5 h-5" />
+    },
+    {
+      key: 'lifestyle',
+      title: 'Lifestyle & Background',
+      description: 'Tell us about your lifestyle and background',
+      icon: <User className="w-5 h-5" />
     },
     {
       key: 'preferences',
@@ -127,6 +145,7 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         dateOfBirth: formData.dateOfBirth,
+        location: formData.location,
         languageProficiency: formData.languageProficiency,
         chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
         interests: formData.interests,
@@ -134,9 +153,18 @@ const Register = () => {
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
         lookingForRelationship: formData.lookingForRelationship,
-      lookingForFriendship: formData.lookingForFriendship,
+        lookingForFriendship: formData.lookingForFriendship,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
+        // Lifestyle fields
+        smoking: formData.smoking,
+        drinking: formData.drinking,
+        hasChildren: formData.hasChildren,
+        education: formData.education,
+        occupation: formData.occupation,
+        religion: formData.religion,
+        politicalViews: formData.politicalViews,
+        about: formData.about,
       };
 
       const result = await registerUser(registerData);
@@ -255,6 +283,16 @@ const Register = () => {
           delete newErrors.chatStyle;
         }
         break;
+
+      case 'location':
+        if (!value) {
+          newErrors.location = 'Location is required';
+        } else if (value.length < 2) {
+          newErrors.location = 'Please enter a valid location';
+        } else {
+          delete newErrors.location;
+        }
+        break;
     }
     
     setErrors(newErrors);
@@ -297,6 +335,12 @@ const Register = () => {
           const age = calculateAge(formData.dateOfBirth);
           newErrors.dateOfBirth = `You must be at least 18 years old to register (you are ${age} years old)`;
         }
+
+        if (!formData.location) {
+          newErrors.location = 'Location is required';
+        } else if (formData.location.length < 2) {
+          newErrors.location = 'Please enter a valid location';
+        }
         break;
         
       case 'profile':
@@ -319,6 +363,11 @@ const Register = () => {
           newErrors.orientation = 'Please select your orientation';
         }
         break;
+      case 'lifestyle':
+        if (!formData.about.trim()) {
+          newErrors.about = 'Please tell us a bit about yourself';
+        }
+        break;
       case 'preferences':
         if (!formData.chatStyle) {
           newErrors.chatStyle = 'Please select your personality type';
@@ -333,12 +382,13 @@ const Register = () => {
   const canProceed = () => {
     switch (currentStage) {
       case 'account':
-        return formData.username && formData.email && formData.password && formData.dateOfBirth &&
+        return formData.username && formData.email && formData.password && formData.dateOfBirth && formData.location &&
                formData.username.length >= 3 && 
                /^[a-zA-Z0-9_]+$/.test(formData.username) &&
                /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
                formData.password.length >= 8 &&
                validateAge(formData.dateOfBirth) &&
+               formData.location.length >= 2 &&
                /[A-Z]/.test(formData.password) &&
                /[a-z]/.test(formData.password) &&
                /\d/.test(formData.password);
@@ -348,6 +398,8 @@ const Register = () => {
         return formData.interests.length >= 3;
       case 'identity':
         return formData.genderIdentity && formData.orientation;
+      case 'lifestyle':
+        return formData.about.trim().length > 0;
       case 'preferences':
         return formData.chatStyle;
       default:
@@ -456,13 +508,10 @@ const Register = () => {
 
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
+              <DatePicker
                 id="dateOfBirth"
-                name="dateOfBirth"
-                type="date"
                 value={formData.dateOfBirth}
-                onChange={(e) => {
-                  const value = e.target.value;
+                onChange={(value) => {
                   setFormData(prev => ({ ...prev, dateOfBirth: value }));
                   if (touched.dateOfBirth) {
                     validateField('dateOfBirth', value);
@@ -472,9 +521,10 @@ const Register = () => {
                   setTouched(prev => ({ ...prev, dateOfBirth: true }));
                   validateField('dateOfBirth', formData.dateOfBirth);
                 }}
+                placeholder="Select your date of birth"
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                required
-                className={errors.dateOfBirth ? 'border-red-500' : ''}
+                error={!!errors.dateOfBirth && touched.dateOfBirth}
+                className="w-full"
               />
               {errors.dateOfBirth && touched.dateOfBirth && (
                 <p className="text-sm text-red-500">{errors.dateOfBirth}</p>
@@ -485,6 +535,32 @@ const Register = () => {
                 </p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                name="location"
+                placeholder="City, Country"
+                value={formData.location}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormData(prev => ({ ...prev, location: value }));
+                  if (touched.location) {
+                    validateField('location', value);
+                  }
+                }}
+                onBlur={() => {
+                  setTouched(prev => ({ ...prev, location: true }));
+                  validateField('location', formData.location);
+                }}
+                autoComplete="address-level2"
+                className={errors.location ? 'border-red-500' : ''}
+              />
+              {errors.location && touched.location && (
+                <p className="text-sm text-red-500">{errors.location}</p>
+              )}
+            </div>
           </div>
         );
 
@@ -492,7 +568,7 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label>Language Proficiency</Label>
+               <Label htmlFor="languageProficiency">Language Proficiency</Label>
                                <Select 
                   name="languageProficiency"
                   value={formData.languageProficiency} 
@@ -501,7 +577,7 @@ const Register = () => {
                     validateField('languageProficiency', value);
                   }}
                 >
-                  <SelectTrigger className={errors.languageProficiency ? 'border-red-500' : ''}>
+                  <SelectTrigger id="languageProficiency" className={errors.languageProficiency ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select your level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -551,7 +627,7 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label>Gender Identity</Label>
+               <Label htmlFor="genderIdentity">Gender Identity</Label>
                <Select 
                  name="genderIdentity"
                  value={formData.genderIdentity} 
@@ -560,7 +636,7 @@ const Register = () => {
                    validateField('genderIdentity', value);
                  }}
                >
-                 <SelectTrigger className={errors.genderIdentity ? 'border-red-500' : ''}>
+                 <SelectTrigger id="genderIdentity" className={errors.genderIdentity ? 'border-red-500' : ''}>
                    <SelectValue placeholder="Select your gender identity" />
                  </SelectTrigger>
                  <SelectContent>
@@ -591,7 +667,7 @@ const Register = () => {
              </div>
 
              <div className="space-y-2">
-               <Label>Orientation</Label>
+               <Label htmlFor="orientation">Orientation</Label>
                <Select 
                  name="orientation"
                  value={formData.orientation} 
@@ -600,7 +676,7 @@ const Register = () => {
                    validateField('orientation', value);
                  }}
                >
-                 <SelectTrigger className={errors.orientation ? 'border-red-500' : ''}>
+                 <SelectTrigger id="orientation" className={errors.orientation ? 'border-red-500' : ''}>
                    <SelectValue placeholder="Select your orientation" />
                  </SelectTrigger>
                  <SelectContent>
@@ -633,8 +709,9 @@ const Register = () => {
 
              <div className="space-y-3">
                <div className="flex items-center justify-between">
-                 <Label className="text-sm sm:text-base">Looking for a relationship?</Label>
+                 <Label htmlFor="lookingForRelationship" className="text-sm sm:text-base">Looking for a relationship?</Label>
                  <Switch
+                   id="lookingForRelationship"
                    checked={formData.lookingForRelationship}
                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForRelationship: checked }))}
                  />
@@ -646,8 +723,9 @@ const Register = () => {
 
              <div className="space-y-3">
                <div className="flex items-center justify-between">
-                 <Label className="text-sm sm:text-base">Looking for friendship?</Label>
+                 <Label htmlFor="lookingForFriendship" className="text-sm sm:text-base">Looking for friendship?</Label>
                  <Switch
+                   id="lookingForFriendship"
                    checked={formData.lookingForFriendship}
                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForFriendship: checked }))}
                  />
@@ -663,7 +741,7 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label>Personality</Label>
+               <Label htmlFor="chatStyle">Personality</Label>
                                <Select 
                   name="chatStyle"
                   value={formData.chatStyle} 
@@ -672,7 +750,7 @@ const Register = () => {
                     validateField('chatStyle', value);
                   }}
                 >
-                  <SelectTrigger className={errors.chatStyle ? 'border-red-500' : ''}>
+                  <SelectTrigger id="chatStyle" className={errors.chatStyle ? 'border-red-500' : ''}>
                     <SelectValue placeholder="How do you prefer to chat?" />
                   </SelectTrigger>
                   <SelectContent>
@@ -687,6 +765,159 @@ const Register = () => {
              </div>
            </div>
          );
+
+      case 'lifestyle':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="about">Tell us about yourself</Label>
+              <Textarea
+                id="about"
+                name="about"
+                placeholder="Share a bit about yourself, your interests, and what you're looking for..."
+                value={formData.about}
+                onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
+                className="min-h-[80px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="smoking">Smoking</Label>
+              <Select 
+                name="smoking"
+                value={formData.smoking} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, smoking: value as any }))}
+              >
+                <SelectTrigger id="smoking">
+                  <SelectValue placeholder="Select your smoking preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="never">Never</SelectItem>
+                  <SelectItem value="casually">Casually</SelectItem>
+                  <SelectItem value="socially">Socially</SelectItem>
+                  <SelectItem value="regularly">Regularly</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="drinking">Drinking</Label>
+              <Select 
+                name="drinking"
+                value={formData.drinking} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, drinking: value as any }))}
+              >
+                <SelectTrigger id="drinking">
+                  <SelectValue placeholder="Select your drinking preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="never">Never</SelectItem>
+                  <SelectItem value="casually">Casually</SelectItem>
+                  <SelectItem value="socially">Socially</SelectItem>
+                  <SelectItem value="regularly">Regularly</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hasChildren">Do you have children?</Label>
+              <Select 
+                name="hasChildren"
+                value={formData.hasChildren} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, hasChildren: value as any }))}
+              >
+                <SelectTrigger id="hasChildren">
+                  <SelectValue placeholder="Select your answer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="planning">Planning to have</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="education">Education Level</Label>
+              <Select 
+                name="education"
+                value={formData.education} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, education: value as any }))}
+              >
+                <SelectTrigger id="education">
+                  <SelectValue placeholder="Select your education level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high-school">High School</SelectItem>
+                  <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
+                  <SelectItem value="master">Master's Degree</SelectItem>
+                  <SelectItem value="phd">PhD/Doctorate</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="occupation">Occupation</Label>
+              <Input
+                id="occupation"
+                name="occupation"
+                placeholder="What do you do for work?"
+                value={formData.occupation}
+                onChange={(e) => setFormData(prev => ({ ...prev, occupation: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="religion">Religion</Label>
+              <Select 
+                name="religion"
+                value={formData.religion} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, religion: value as any }))}
+              >
+                <SelectTrigger id="religion">
+                  <SelectValue placeholder="Select your religion" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="christianity">Christianity</SelectItem>
+                  <SelectItem value="islam">Islam</SelectItem>
+                  <SelectItem value="judaism">Judaism</SelectItem>
+                  <SelectItem value="hinduism">Hinduism</SelectItem>
+                  <SelectItem value="buddhism">Buddhism</SelectItem>
+                  <SelectItem value="atheist">Atheist</SelectItem>
+                  <SelectItem value="agnostic">Agnostic</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="politicalViews">Political Views</Label>
+              <Select 
+                name="politicalViews"
+                value={formData.politicalViews} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, politicalViews: value as any }))}
+              >
+                <SelectTrigger id="politicalViews">
+                  <SelectValue placeholder="Select your political views" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="liberal">Liberal</SelectItem>
+                  <SelectItem value="conservative">Conservative</SelectItem>
+                  <SelectItem value="moderate">Moderate</SelectItem>
+                  <SelectItem value="apolitical">Apolitical</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
 
       default:
         return null;
@@ -721,10 +952,10 @@ const Register = () => {
           
           {/* Progress Indicator */}
           <div className="px-4 sm:px-6 pb-4">
-            <div className="flex items-center justify-between mb-4 overflow-x-auto">
+            <div className="flex items-center justify-center mb-4 gap-1 sm:gap-2">
               {stages.map((stage, index) => (
                 <div key={stage.key} className="flex items-center flex-shrink-0">
-                  <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-300 ${
+                  <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full border-2 transition-all duration-300 ${
                     index < currentStageIndex 
                       ? 'bg-primary border-primary text-primary-foreground' 
                       : index === currentStageIndex
@@ -732,24 +963,18 @@ const Register = () => {
                       : 'border-muted-foreground text-muted-foreground'
                   }`}>
                     {index < currentStageIndex ? (
-                      <Check size={14} className="sm:w-4 sm:h-4" />
+                      <Check size={12} className="sm:w-3 sm:h-3 md:w-4 md:h-4" />
                     ) : (
-                      <div className="w-4 h-4 sm:w-5 sm:h-5">{stage.icon}</div>
+                      <div className="flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5">{stage.icon}</div>
                     )}
                   </div>
                   {index < stages.length - 1 && (
-                    <div className={`w-6 sm:w-12 h-0.5 mx-1 sm:mx-2 transition-all duration-300 ${
+                    <div className={`w-3 sm:w-6 md:w-8 h-0.5 mx-0.5 sm:mx-1 md:mx-2 transition-all duration-300 ${
                       index < currentStageIndex ? 'bg-primary' : 'bg-muted'
                     }`} />
                   )}
                 </div>
               ))}
-            </div>
-            
-            {/* Stage Title */}
-            <div className="text-center mb-4">
-              <h3 className="font-semibold text-lg sm:text-xl">{stages[currentStageIndex].title}</h3>
-              <p className="text-sm text-muted-foreground px-2">{stages[currentStageIndex].description}</p>
             </div>
           </div>
           

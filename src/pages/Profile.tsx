@@ -12,6 +12,7 @@ import { Profile as ProfileType } from '@/types';
 import { getProfileById } from '@/data/mockProfiles';
 import { LoadingState } from '@/components/ui/LoadingSpinner';
 import { toast } from '@/hooks/use-toast';
+import { calculateAge } from '@/lib/auth';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -116,29 +117,29 @@ const Profile = () => {
                 </>
               )}
               
-              {!isOwnProfile && profileData && (
-                <>
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <span>{profileData.age} years old</span>
-                    <span>•</span>
-                    <span>{profileData.location.split(',')[0]}</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <span>{profileData.distance}km away</span>
-                    {profileData.isOnline && (
-                      <>
-                        <span>•</span>
-                        <span className="text-green-600">Online now</span>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
+                             {!isOwnProfile && profileData && (
+                 <>
+                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                     <span>{profileData.age} years old</span>
+                     {profileData.isOnline && (
+                       <>
+                         <span>•</span>
+                         <span className="text-green-600">Online now</span>
+                       </>
+                     )}
+                   </div>
+                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                     <span>{profileData.location.split(',')[0]}</span>
+                     <span>•</span>
+                     <span>{profileData.distance}km away</span>
+                   </div>
+                 </>
+               )}
             </div>
             
             {/* Action Buttons */}
             <div className="mt-4 space-y-2">
-              {isOwnProfile ? (
+              {isOwnProfile && (
                 <>
                   <div className="flex justify-center gap-2">
                     <Button variant="outline" onClick={() => navigate('/profile/edit')}>
@@ -157,24 +158,14 @@ const Profile = () => {
                     </Button>
                   </div>
                 </>
-              ) : (
-                <div className="flex justify-center gap-2">
-                  <Button onClick={handleSendMessage}>
-                    <MessageCircle size={16} />
-                    <span className="ml-2">Message</span>
-                  </Button>
-                  <Button variant="outline" onClick={handleLikeProfile}>
-                    <Heart size={16} />
-                    <span className="ml-2">Like</span>
-                  </Button>
-                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Photo Gallery - For other users */}
-        {!isOwnProfile && profileData && profileData.photos && profileData.photos.length > 0 && (
+        {/* Photo Gallery */}
+        {((isOwnProfile && user?.photos && user.photos.length > 0) || 
+          (!isOwnProfile && profileData?.photos && profileData.photos.length > 0)) && (
           <Card>
             <CardContent className="p-4">
               <h3 className="font-semibold flex items-center gap-2 mb-4">
@@ -182,11 +173,11 @@ const Profile = () => {
                 Photos
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                {profileData.photos.slice(0, 4).map((photo, index) => (
+                {(isOwnProfile ? user?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
                   <div key={index} className="aspect-square rounded-lg overflow-hidden">
                     <img 
                       src={photo} 
-                      alt={`${profileData.name} photo ${index + 1}`}
+                      alt={`Photo ${index + 1}`}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -196,213 +187,314 @@ const Profile = () => {
                   </div>
                 ))}
               </div>
-              {profileData.photos.length > 4 && (
+              {((isOwnProfile ? user?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
                 <p className="text-center text-sm text-muted-foreground mt-2">
-                  +{profileData.photos.length - 4} more photos
+                  +{((isOwnProfile ? user?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
                 </p>
               )}
             </CardContent>
           </Card>
         )}
 
-        {/* Identity & Basic Info - For other users */}
-        {!isOwnProfile && profileData && (
+        {/* Identity & Basic Info */}
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Users size={16} />
+              Identity & Basic Info
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Gender</p>
+                <Badge variant="outline" className="mt-1">
+                  {isOwnProfile 
+                    ? (user?.genderIdentity === 'other' && user?.customGender 
+                        ? user.customGender 
+                        : user?.genderIdentity === 'prefer-not-to-say' 
+                        ? 'Prefer not to say' 
+                        : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set')
+                    : (profileData?.genderIdentity?.charAt(0).toUpperCase() + profileData?.genderIdentity?.slice(1) || 'Not specified')
+                  }
+                </Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Orientation</p>
+                <Badge variant="outline" className="mt-1">
+                  {isOwnProfile 
+                    ? (user?.orientation === 'other' && user?.customOrientation 
+                        ? user.customOrientation 
+                        : user?.orientation?.charAt(0).toUpperCase() + user?.orientation?.slice(1) || 'Not set')
+                    : (profileData?.orientation?.charAt(0).toUpperCase() + profileData?.orientation?.slice(1) || 'Not specified')
+                  }
+                </Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Age</p>
+                <p className="font-medium">
+                  {isOwnProfile 
+                    ? (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : 'Not set')
+                    : profileData?.age
+                  } years old
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Location</p>
+                <p className="font-medium">
+                  {isOwnProfile 
+                    ? (user?.location || 'Not set')
+                    : (profileData?.location || 'Not specified')
+                  }
+                </p>
+              </div>
+            </div>
+
+            {(isOwnProfile ? user?.about : profileData?.about) && (
+              <div>
+                <p className="text-muted-foreground text-sm mb-2">About</p>
+                <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : profileData?.about}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Settings & Preferences - Only for own profile */}
+        {isOwnProfile && (
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="font-semibold flex items-center gap-2">
-                <Users size={16} />
-                Identity & Basic Info
+                <Users className="w-4 h-4 text-primary" />
+                Settings & Preferences
               </h3>
               
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Gender</p>
-                  <Badge variant="outline" className="mt-1">
-                    {profileData.genderIdentity?.charAt(0).toUpperCase() + profileData.genderIdentity?.slice(1) || 'Not specified'}
-                  </Badge>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Looking for relationship</span>
+                  <Switch 
+                    checked={user?.lookingForRelationship || false} 
+                    disabled 
+                  />
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Orientation</p>
-                  <Badge variant="outline" className="mt-1">
-                    {profileData.orientation?.charAt(0).toUpperCase() + profileData.orientation?.slice(1) || 'Not specified'}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Age</p>
-                  <p className="font-medium">{profileData.age} years old</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Location</p>
-                  <p className="font-medium">{profileData.location}</p>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Looking for friendship</span>
+                  <Switch 
+                    checked={user?.lookingForFriendship || false} 
+                    disabled 
+                  />
                 </div>
               </div>
-
-              {profileData.bio && (
-                <div>
-                  <p className="text-muted-foreground text-sm mb-2">About</p>
-                  <p className="text-sm leading-relaxed">{profileData.bio}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Interests & Information */}
-        {!isOwnProfile && profileData && (
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Heart size={16} />
-                Interests & Preferences
-              </h3>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Interests</p>
+        {/* Interests & Preferences */}
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Heart size={16} />
+              Interests & Preferences
+            </h3>
+            
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Interests</p>
+                {(isOwnProfile ? user?.interests : profileData?.interests) && (isOwnProfile ? user?.interests : profileData?.interests)?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {profileData.interests.map((interest) => (
+                    {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest) => (
                       <Badge key={interest} variant="secondary" className="text-xs">
                         {interest}
                       </Badge>
                     ))}
                   </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No interests selected yet</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Language Level</p>
+                  <p className="font-medium">
+                    {isOwnProfile 
+                      ? (user?.languageProficiency || 'Not set')
+                      : (profileData?.languageProficiency || 'Not specified')
+                    }
+                  </p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Age</p>
-                    <p className="font-medium">{profileData.age} years old</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Language Level</p>
-                    <p className="font-medium">{profileData.languageLevel}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Personality</p>
-                    <p className="font-medium capitalize">{profileData.chatStyle}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Looking for</p>
-                    <p className="font-medium">
-                      {profileData.lookingForRelationship && profileData.lookingForFriendship 
-                        ? 'Relationship, Friendship' 
-                        : profileData.lookingForRelationship 
-                        ? 'Relationship' 
-                        : profileData.lookingForFriendship 
-                        ? 'Friendship' 
-                        : 'Not specified'}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-muted-foreground">Personality</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.chatStyle || 'Not set')
+                      : (profileData?.chatStyle || 'Not specified')
+                    }
+                  </p>
                 </div>
-                
-                {/* Interests Section */}
-                {profileData.interests && profileData.interests.length > 0 && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Interests</p>
-                    <div className="flex flex-wrap gap-2">
-                      {profileData.interests.map((interest, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {interest}
-                        </Badge>
-                      ))}
-                    </div>
+                <div className="col-span-2">
+                  <p className="text-muted-foreground">Looking for</p>
+                  <p className="font-medium">
+                    {isOwnProfile 
+                      ? (user?.lookingForRelationship && user?.lookingForFriendship 
+                          ? 'Relationship, Friendship' 
+                          : user?.lookingForRelationship 
+                          ? 'Relationship' 
+                          : user?.lookingForFriendship 
+                          ? 'Friendship' 
+                          : 'Not specified')
+                      : (profileData?.lookingForRelationship && profileData?.lookingForFriendship 
+                          ? 'Relationship, Friendship' 
+                          : profileData?.lookingForRelationship 
+                          ? 'Relationship' 
+                          : profileData?.lookingForFriendship 
+                          ? 'Friendship' 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lifestyle & Background */}
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <User size={16} />
+              Lifestyle & Background
+            </h3>
+            
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Smoking</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.smoking && user.smoking !== 'prefer-not-to-say' 
+                          ? user.smoking.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.smoking && profileData.smoking !== 'prefer-not-to-say' 
+                          ? profileData.smoking.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Drinking</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.drinking && user.drinking !== 'prefer-not-to-say' 
+                          ? user.drinking.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.drinking && profileData.drinking !== 'prefer-not-to-say' 
+                          ? profileData.drinking.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Children</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' 
+                          ? user.hasChildren.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.hasChildren && profileData.hasChildren !== 'prefer-not-to-say' 
+                          ? profileData.hasChildren.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Education</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.education && user.education !== 'prefer-not-to-say' 
+                          ? user.education.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.education && profileData.education !== 'prefer-not-to-say' 
+                          ? profileData.education.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+                {(isOwnProfile ? user?.occupation : profileData?.occupation) && (
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground">Occupation</p>
+                    <p className="font-medium">{isOwnProfile ? user?.occupation : profileData?.occupation}</p>
                   </div>
                 )}
-                
-                {profileData.iceBreakerAnswers && Object.keys(profileData.iceBreakerAnswers).length > 0 && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Get to know me</p>
-                    <div className="space-y-2">
-                      {Object.entries(profileData.iceBreakerAnswers).slice(0, 2).map(([question, answer]) => (
-                        <div key={question} className="text-sm">
-                          <p className="font-medium text-muted-foreground">{question}</p>
-                          <p className="mt-1">{answer}</p>
-                        </div>
-                      ))}
-                    </div>
+                <div>
+                  <p className="text-muted-foreground">Religion</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.religion && user.religion !== 'prefer-not-to-say' 
+                          ? user.religion.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.religion && profileData.religion !== 'prefer-not-to-say' 
+                          ? profileData.religion.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Political Views</p>
+                  <p className="font-medium capitalize">
+                    {isOwnProfile 
+                      ? (user?.politicalViews && user.politicalViews !== 'prefer-not-to-say' 
+                          ? user.politicalViews.replace('-', ' ') 
+                          : 'Not specified')
+                      : (profileData?.politicalViews && profileData.politicalViews !== 'prefer-not-to-say' 
+                          ? profileData.politicalViews.replace('-', ' ') 
+                          : 'Not specified')
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+
+
+        {/* Profile Questions Section */}
+        {(isOwnProfile || (!isOwnProfile && profileData?.profileQuestions && profileData.profileQuestions.some(q => q.answer))) && (
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                {isOwnProfile ? "Get to Know Me" : "Get to Know Them"}
+              </h3>
+              
+              <div className="space-y-4">
+                {(isOwnProfile ? user?.profileQuestions : profileData?.profileQuestions)?.map((question, index) => (
+                  <div key={question.id} className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">{question.question}</p>
+                    {question.answer ? (
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                        {question.answer}
+                      </p>
+                    ) : isOwnProfile ? (
+                      <p className="text-sm text-muted-foreground italic">
+                        Not answered yet
+                      </p>
+                    ) : null}
                   </div>
+                ))}
+                
+                {isOwnProfile && (!user?.profileQuestions || user.profileQuestions.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No profile questions yet. Edit your profile to add some!
+                  </p>
                 )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Identity & Relationship Information - Only for own profile */}
+        {/* Logout Section - Only for own profile */}
         {isOwnProfile && (
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              Identity & Preferences
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Gender Identity</span>
-                <Badge variant="outline">
-                  {user?.genderIdentity === 'other' && user?.customGender 
-                    ? user.customGender 
-                    : user?.genderIdentity === 'prefer-not-to-say' 
-                    ? 'Prefer not to say' 
-                    : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set'}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Orientation</span>
-                <Badge variant="outline">
-                  {user?.orientation === 'other' && user?.customOrientation 
-                    ? user.customOrientation 
-                    : user?.orientation?.charAt(0).toUpperCase() + user?.orientation?.slice(1) || 'Not set'}
-                </Badge>
-              </div>
-              
-
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Looking for relationship</span>
-                <Switch 
-                  checked={user?.lookingForRelationship || false} 
-                  disabled 
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Looking for friendship</span>
-                <Switch 
-                  checked={user?.lookingForFriendship || false} 
-                  disabled 
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Settings - Only for own profile */}
-        {isOwnProfile && (
-          <>
-            <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold">Safe Mode Settings</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span>Light Mode</span>
-                <Switch checked={safeMode === 'light'} onCheckedChange={() => setSafeMode('light')} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Deep Mode</span>
-                <Switch checked={safeMode === 'deep'} onCheckedChange={() => setSafeMode('deep')} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Learning Mode</span>
-                <Switch checked={safeMode === 'learning'} onCheckedChange={() => setSafeMode('learning')} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-          {/* Logout Section */}
           <Card>
             <CardContent className="p-4">
               <Button 
@@ -411,11 +503,10 @@ const Profile = () => {
                 onClick={logout}
               >
                 <LogOut size={16} />
-                              <span className="ml-2">Logout</span>
-            </Button>
-          </CardContent>
-        </Card>
-          </>
+                <span className="ml-2">Logout</span>
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
 
