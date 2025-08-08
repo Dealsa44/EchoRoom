@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import React, { useState, useRef, useEffect, ReactNode, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 
 interface SwipeAction {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number | string; className?: string }>;
   color: string;
   action: () => void;
   threshold?: number;
@@ -29,20 +29,24 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   className = '',
   disabled = false
 }) => {
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const currentTransformRef = useRef<{ x: number; y: number; rotation: number; scale: number }>({
+    x: 0,
+    y: 0,
+    rotation: 0,
+    scale: 1
+  });
 
   const threshold = 80; // Minimum swipe distance to trigger action
   const maxSwipe = 150; // Maximum swipe distance
   const maxTilt = 15; // Maximum tilt angle in degrees
 
+  // Cleanup animation frame on unmount
   useEffect(() => {
     return () => {
       if (animationRef.current) {
@@ -51,85 +55,95 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     };
   }, []);
 
-  const handleStart = (clientX: number, clientY: number) => {
+  // Optimized transform update using requestAnimationFrame
+  const updateTransform = useCallback((deltaX: number, deltaY: number) => {
+    if (!cardRef.current) return;
+
+    const clampedDeltaX = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX));
+    const tiltAngle = (clampedDeltaX / maxSwipe) * maxTilt;
+    const scale = Math.max(0.95, 1 - Math.abs(clampedDeltaX) / (maxSwipe * 2));
+    
+    currentTransformRef.current = {
+      x: clampedDeltaX,
+      y: deltaY * 0.1,
+      rotation: tiltAngle,
+      scale
+    };
+
+    // Use requestAnimationFrame for smooth updates
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
+    animationRef.current = requestAnimationFrame(() => {
+      if (cardRef.current) {
+        const { x, y, rotation, scale } = currentTransformRef.current;
+        cardRef.current.style.transform = `translateX(${x}px) translateY(${y}px) rotate(${rotation}deg) scale(${scale})`;
+        
+        // Update background color based on swipe direction and distance
+        const opacity = Math.abs(clampedDeltaX) / maxSwipe;
+        if (clampedDeltaX > 0 && rightAction) {
+          cardRef.current.style.backgroundColor = `rgba(34, 197, 94, ${opacity * 0.15})`;
+        } else if (clampedDeltaX < 0 && leftAction) {
+          cardRef.current.style.backgroundColor = `rgba(239, 68, 68, ${opacity * 0.15})`;
+        } else {
+          cardRef.current.style.backgroundColor = '';
+        }
+      }
+    });
+
+    // Calculate progress for button filling
+    const progress = Math.min(Math.abs(clampedDeltaX) / threshold, 1);
+    const direction = clampedDeltaX > 0 ? 'right' : 'left';
+    
+    // Set swipe direction for visual feedback
+    if (Math.abs(clampedDeltaX) > 20) {
+      setSwipeDirection(direction);
+    } else {
+      setSwipeDirection(null);
+    }
+    
+    onSwipeProgress?.(progress, direction);
+  }, [maxSwipe, maxTilt, threshold, leftAction, rightAction, onSwipeProgress]);
+
+  const handleStart = useCallback((clientX: number, clientY: number) => {
     if (disabled || isAnimating) return;
     
-    setStartX(clientX);
-    setStartY(clientY);
-    setCurrentX(0);
-    setCurrentY(0);
+    touchStartRef.current = { x: clientX, y: clientY };
     setSwipeDirection(null);
     setIsDragging(true);
     onSwipeStart?.();
-  };
+  }, [disabled, isAnimating, onSwipeStart]);
 
-  const handleMove = (clientX: number, clientY: number) => {
-    if (!isDragging || disabled || isAnimating) return;
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging || disabled || isAnimating || !touchStartRef.current) return;
     
-    const deltaX = clientX - startX;
-    const deltaY = clientY - startY;
+    const deltaX = clientX - touchStartRef.current.x;
+    const deltaY = clientY - touchStartRef.current.y;
     
     // Determine swipe direction
     const direction = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
     
     if (direction === 'horizontal') {
-      const clampedDeltaX = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX));
-      setCurrentX(clampedDeltaX);
-      setCurrentY(0);
-      
-      // Set swipe direction for visual feedback
-      if (clampedDeltaX > 20) {
-        setSwipeDirection('right');
-      } else if (clampedDeltaX < -20) {
-        setSwipeDirection('left');
-      } else {
-        setSwipeDirection(null);
-      }
-      
-      // Calculate progress for button filling
-      const progress = Math.min(Math.abs(clampedDeltaX) / threshold, 1);
-      onSwipeProgress?.(progress, clampedDeltaX > 0 ? 'right' : 'left');
-      
-      if (cardRef.current) {
-        // Apply transform with tilt effect
-        const tiltAngle = (clampedDeltaX / maxSwipe) * maxTilt;
-        const scale = 1 - Math.abs(clampedDeltaX) / (maxSwipe * 2);
-        
-        cardRef.current.style.transform = `
-          translateX(${clampedDeltaX}px) 
-          translateY(${deltaY * 0.1}px) 
-          rotate(${tiltAngle}deg) 
-          scale(${Math.max(0.95, scale)})
-        `;
-        cardRef.current.style.transition = 'none';
-        
-        // Update background color based on swipe direction and distance
-        const opacity = Math.abs(clampedDeltaX) / maxSwipe;
-        if (clampedDeltaX > 0 && rightAction) {
-          // Use a more vibrant green for like action
-          cardRef.current.style.backgroundColor = `rgba(34, 197, 94, ${opacity * 0.15})`;
-        } else if (clampedDeltaX < 0 && leftAction) {
-          // Use a more vibrant red for dislike action
-          cardRef.current.style.backgroundColor = `rgba(239, 68, 68, ${opacity * 0.15})`;
-        }
-      }
+      updateTransform(deltaX, deltaY);
     }
-  };
+  }, [isDragging, disabled, isAnimating, updateTransform]);
 
-  const handleEnd = () => {
+  const handleEnd = useCallback(() => {
     if (!isDragging || disabled) return;
     
     setIsDragging(false);
     setIsAnimating(true);
     
-    const shouldTriggerAction = Math.abs(currentX) >= threshold;
+    const { x } = currentTransformRef.current;
+    const shouldTriggerAction = Math.abs(x) >= threshold;
     let actionTriggered = false;
     
     if (shouldTriggerAction) {
-      if (currentX > 0 && rightAction) {
+      if (x > 0 && rightAction) {
         rightAction.action();
         actionTriggered = true;
-      } else if (currentX < 0 && leftAction) {
+      } else if (x < 0 && leftAction) {
         leftAction.action();
         actionTriggered = true;
       }
@@ -147,49 +161,48 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       navigator.vibrate([50, 100, 50]);
     }
     
+    // Reset state after animation
     setTimeout(() => {
       setIsAnimating(false);
-      setCurrentX(0);
-      setCurrentY(0);
       setSwipeDirection(null);
+      currentTransformRef.current = { x: 0, y: 0, rotation: 0, scale: 1 };
+      touchStartRef.current = null;
       onSwipeEnd?.();
     }, 400);
-  };
+  }, [isDragging, disabled, threshold, leftAction, rightAction, onSwipeEnd]);
 
-  // Touch events
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // Touch events with passive listeners for better performance
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     handleStart(e.touches[0].clientX, e.touches[0].clientY);
-  };
+  }, [handleStart]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     handleMove(e.touches[0].clientX, e.touches[0].clientY);
-  };
+  }, [handleMove]);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     handleEnd();
-  };
+  }, [handleEnd]);
 
   // Mouse events (for desktop testing)
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     handleStart(e.clientX, e.clientY);
-  };
+  }, [handleStart]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
       handleMove(e.clientX, e.clientY);
     }
-  };
+  }, [isDragging, handleMove]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (isDragging) {
       handleEnd();
     }
-  };
-
-
+  }, [isDragging, handleEnd]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
@@ -209,7 +222,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         onMouseLeave={handleMouseUp}
         style={{ 
           userSelect: 'none',
-          willChange: isDragging ? 'transform' : 'auto'
+          willChange: isDragging ? 'transform' : 'auto',
+          touchAction: 'pan-y pinch-zoom'
         }}
       >
         {children}

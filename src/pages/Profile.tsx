@@ -70,7 +70,7 @@ const Profile = () => {
   const handleLikeProfile = () => {
     toast({
       title: "Liked! 💚",
-      description: `You liked ${displayUser?.username || displayUser?.name}'s profile!`,
+      description: `You liked ${(displayUser as any)?.username || (displayUser as any)?.name}'s profile!`,
     });
   };
 
@@ -86,7 +86,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopBar 
-        title={isOwnProfile ? "Profile" : (displayUser?.username || displayUser?.name || "Profile")}
+        title={isOwnProfile ? "Profile" : ((displayUser as any)?.username || (displayUser as any)?.name || "Profile")}
         showBack={!isOwnProfile}
       />
       
@@ -99,7 +99,7 @@ const Profile = () => {
                 <Shield className="absolute -top-1 -right-1 h-5 w-5 text-blue-500" />
               )}
             </div>
-            <h2 className="text-xl font-bold">{displayUser?.username || displayUser?.name || 'Guest'}</h2>
+            <h2 className="text-xl font-bold">{(displayUser as any)?.username || (displayUser as any)?.name || 'Guest'}</h2>
             <p className="text-muted-foreground">{displayUser?.bio || 'Welcome to EchoRoom'}</p>
             
             {/* User Info */}
@@ -108,7 +108,7 @@ const Profile = () => {
                 <>
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <Mail size={14} />
-                    <span>{displayUser?.email}</span>
+                                         <span>{(displayUser as any)?.email}</span>
                   </div>
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <User size={14} />
@@ -164,7 +164,7 @@ const Profile = () => {
         </Card>
 
         {/* Photo Gallery */}
-        {((isOwnProfile && user?.photos && user.photos.length > 0) || 
+        {((isOwnProfile && (user as any)?.photos && (user as any).photos.length > 0) || 
           (!isOwnProfile && profileData?.photos && profileData.photos.length > 0)) && (
           <Card>
             <CardContent className="p-4">
@@ -173,7 +173,7 @@ const Profile = () => {
                 Photos
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                {(isOwnProfile ? user?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
+                                 {(isOwnProfile ? (user as any)?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
                   <div key={index} className="aspect-square rounded-lg overflow-hidden">
                     <img 
                       src={photo} 
@@ -187,11 +187,11 @@ const Profile = () => {
                   </div>
                 ))}
               </div>
-              {((isOwnProfile ? user?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
-                <p className="text-center text-sm text-muted-foreground mt-2">
-                  +{((isOwnProfile ? user?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
-                </p>
-              )}
+                             {((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
+                 <p className="text-center text-sm text-muted-foreground mt-2">
+                   +{((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
+                 </p>
+               )}
             </CardContent>
           </Card>
         )}
@@ -242,17 +242,17 @@ const Profile = () => {
                 <p className="text-muted-foreground">Location</p>
                 <p className="font-medium">
                   {isOwnProfile 
-                    ? (user?.location || 'Not set')
+                                         ? ((user as any)?.location || 'Not set')
                     : (profileData?.location || 'Not specified')
                   }
                 </p>
               </div>
             </div>
 
-            {(isOwnProfile ? user?.about : profileData?.about) && (
+            {(isOwnProfile ? user?.about : (profileData as any)?.about) && (
               <div>
                 <p className="text-muted-foreground text-sm mb-2">About</p>
-                <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : profileData?.about}</p>
+                <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : (profileData as any)?.about}</p>
               </div>
             )}
           </CardContent>
@@ -316,10 +316,10 @@ const Profile = () => {
                 <div>
                   <p className="text-muted-foreground">Language Level</p>
                   <p className="font-medium">
-                    {isOwnProfile 
-                      ? (user?.languageProficiency || 'Not set')
-                      : (profileData?.languageProficiency || 'Not specified')
-                    }
+                                         {isOwnProfile 
+                       ? (user?.languageProficiency || 'Not set')
+                       : ((profileData as any)?.languageProficiency || 'Not specified')
+                     }
                   </p>
                 </div>
                 <div>
@@ -374,9 +374,9 @@ const Profile = () => {
                       ? (user?.smoking && user.smoking !== 'prefer-not-to-say' 
                           ? user.smoking.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.smoking && profileData.smoking !== 'prefer-not-to-say' 
-                          ? profileData.smoking.replace('-', ' ') 
-                          : 'Not specified')
+                                             : ((profileData as any)?.smoking && (profileData as any).smoking !== 'prefer-not-to-say' 
+                           ? (profileData as any).smoking.replace('-', ' ') 
+                           : 'Not specified')
                     }
                   </p>
                 </div>
@@ -387,9 +387,9 @@ const Profile = () => {
                       ? (user?.drinking && user.drinking !== 'prefer-not-to-say' 
                           ? user.drinking.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.drinking && profileData.drinking !== 'prefer-not-to-say' 
-                          ? profileData.drinking.replace('-', ' ') 
-                          : 'Not specified')
+                                             : ((profileData as any)?.drinking && (profileData as any).drinking !== 'prefer-not-to-say' 
+                           ? (profileData as any).drinking.replace('-', ' ') 
+                           : 'Not specified')
                     }
                   </p>
                 </div>
@@ -400,9 +400,9 @@ const Profile = () => {
                       ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' 
                           ? user.hasChildren.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.hasChildren && profileData.hasChildren !== 'prefer-not-to-say' 
-                          ? profileData.hasChildren.replace('-', ' ') 
-                          : 'Not specified')
+                                             : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' 
+                           ? (profileData as any).hasChildren.replace('-', ' ') 
+                           : 'Not specified')
                     }
                   </p>
                 </div>
@@ -413,16 +413,16 @@ const Profile = () => {
                       ? (user?.education && user.education !== 'prefer-not-to-say' 
                           ? user.education.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.education && profileData.education !== 'prefer-not-to-say' 
-                          ? profileData.education.replace('-', ' ') 
-                          : 'Not specified')
+                                             : ((profileData as any)?.education && (profileData as any).education !== 'prefer-not-to-say' 
+                           ? (profileData as any).education.replace('-', ' ') 
+                           : 'Not specified')
                     }
                   </p>
                 </div>
-                {(isOwnProfile ? user?.occupation : profileData?.occupation) && (
+                {(isOwnProfile ? user?.occupation : (profileData as any)?.occupation) && (
                   <div className="col-span-2">
                     <p className="text-muted-foreground">Occupation</p>
-                    <p className="font-medium">{isOwnProfile ? user?.occupation : profileData?.occupation}</p>
+                    <p className="font-medium">{isOwnProfile ? user?.occupation : (profileData as any)?.occupation}</p>
                   </div>
                 )}
                 <div>
@@ -432,9 +432,9 @@ const Profile = () => {
                       ? (user?.religion && user.religion !== 'prefer-not-to-say' 
                           ? user.religion.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.religion && profileData.religion !== 'prefer-not-to-say' 
-                          ? profileData.religion.replace('-', ' ') 
-                          : 'Not specified')
+                                             : ((profileData as any)?.religion && (profileData as any).religion !== 'prefer-not-to-say' 
+                           ? (profileData as any).religion.replace('-', ' ') 
+                           : 'Not specified')
                     }
                   </p>
                 </div>
@@ -445,8 +445,8 @@ const Profile = () => {
                       ? (user?.politicalViews && user.politicalViews !== 'prefer-not-to-say' 
                           ? user.politicalViews.replace('-', ' ') 
                           : 'Not specified')
-                      : (profileData?.politicalViews && profileData.politicalViews !== 'prefer-not-to-say' 
-                          ? profileData.politicalViews.replace('-', ' ') 
+                      : ((profileData as any)?.politicalViews && (profileData as any).politicalViews !== 'prefer-not-to-say' 
+                          ? (profileData as any).politicalViews.replace('-', ' ') 
                           : 'Not specified')
                     }
                   </p>

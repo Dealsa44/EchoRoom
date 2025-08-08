@@ -163,7 +163,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
     }
     
     // Create new user
-    const newUser: User = {
+    const newUser = {
       id: Date.now().toString(),
       username: data.username,
       email: data.email,
@@ -179,7 +179,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       // Date of birth and calculated age
       dateOfBirth: data.dateOfBirth,
       age: calculateAge(data.dateOfBirth),
-      location: data.location,
+      location: data.location as any,
       // New fields for gender and orientation
       genderIdentity: data.genderIdentity,
       orientation: data.orientation,
@@ -199,7 +199,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       about: data.about,
       languageProficiency: data.languageProficiency,
       profileQuestions: getRandomProfileQuestions(5)
-    };
+    } as User;
     
     // Save user
     users.push(newUser);

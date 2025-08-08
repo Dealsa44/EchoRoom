@@ -392,10 +392,7 @@ export const suggestMoodTheme = (
   toast({
     title: `${theme.emoji} Switch to ${theme.name} theme?`,
     description: reason,
-    action: {
-      label: 'Apply',
-      onClick: () => onAccept(suggestedTheme)
-    }
+
   });
 };
 

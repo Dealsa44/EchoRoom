@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -50,6 +50,10 @@ const Match = () => {
   const [cardStack, setCardStack] = useState<Profile[]>([]);
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  
+  // Performance optimization: Memoize expensive calculations
+  const swipeProgressRef = useRef(0);
+  const swipeDirectionRef = useRef<'left' | 'right' | null>(null);
   const [filters, setFilters] = useState<Filters>({
     interests: [],
     languageLevel: 'all',
@@ -252,13 +256,14 @@ const Match = () => {
 
   const currentProfile = filteredProfiles[currentProfileIndex];
 
-  // Update card stack when filtered profiles change
+  // Update card stack when filtered profiles change - Optimized
   useEffect(() => {
     if (currentProfileIndex >= filteredProfiles.length) {
       // We're beyond the available profiles - show empty stack
       setCardStack([]);
     } else {
-      const nextProfiles = filteredProfiles.slice(currentProfileIndex, currentProfileIndex + 3);
+      // Only load 2 cards at a time for better performance
+      const nextProfiles = filteredProfiles.slice(currentProfileIndex, currentProfileIndex + 2);
       setCardStack(nextProfiles);
     }
   }, [currentProfileIndex, filteredProfiles]);
@@ -298,16 +303,25 @@ const Match = () => {
     }, 1500);
   };
 
-  const handleSwipeProgress = (progress: number, direction: 'left' | 'right') => {
-    setSwipeProgress(progress);
-    setSwipeDirection(direction);
-  };
+  const handleSwipeProgress = useCallback((progress: number, direction: 'left' | 'right') => {
+    // Use refs to avoid unnecessary re-renders during swipe
+    swipeProgressRef.current = progress;
+    swipeDirectionRef.current = direction;
+    
+    // Only update state if there's a significant change to reduce re-renders
+    if (Math.abs(progress - swipeProgress) > 0.05 || swipeDirection !== direction) {
+      setSwipeProgress(progress);
+      setSwipeDirection(direction);
+    }
+  }, [swipeProgress, swipeDirection]);
 
-  const handleSwipeEnd = () => {
+  const handleSwipeEnd = useCallback(() => {
     // Reset progress when swipe ends
     setSwipeProgress(0);
     setSwipeDirection(null);
-  };
+    swipeProgressRef.current = 0;
+    swipeDirectionRef.current = null;
+  }, []);
 
   const handleDislike = () => {
     if (!currentProfile || isCardAnimating) return;
@@ -503,21 +517,23 @@ const Match = () => {
         <img 
           src={profile.photos[currentPhotoIndex]} 
           alt={profile.name}
-          className="w-full h-full object-cover transition-all duration-500 ease-out"
+          className="w-full h-full object-cover transition-opacity duration-300 ease-out"
           onError={onPhotoError}
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
         
-        {/* Photo Navigation Dots */}
+        {/* Photo Navigation Dots - Optimized */}
         {profile.photos.length > 1 && !isPreview && (
           <div className="absolute top-4 left-4 flex gap-2 z-30">
             {profile.photos.map((_, index) => (
               <div
                 key={index}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${
                   index === currentPhotoIndex 
                     ? 'bg-white shadow-lg scale-110' 
-                    : 'bg-white/50 backdrop-blur-sm'
+                    : 'bg-white/50'
                 }`}
               />
             ))}
@@ -625,11 +641,11 @@ const Match = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 relative">
-      {/* Background Elements */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-8 w-32 h-32 bg-gradient-accent rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-40 right-10 w-24 h-24 bg-gradient-secondary rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/3 right-16 w-20 h-20 bg-gradient-primary rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }} />
+      {/* Background Elements - Optimized for mobile performance */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-8 w-24 h-24 bg-gradient-accent rounded-full blur-2xl" />
+        <div className="absolute bottom-40 right-10 w-16 h-16 bg-gradient-secondary rounded-full blur-xl" />
+        <div className="absolute top-1/3 right-16 w-12 h-12 bg-gradient-primary rounded-full blur-lg" />
       </div>
 
       <TopBar 
@@ -715,23 +731,23 @@ const Match = () => {
           </Card>
         )}
 
-        {/* Card Stack */}
+        {/* Card Stack - Optimized for mobile performance */}
         <div className="relative h-[520px] max-w-sm mx-auto mb-6">
-          {cardStack.map((profile, stackIndex) => {
+          {cardStack.slice(0, 2).map((profile, stackIndex) => {
             const isCurrentCard = stackIndex === 0;
-            const zIndex = cardStack.length - stackIndex;
-            const scale = 1 - (stackIndex * 0.04);
-            const translateY = stackIndex * 6;
-            const opacity = 1 - (stackIndex * 0.25);
+            const zIndex = 2 - stackIndex;
+            const scale = 1 - (stackIndex * 0.05);
+            const translateY = stackIndex * 8;
+            const opacity = 1 - (stackIndex * 0.3);
             
             return (
               <div
                 key={`${profile.id}-${stackIndex}`}
-                className="absolute inset-0 transition-all duration-500 ease-out card-stack-item"
+                className="absolute inset-0 transition-transform duration-300 ease-out"
                 style={{
                   zIndex,
                   transform: `scale(${scale}) translateY(${translateY}px)`,
-                  opacity: opacity > 0.15 ? opacity : 0.15
+                  opacity: opacity > 0.2 ? opacity : 0.2
                 }}
               >
                 {isCurrentCard ? (
@@ -762,15 +778,15 @@ const Match = () => {
                     />
                   </SwipeableCard>
                 ) : (
-                  <Card className="h-full shadow-xl border-0 overflow-hidden bg-gradient-to-br from-muted/30 to-muted/50 rounded-2xl">
+                  <Card className="h-full shadow-lg border-0 overflow-hidden bg-gradient-to-br from-muted/20 to-muted/40 rounded-2xl">
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
-                        <div className="w-16 h-16 bg-muted/40 rounded-full mx-auto mb-4 flex items-center justify-center">
-                          <Users size={24} className="text-muted-foreground/60" />
+                        <div className="w-12 h-12 bg-muted/30 rounded-full mx-auto mb-3 flex items-center justify-center">
+                          <Users size={20} className="text-muted-foreground/50" />
                         </div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-muted/40 rounded w-24 mx-auto"></div>
-                          <div className="h-3 bg-muted/30 rounded w-32 mx-auto"></div>
+                        <div className="space-y-1.5">
+                          <div className="h-3 bg-muted/30 rounded w-20 mx-auto"></div>
+                          <div className="h-2.5 bg-muted/20 rounded w-24 mx-auto"></div>
                         </div>
                       </div>
                     </div>
@@ -779,11 +795,9 @@ const Match = () => {
               </div>
             );
           })}
-          
-
         </div>
 
-        {/* Mobile Action Buttons */}
+        {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
           <div className="fixed bottom-28 left-0 right-0 z-20 pt-2 pb-0">
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none"></div>
@@ -798,11 +812,11 @@ const Match = () => {
                   className="h-14 w-14 border-2 border-red-500/30 text-red-500 hover:border-red-500 hover:shadow-glow-destructive/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden dislike-button"
                 >
                   <X size={20} className="relative z-10" />
-                  {/* Fill animation for dislike */}
+                  {/* Fill animation for dislike - optimized */}
                   <div 
-                    className="absolute inset-0 bg-red-500 transition-all duration-300 ease-out action-button-fill"
+                    className="absolute inset-0 bg-red-500 transition-transform duration-200 ease-out"
                     style={{
-                      transform: swipeDirection === 'left' && swipeProgress > 0 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
+                      transform: swipeDirection === 'left' && swipeProgress > 0.1 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
                       transformOrigin: 'left center'
                     }}
                   />
@@ -818,7 +832,6 @@ const Match = () => {
                 className="h-12 w-12 border-2 border-blue-400/30 text-blue-400 hover:border-blue-400 hover:shadow-glow-blue/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
                 <Star size={18} className="relative z-10" />
-                <div className="absolute inset-0 bg-blue-400/20 rounded-full scale-0 hover:scale-100 transition-transform duration-300" />
               </Button>
               
               {/* Message Button */}
@@ -830,7 +843,6 @@ const Match = () => {
                 className="h-16 w-16 shadow-glow-primary hover:scale-110 transition-spring relative overflow-hidden group disabled:opacity-50 disabled:scale-100"
               >
                 <MessageCircle size={22} className="group-hover:scale-110 transition-spring relative z-10" />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </Button>
               
               {/* AI Assist Button */}
@@ -842,7 +854,6 @@ const Match = () => {
                 className="h-12 w-12 border-2 border-purple-400/30 text-purple-400 hover:border-purple-400 hover:shadow-glow-purple/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
                 <Zap size={18} className="relative z-10" />
-                <div className="absolute inset-0 bg-purple-400/20 rounded-full scale-0 hover:scale-100 transition-transform duration-300" />
               </Button>
               
               {/* Like Button */}
@@ -855,11 +866,11 @@ const Match = () => {
                   className="h-14 w-14 border-2 border-green-500/30 text-green-500 hover:border-green-500 hover:shadow-glow-green/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden like-button"
                 >
                   <Heart size={20} className="relative z-10" />
-                  {/* Fill animation for like */}
+                  {/* Fill animation for like - optimized */}
                   <div 
-                    className="absolute inset-0 bg-green-500 transition-all duration-300 ease-out action-button-fill"
+                    className="absolute inset-0 bg-green-500 transition-transform duration-200 ease-out"
                     style={{
-                      transform: swipeDirection === 'right' && swipeProgress > 0 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
+                      transform: swipeDirection === 'right' && swipeProgress > 0.1 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
                       transformOrigin: 'right center'
                     }}
                   />

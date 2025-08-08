@@ -667,12 +667,62 @@
     outline-offset: 2px;
   }
 
-  /* Enhanced mobile swipe animations */
+  /* Enhanced mobile swipe animations - Optimized for performance */
   .swipe-card {
     touch-action: pan-y pinch-zoom;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
+    will-change: transform;
+    transform: translateZ(0); /* Force hardware acceleration */
+  }
+
+  /* Optimized mobile button animations */
+  .mobile-button-press {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+  }
+
+  .mobile-button-press:active {
+    transform: scale(0.9);
+  }
+
+  /* Optimized card stack animations */
+  .card-stack-item {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+  }
+
+  /* Optimized action button fill animations */
+  .action-button-fill {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  /* Optimized haptic feedback simulation */
+  .haptic-feedback {
+    animation: haptic-pulse 0.1s ease-out;
+  }
+
+  /* Performance optimizations for mobile */
+  .mobile-optimized {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .swipe-card,
+    .card-stack-item,
+    .action-button-fill,
+    .mobile-button-press {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 
   /* Mobile button press effects */

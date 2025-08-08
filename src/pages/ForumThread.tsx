@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarContent } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Heart, MessageCircle, Share, MoreHorizontal, Reply, Calendar, Clock, User, ChevronDown, ChevronUp, Minus, Plus, Filter, SortAsc, SortDesc, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import TopBar from '@/components/layout/TopBar';

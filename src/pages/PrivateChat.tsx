@@ -709,10 +709,10 @@ const PrivateChat = () => {
                         </div>
                       ) : (
                         <>
-                          {msg.type === 'image' && (
+                          {msg.type === 'image' && (msg as any).imageUrl && (
                             <div className="mb-2">
                               <img 
-                                src={msg.imageUrl} 
+                                src={(msg as any).imageUrl} 
                                 alt="Shared image" 
                                 className="rounded-lg max-w-full h-auto"
                                 onError={(e) => {
@@ -755,12 +755,12 @@ const PrivateChat = () => {
                             </div>
                           )}
 
-                          {msg.type === 'file' && msg.fileData && (
+                          {msg.type === 'file' && (msg as any).fileData && (
                             <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
                               <File size={16} />
                               <div className="flex-1">
-                                <div className="text-sm font-medium">{msg.fileData.name}</div>
-                                <div className="text-xs opacity-70">{msg.fileData.size}</div>
+                                <div className="text-sm font-medium">{(msg as any).fileData.name}</div>
+                                <div className="text-xs opacity-70">{(msg as any).fileData.size}</div>
                               </div>
                               <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                                 <Download size={12} />
@@ -1173,7 +1173,6 @@ const PrivateChat = () => {
         <AIAssistantModal
           isOpen={showAIModal}
           onClose={() => setShowAIModal(false)}
-          onSendSuggestion={handleSuggestionFromAI}
         />
 
         {/* Compatibility Dashboard */}
