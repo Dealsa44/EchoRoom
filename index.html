@@ -6,6 +6,20 @@
     <title>EchoRoom - Thoughtful Conversations & Meaningful Connections</title>
     <link rel="icon" type="image/png" href="/EchoRoom.png" />
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Theme Colors - Light Theme -->
+    <meta name="theme-color" content="#8b5cf6" media="(prefers-color-scheme: light)" />
+    <!-- PWA Theme Colors - Dark Theme -->
+    <meta name="theme-color" content="#a78bfa" media="(prefers-color-scheme: dark)" />
+    
+    <!-- Apple Touch Icons for iOS -->
+    <link rel="apple-touch-icon" href="/EchoRoom.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EchoRoom" />
+    
     <!-- Primary Meta Tags -->
     <meta name="title" content="EchoRoom - Thoughtful Conversations & Meaningful Connections" />
     <meta name="description" content="Join EchoRoom, a safe and inclusive social platform for meaningful conversations. Connect with like-minded people, learn languages, and engage in thoughtful discussions about philosophy, books, science, and more." />
@@ -32,14 +46,26 @@
     <!-- Additional SEO Meta Tags -->
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
-    <meta name="theme-color" content="#3b82f6" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="EchoRoom" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
