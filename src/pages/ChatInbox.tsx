@@ -22,7 +22,8 @@ import {
   Heart,
   Users,
   User,
-  VolumeX
+  VolumeX,
+  Trash2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -36,6 +37,12 @@ import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
+import { 
+  getConversationState, 
+  updateConversationState, 
+  markConversationAsLeft,
+  deleteConversationState 
+} from '@/lib/conversationStorage';
 
 interface ChatConversation {
   id: string;
@@ -72,84 +79,118 @@ const ChatInbox = () => {
   const { user, joinedRooms, leaveRoom } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [conversations, setConversations] = useState<ChatConversation[]>([
-    // Private chats from matches
-    {
-      id: 'private-1',
-      type: 'private',
-      participant: {
-        id: '1',
-        name: 'Luna',
-        avatar: '🌙',
-        isOnline: true,
-      },
-      lastMessage: {
-        id: 'msg-1',
-        content: 'That\'s such a beautiful perspective on philosophy! I\'d love to hear more about your thoughts on...',
-        sender: 'Luna',
-        timestamp: '2 min ago',
-        type: 'text',
-        isRead: false,
-      },
-      unreadCount: 3,
-      isPinned: true,
-      isArchived: false,
-      isMuted: false,
-      isTyping: false,
-    },
-    {
-      id: 'private-2',
-      type: 'private',
-      participant: {
-        id: '2',
-        name: 'Alex',
-        avatar: '📚',
-        isOnline: false,
-        lastSeen: '1 hour ago',
-      },
-      lastMessage: {
-        id: 'msg-2',
-        content: '🎵 Voice message (0:45)',
-        sender: 'Alex',
-        timestamp: '1 hour ago',
-        type: 'voice',
-        isRead: true,
-      },
-      unreadCount: 0,
-      isPinned: false,
-      isArchived: false,
-      isMuted: false,
-      isTyping: false,
-    },
-    {
-      id: 'private-3',
-      type: 'private',
-      participant: {
-        id: '3',
-        name: 'Sage',
-        avatar: '🌱',
-        isOnline: true,
-      },
-      lastMessage: {
-        id: 'msg-3',
-        content: '📷 Photo',
-        sender: 'you',
-        timestamp: '3 hours ago',
-        type: 'image',
-        isRead: true,
-      },
-      unreadCount: 0,
-      isPinned: false,
-      isArchived: false,
-      isMuted: false,
-      isTyping: true,
-    },
-  ]);
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
 
-  // Add joined rooms to conversations
+  // Initialize conversations with persistent state
+  useEffect(() => {
+    const initializeConversations = () => {
+      const baseConversations: ChatConversation[] = [
+        // Private chats from matches
+        {
+          id: 'private-1',
+          type: 'private',
+          participant: {
+            id: '1',
+            name: 'Luna',
+            avatar: '🌙',
+            isOnline: true,
+          },
+          lastMessage: {
+            id: 'msg-1',
+            content: 'That\'s such a beautiful perspective on philosophy! I\'d love to hear more about your thoughts on...',
+            sender: 'Luna',
+            timestamp: '2 min ago',
+            type: 'text',
+            isRead: false,
+          },
+          unreadCount: 3,
+          isPinned: false,
+          isArchived: false,
+          isMuted: false,
+          isTyping: false,
+        },
+        {
+          id: 'private-2',
+          type: 'private',
+          participant: {
+            id: '2',
+            name: 'Alex',
+            avatar: '📚',
+            isOnline: false,
+            lastSeen: '1 hour ago',
+          },
+          lastMessage: {
+            id: 'msg-2',
+            content: '🎵 Voice message (0:45)',
+            sender: 'Alex',
+            timestamp: '1 hour ago',
+            type: 'voice',
+            isRead: true,
+          },
+          unreadCount: 0,
+          isPinned: false,
+          isArchived: false,
+          isMuted: false,
+          isTyping: false,
+        },
+        {
+          id: 'private-3',
+          type: 'private',
+          participant: {
+            id: '3',
+            name: 'Sage',
+            avatar: '🌱',
+            isOnline: true,
+          },
+          lastMessage: {
+            id: 'msg-3',
+            content: '📷 Photo',
+            sender: 'you',
+            timestamp: '3 hours ago',
+            type: 'image',
+            isRead: true,
+          },
+          unreadCount: 0,
+          isPinned: false,
+          isArchived: false,
+          isMuted: false,
+          isTyping: true,
+        },
+      ];
+
+      // Apply persistent states to conversations
+      const conversationsWithState = baseConversations.map(conv => {
+        const state = getConversationState(conv.id);
+        return {
+          ...conv,
+          isPinned: state.isPinned,
+          isArchived: state.isArchived,
+          isMuted: state.isMuted
+        };
+      });
+
+      setConversations(conversationsWithState);
+    };
+
+    initializeConversations();
+  }, []);
+
+  // Refresh conversations when joined rooms change
+  useEffect(() => {
+    // This will trigger a re-render when joinedRooms changes,
+    // which will update the joinedRoomConversations
+  }, [joinedRooms]);
+
+  // Add joined rooms to conversations (exclude left rooms)
   const joinedRoomConversations: ChatConversation[] = (joinedRooms || []).map(roomId => {
     const room = chatRooms.find(r => r.id === roomId);
     if (!room) return null;
+
+    const conversationId = `joined-${roomId}`;
+    const state = getConversationState(conversationId);
+    
+    // Skip if this room has been left
+    if (state.isLeft) return null;
 
     // Generate some sample last messages based on room type
     const getLastMessage = () => {
@@ -166,7 +207,7 @@ const ChatInbox = () => {
     };
 
     return {
-      id: `joined-${roomId}`,
+      id: conversationId,
       type: 'group',
       participant: {
         id: `room-${roomId}`,
@@ -188,9 +229,9 @@ const ChatInbox = () => {
         isRead: true,
       },
       unreadCount: 0,
-      isPinned: false,
-      isArchived: false,
-      isMuted: false,
+      isPinned: state.isPinned,
+      isArchived: state.isArchived,
+      isMuted: state.isMuted,
       isTyping: false,
     };
   }).filter(Boolean) as ChatConversation[];
@@ -225,7 +266,7 @@ const ChatInbox = () => {
     if (conversation.type === 'private') {
       navigate(`/private-chat/${conversation.participant.id}`);
     } else if (conversation.type === 'group') {
-      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}?from=messages`);
+      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}?from=chat-inbox`);
     }
     
     // Mark as read
@@ -237,30 +278,42 @@ const ChatInbox = () => {
   };
 
   const handlePinConversation = (conversationId: string) => {
+    const conv = allConversations.find(c => c.id === conversationId);
+    const newPinnedState = !conv?.isPinned;
+    
+    // Update persistent storage
+    updateConversationState(conversationId, { isPinned: newPinnedState });
+    
+    // Update local state
     setConversations(prev => prev.map(conv => 
       conv.id === conversationId 
-        ? { ...conv, isPinned: !conv.isPinned }
+        ? { ...conv, isPinned: newPinnedState }
         : conv
     ));
     
-    const conv = allConversations.find(c => c.id === conversationId);
     toast({
-      title: conv?.isPinned ? "Unpinned conversation" : "Pinned conversation",
-      description: `${conv?.participant.name} ${conv?.isPinned ? 'removed from' : 'added to'} pinned conversations`,
+      title: newPinnedState ? "Pinned conversation" : "Unpinned conversation",
+      description: `${conv?.participant.name} ${newPinnedState ? 'added to' : 'removed from'} pinned conversations`,
     });
   };
 
   const handleArchiveConversation = (conversationId: string) => {
+    const conv = allConversations.find(c => c.id === conversationId);
+    const newArchivedState = !conv?.isArchived;
+    
+    // Update persistent storage
+    updateConversationState(conversationId, { isArchived: newArchivedState });
+    
+    // Update local state
     setConversations(prev => prev.map(conv => 
       conv.id === conversationId 
-        ? { ...conv, isArchived: !conv.isArchived }
+        ? { ...conv, isArchived: newArchivedState }
         : conv
     ));
     
-    const conv = allConversations.find(c => c.id === conversationId);
     toast({
-      title: conv?.isArchived ? "Unarchived conversation" : "Archived conversation",
-      description: `${conv?.participant.name} ${conv?.isArchived ? 'removed from' : 'moved to'} archives`,
+      title: newArchivedState ? "Archived conversation" : "Unarchived conversation",
+      description: `${conv?.participant.name} ${newArchivedState ? 'moved to' : 'removed from'} archives`,
     });
   };
 
@@ -270,23 +323,21 @@ const ChatInbox = () => {
     if (conv?.type === 'group' && conversationId.startsWith('joined-')) {
       // Extract room ID from conversation ID
       const roomId = conversationId.replace('joined-', '');
-      leaveRoom(roomId);
       
-      toast({
-        title: "Left chat room",
-        description: `You've left ${conv.participant.name}`,
-      });
+      // Mark as left in persistent storage
+      markConversationAsLeft(conversationId);
+      
+      // Leave room in app context (this will make it available in chat rooms again)
+      leaveRoom(roomId);
     } else if (conv?.type === 'private') {
-      // For private chats, remove them from the list
+      // For private chats, remove them from persistent storage and local state
+      deleteConversationState(conversationId);
       setConversations(prev => prev.filter(conv => conv.id !== conversationId));
       
       toast({
         title: "Deleted conversation",
         description: `Removed ${conv.participant.name} from your conversations`,
       });
-    } else {
-      // For other types, archive them
-      handleArchiveConversation(conversationId);
     }
   };
 
@@ -410,6 +461,15 @@ const ChatInbox = () => {
                               <Pin size={14} className="mr-2" />
                               {conversation.isPinned ? 'Unpin' : 'Pin'}
                             </DropdownMenuItem>
+                            
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchiveConversation(conversation.id);
+                            }}>
+                              <Archive size={14} className="mr-2" />
+                              {conversation.isArchived ? 'Unarchive' : 'Archive'}
+                            </DropdownMenuItem>
+                            
                             {conversation.type === 'group' ? (
                               <DropdownMenuItem 
                                 onClick={(e) => {
@@ -419,28 +479,19 @@ const ChatInbox = () => {
                                 className="text-destructive"
                               >
                                 <LogOut size={14} className="mr-2" />
-                                Leave Chat
+                                Leave
                               </DropdownMenuItem>
                             ) : (
-                              <>
-                                <DropdownMenuItem onClick={(e) => {
+                              <DropdownMenuItem 
+                                onClick={(e) => {
                                   e.stopPropagation();
-                                  handleArchiveConversation(conversation.id);
-                                }}>
-                                  <Archive size={14} className="mr-2" />
-                                  {conversation.isArchived ? 'Unarchive' : 'Archive'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLeaveConversation(conversation.id);
-                                  }}
-                                  className="text-destructive"
-                                >
-                                  <LogOut size={14} className="mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </>
+                                  handleLeaveConversation(conversation.id);
+                                }}
+                                className="text-destructive"
+                              >
+                                <Trash2 size={14} className="mr-2" />
+                                Delete
+                              </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

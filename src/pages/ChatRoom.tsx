@@ -5,6 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useLanguageAI, LanguageCode } from '@/contexts/LanguageAIContext';
@@ -883,6 +889,29 @@ const ChatRoom = () => {
     });
   };
 
+  const handleBackNavigation = () => {
+    if (currentSession) {
+      endLearningSession();
+    }
+    
+    // Smart navigation: check where user came from
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get('from');
+    
+    if (from === 'chat-inbox' || from === 'messages') {
+      navigate('/chat-inbox');
+    } else if (from === 'chat-rooms') {
+      // When going back to chat-rooms, check if there was an original source
+      // This handles the case: Community → Chat Rooms → Join Room → Back
+      navigate('/chat-rooms?from=community');
+    } else if (from === 'community') {
+      navigate('/community');
+    } else {
+      // Default fallback: try to go back in history, or go to community
+      navigate(-1);
+    }
+  };
+
   const handleLeaveRoom = () => {
     if (currentSession) {
       endLearningSession();
@@ -893,18 +922,8 @@ const ChatRoom = () => {
       leaveRoom(id);
     }
     
-    // Smart navigation: check where user came from
-    const urlParams = new URLSearchParams(window.location.search);
-    const from = urlParams.get('from');
-    
-    if (from === 'messages') {
-      navigate('/messages');
-    } else if (from === 'community') {
-      navigate('/community');
-    } else {
-      // Default fallback: try to go back in history, or go to community
-      navigate(-1);
-    }
+    // After leaving, navigate back
+    handleBackNavigation();
   };
 
   const sendSuggestedMessage = (suggestion: string) => {
@@ -932,7 +951,7 @@ const ChatRoom = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleLeaveRoom}
+              onClick={handleBackNavigation}
             >
               <ArrowLeft size={20} />
             </Button>
@@ -940,6 +959,24 @@ const ChatRoom = () => {
               <h1 className="font-semibold">{roomData.title}</h1>
             </div>
           </div>
+          
+          {/* Room Settings Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={handleLeaveRoom}
+                className="text-destructive"
+              >
+                <ArrowLeft size={14} className="mr-2" />
+                Leave Room
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

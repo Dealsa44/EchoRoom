@@ -14,6 +14,7 @@ import { ChatRoomSkeleton } from '@/components/ui/SkeletonLoader';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
+import { markConversationAsRejoined } from '@/lib/conversationStorage';
 
 const ChatRooms = () => {
   const navigate = useNavigate();
@@ -61,18 +62,25 @@ const ChatRooms = () => {
     // Simulate join delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
+    // Join room in app context
     joinRoom(roomId);
+    
+    // Mark conversation as rejoined (clears left state)
+    const conversationId = `joined-${roomId}`;
+    markConversationAsRejoined(conversationId);
+    
     setJoiningRoom(null);
     
     toast({
       title: "Joined room!",
       description: "You can now access this room from your messages.",
+      duration: 3000,
     });
     
-    // Auto-navigate to the joined room with source parameter
+    // Navigate directly to the chat room with source parameter
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get('from') || 'community';
-    navigate(`/chat-room/${roomId}?from=${from}`);
+    navigate(`/chat-room/${roomId}?from=chat-rooms`);
   };
 
 

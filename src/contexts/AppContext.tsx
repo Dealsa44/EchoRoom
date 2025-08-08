@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
 import { ProfileQuestion } from '@/types';
+import { clearConversationStates } from '@/lib/conversationStorage';
 
 type SafeMode = 'light' | 'deep' | 'learning';
 type ChatStyle = 'introvert' | 'ambievert' | 'extrovert';
@@ -259,6 +260,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     
     // Clear joined rooms from localStorage
     localStorage.setItem('joinedRooms', JSON.stringify([]));
+    
+    // Clear conversation states
+    clearConversationStates();
     
     setState(prev => ({ 
       ...prev, 
