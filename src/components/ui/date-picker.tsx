@@ -260,6 +260,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
         ref={popoverRef}
         className="w-auto p-0 border-0 shadow-lg bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 date-picker-enter"
         align="start"
+        side="top"
+        sideOffset={4}
       >
                  <div className="p-2">
                      {/* Header */}
