@@ -39,10 +39,7 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
     e.preventDefault();
     
     // Simulate room creation
-    toast({
-      title: "Room Created!",
-      description: `"${formData.name}" has been created successfully.`,
-    });
+    // Room created - toast removed per user request
     
     // Reset form and close modal
     setFormData({

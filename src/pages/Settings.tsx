@@ -121,47 +121,28 @@ const Settings = () => {
   });
 
   const handleExportData = () => {
-    toast({
-      title: "Data Export",
-      description: "Your data export will be ready shortly. You'll receive a download link via email.",
-    });
+    // Export data functionality - toast removed per user request
   };
 
   const handleDeleteAccount = () => {
-    toast({
-      title: "Account Deletion",
-      description: "Please contact support to delete your account. This action cannot be undone.",
-      variant: "destructive",
-    });
+    // Account deletion functionality - toast removed per user request
   };
 
   const handlePasswordChange = async () => {
     if (!user) return;
 
     if (!passwordData.currentPassword || !passwordData.newPassword) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in both current and new password fields.",
-        variant: "destructive",
-      });
+      // Missing information validation - toast removed per user request
       return;
     }
 
     if (passwordData.currentPassword !== user.password) {
-      toast({
-        title: "Current Password Incorrect",
-        description: "Please enter your current password correctly.",
-        variant: "destructive",
-      });
+      // Password validation - toast removed per user request
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast({
-        title: "Password Too Short",
-        description: "New password must be at least 8 characters long.",
-        variant: "destructive",
-      });
+      // Password length validation - toast removed per user request
       return;
     }
 
@@ -172,10 +153,7 @@ const Settings = () => {
     // Clear the form
     setPasswordData({ currentPassword: '', newPassword: '' });
     
-    toast({
-      title: "Password Changed",
-      description: "Your password has been updated successfully.",
-    });
+    // Password changed successfully - toast removed per user request
   };
 
   return (
@@ -574,10 +552,7 @@ const Settings = () => {
                 variant="outline" 
                 className="w-full justify-start"
                 onClick={() => {
-                  toast({
-                    title: "Backup Created",
-                    description: "Your data has been backed up to cloud storage.",
-                  });
+                  // Backup created - toast removed per user request
                 }}
               >
                 <Upload className="h-4 w-4 mr-2" />
@@ -590,10 +565,7 @@ const Settings = () => {
                 variant="outline" 
                 className="w-full justify-start text-destructive hover:text-destructive" 
                 onClick={() => {
-                  toast({
-                    title: "Data Cleared",
-                    description: "All local app data has been cleared.",
-                  });
+                  // Data cleared - toast removed per user request
                 }}
               >
                 <Trash2 className="h-4 w-4 mr-2" />

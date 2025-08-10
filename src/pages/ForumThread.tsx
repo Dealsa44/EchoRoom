@@ -567,75 +567,77 @@ const ForumThread = () => {
 
         {/* Comments Section */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          {/* Comments title on first row */}
+          <div>
             <h3 className="font-semibold text-lg">Comments ({comments.length})</h3>
-            
-            <div className="flex items-center gap-2">
+          </div>
+          
+          {/* Sort controls and show all toggle on second row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
               {/* Sort/Filter Controls */}
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortOrder('newest')}
-                  className={`h-7 px-2 text-xs transition-colors duration-200 ${
-                    sortOrder === 'newest' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <SortDesc size={12} className="mr-1" />
-                  Newest
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortOrder('oldest')}
-                  className={`h-7 px-2 text-xs transition-colors duration-200 ${
-                    sortOrder === 'oldest' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <SortAsc size={12} className="mr-1" />
-                  Oldest
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortOrder('popular')}
-                  className={`h-7 px-2 text-xs transition-colors duration-200 ${
-                    sortOrder === 'popular' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Heart size={12} className="mr-1" />
-                  Popular
-                </Button>
-              </div>
-
-              {/* Show All Toggle */}
-              {comments.length > 3 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAllComments(!showAllComments)}
-                  className="h-7 px-2 text-xs text-primary hover:text-primary-dark transition-colors duration-200 bg-primary/5 hover:bg-primary/10 rounded-full"
-                >
-                  {showAllComments ? (
-                    <>
-                      <ChevronUp size={12} className="mr-1" />
-                      Show less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={12} className="mr-1" />
-                      All {comments.length}
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSortOrder('newest')}
+                className={`h-7 px-2 text-xs transition-colors duration-200 ${
+                  sortOrder === 'newest' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <SortDesc size={12} className="mr-1" />
+                Newest
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSortOrder('oldest')}
+                className={`h-7 px-2 text-xs transition-colors duration-200 ${
+                  sortOrder === 'oldest' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <SortAsc size={12} className="mr-1" />
+                Oldest
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSortOrder('popular')}
+                className={`h-7 px-2 text-xs transition-colors duration-200 ${
+                  sortOrder === 'popular' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Heart size={12} className="mr-1" />
+                Popular
+              </Button>
             </div>
+
+            {/* Show All Toggle */}
+            {comments.length > 3 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllComments(!showAllComments)}
+                className="h-7 px-2 text-xs text-primary hover:text-primary-dark transition-colors duration-200 bg-primary/5 hover:bg-primary/10 rounded-full"
+              >
+                {showAllComments ? (
+                  <>
+                    <ChevronUp size={12} className="mr-1" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={12} className="mr-1" />
+                    All {comments.length}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           
           <div className="space-y-4">

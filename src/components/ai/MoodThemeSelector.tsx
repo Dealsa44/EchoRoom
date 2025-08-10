@@ -60,10 +60,7 @@ const MoodThemeSelector = ({
     onThemeChange(themeId);
     
     const theme = moodThemes[themeId];
-    toast({
-      title: `${theme.emoji} Theme Applied!`,
-      description: `Switched to ${theme.name} theme`,
-    });
+    // Theme applied - toast removed per user request
 
     // Create particle effect if enabled
     const chatContainer = document.querySelector('.chat-container') as HTMLElement;
@@ -256,10 +253,7 @@ const MoodThemeSelector = ({
                 onClick={() => {
                   const newSuggestions = getThemeSuggestions(messages, currentTheme);
                   setSuggestions(newSuggestions);
-                  toast({
-                    title: "Refreshed!",
-                    description: "Updated theme suggestions based on your latest messages",
-                  });
+                  // Refreshed suggestions - toast removed per user request
                 }}
               >
                 <RefreshCw className="h-3 w-3 mr-1" />

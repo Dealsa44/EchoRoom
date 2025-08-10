@@ -232,14 +232,26 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1 && isDragging) {
       // Only prevent default during active drag to maintain smooth scrolling
-      e.preventDefault();
+      try {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      } catch (error) {
+        // Ignore passive event listener errors
+      }
       handleMove(e.touches[0].clientX, e.touches[0].clientY);
     }
   }, [handleMove, isDragging]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (isDragging) {
-      e.preventDefault();
+      try {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      } catch (error) {
+        // Ignore passive event listener errors
+      }
       handleEnd();
     }
   }, [handleEnd, isDragging]);

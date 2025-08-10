@@ -19,6 +19,7 @@ import { chatRooms } from '@/data/chatRooms';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 const ChatRoom = () => {
   const { id } = useParams();
@@ -63,12 +64,14 @@ const ChatRoom = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
+  const [actionSheetMessageId, setActionSheetMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('english');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Find the actual room data based on the ID
   const room = chatRooms.find(r => r.id === id);
@@ -76,11 +79,7 @@ const ChatRoom = () => {
   // If room not found, redirect to chat rooms
   useEffect(() => {
     if (!room) {
-      toast({
-        title: "Room not found",
-        description: "The chat room you're looking for doesn't exist.",
-        variant: "destructive",
-      });
+      // Room not found - toast removed per user request
       navigate('/chat-rooms');
     }
   }, [room, navigate]);
@@ -90,6 +89,9 @@ const ChatRoom = () => {
     return () => {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
+      }
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
       }
     };
   }, []);
@@ -469,6 +471,18 @@ const ChatRoom = () => {
     setReplyingTo(messageId);
   };
 
+  // Long-press for mobile to open actions sheet
+  const startLongPress = (messageId: number) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => setActionSheetMessageId(messageId), 400);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   const handlePinMessage = (messageId: number) => {
     if (!isUserModerator) return;
     
@@ -485,11 +499,8 @@ const ChatRoom = () => {
       }
       return newSet;
     });
-
-    toast({
-      title: pinnedMessages.has(messageId) ? "Message unpinned" : "Message pinned",
-      description: "Moderator action completed",
-    });
+    
+    // Pin/unpin message - toast removed per user request
   };
 
   const handleDeleteMessage = (messageId: number) => {
@@ -499,11 +510,7 @@ const ChatRoom = () => {
     if (!isUserModerator && !isMyMessage) return;
     
     setMessages(prev => prev.filter(msg => msg.id !== messageId));
-    toast({
-      title: "Message deleted",
-      description: isUserModerator ? "Moderator action completed" : "Your message has been deleted",
-      variant: "destructive",
-    });
+    // Message deleted - toast removed per user request
   };
 
   const handleEditMessage = (messageId: number) => {
@@ -526,10 +533,7 @@ const ChatRoom = () => {
     setEditingMessageId(null);
     setEditingText('');
     
-    toast({
-      title: "Message updated",
-      description: "Your message has been edited",
-    });
+    // Message updated - toast removed per user request
   };
 
   const handleTranslate = (messageId: number) => {
@@ -568,25 +572,19 @@ const ChatRoom = () => {
         m.id === messageId ? { ...m, corrected: true, hasErrors: false } : m
       ));
       
-      toast({
-        title: "Grammar Check Complete",
-        description: `Found ${corrections.length} issue(s). Check the language panel for details.`,
-      });
+      // Grammar check with issues - toast removed per user request
     } else {
       setMessages(prev => prev.map(m => 
         m.id === messageId ? { ...m, corrected: true, hasErrors: false } : m
       ));
       
-      toast({
-        title: "Grammar Check Complete",
-        description: "No grammar issues found!",
-      });
+      // Grammar check no issues - toast removed per user request
     }
   };
 
   const renderMessageContent = (msg: any) => {
     // Simple message rendering - can be enhanced with grammar highlighting
-    return <p className="text-sm">{msg.content}</p>;
+    return <p className="text-sm break-words">{msg.content}</p>;
   };
 
   const handleMuteUser = (username: string) => {
@@ -601,11 +599,8 @@ const ChatRoom = () => {
       }
       return newSet;
     });
-
-    toast({
-      title: mutedUsers.has(username) ? `${username} unmuted` : `${username} muted`,
-      description: "Moderator action completed",
-    });
+    
+    // Mute/unmute user - toast removed per user request
   };
 
   const getRoleIcon = (role: string) => {
@@ -642,10 +637,7 @@ const ChatRoom = () => {
           );
         });
         
-        toast({
-          title: "Grammar Correction",
-          description: `Found ${corrections.length} grammar issue(s). Check the language panel for details.`,
-        });
+        // Grammar correction notification - toast removed per user request
       }
     }
 
@@ -847,10 +839,7 @@ const ChatRoom = () => {
     setReplyingTo(null);
     setShowAttachments(false);
     
-    toast({
-      title: "Photo sent",
-      description: "Your photo has been shared",
-    });
+    // Photo sent - toast removed per user request
   };
 
   const handleFileUpload = () => {
@@ -883,10 +872,7 @@ const ChatRoom = () => {
     setReplyingTo(null);
     setShowAttachments(false);
     
-    toast({
-      title: "File sent",
-      description: "Your file has been shared",
-    });
+    // File sent - toast removed per user request
   };
 
   const handleBackNavigation = () => {
@@ -946,24 +932,25 @@ const ChatRoom = () => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-40 chat-room-header border-b border-border shadow-soft">
-        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleBackNavigation}
+              className="flex-shrink-0"
             >
               <ArrowLeft size={20} />
             </Button>
-            <div>
-              <h1 className="font-semibold">{roomData.title}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-semibold truncate">{roomData.title}</h1>
             </div>
           </div>
           
           {/* Room Settings Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="flex-shrink-0">
                 <MoreVertical size={20} />
               </Button>
             </DropdownMenuTrigger>
@@ -992,10 +979,14 @@ const ChatRoom = () => {
                 key={msg.id}
                 className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
               >
-                <Card className={`max-w-[80%] relative group ${
+                <Card
+                  onTouchStart={() => startLongPress(msg.id)}
+                  onTouchEnd={cancelLongPress}
+                  onTouchMove={cancelLongPress}
+                  className={`max-w-[80%] relative group transition-colors ${
                   isMyMessage 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-card'
+                    ? 'bg-primary text-primary-foreground hover:!bg-primary hover:brightness-95' 
+                    : 'bg-card hover:bg-muted/60 dark:hover:bg-white/10'
                 } ${msg.user?.isAnonymous ? 'opacity-90' : ''}`}>
                   <CardContent className="p-3">
                     {/* User info at top for public chat (except for own messages) */}
@@ -1049,14 +1040,12 @@ const ChatRoom = () => {
                         <>
                           {msg.type === 'image' && (
                             <div className="mb-2">
-                              <img 
-                                src={msg.imageUrl} 
-                                alt="Shared image" 
+                              <img
+                                src={msg.imageUrl}
+                                alt="Shared image"
                                 className="rounded-lg max-w-full h-auto"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = 'https://picsum.photos/300/200?random=fallback';
-                                }}
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                           )}
@@ -1107,12 +1096,12 @@ const ChatRoom = () => {
                           )}
 
                           {(msg.type === 'text' || !msg.type) && (
-                            <>
+                            <div className="break-words">
                               {renderMessageContent(msg)}
                               {msg.isEdited && (
                                 <span className="text-xs opacity-50 ml-2">(edited)</span>
                               )}
-                            </>
+                            </div>
                           )}
                         </>
                       )}
@@ -1134,7 +1123,7 @@ const ChatRoom = () => {
                     )}
                     
                     {(msg.translated || (autoTranslateEnabled && !isMyMessage)) && (
-                      <div className="text-xs opacity-80 mt-2 p-2 bg-primary/10 rounded">
+                      <div className="text-xs opacity-80 mt-2 p-2 bg-primary/10 rounded break-words">
                         <Languages size={12} className="inline mr-1" />
                         Translation: {msg.translatedContent || `[${targetLanguage?.toUpperCase() || 'EN'}] ${msg.content}`}
                       </div>
@@ -1147,8 +1136,8 @@ const ChatRoom = () => {
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
+                    {/* Meta row: time + delivery; separated from actions to avoid overflow */}
+                    <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs opacity-70">{msg.timestamp}</span>
                         {msg.isEncrypted && (
                           <Lock size={10} className="opacity-50" />
@@ -1160,127 +1149,46 @@ const ChatRoom = () => {
                             {msg.deliveryStatus === 'read' && <CheckCheck size={10} className="text-blue-500" />}
                           </div>
                         )}
-                      </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {/* Quick reactions */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '❤️')}
-                        >
-                          ❤️
+                    </div>
+
+                    {/* Desktop actions (hover to reveal) */}
+                    <div className="mt-1 hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '❤️')}>❤️</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '👍')}>👍</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '😊')}>😊</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleReplyToMessage(msg.id)}><Reply size={10} /></Button>
+                      {isMyMessage && !msg.isDeleted && (
+                        <>
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleEditMessage(msg.id)}><Edit3 size={10} /></Button>
+                          <Button variant="ghost" size="sm" className="h-6 px-1 text-red-500 hover:bg-red-50" onClick={() => handleDeleteMessage(msg.id)}><Trash2 size={10} /></Button>
+                        </>
+                      )}
+                      {isMyMessage && practiceMode && (
+                        <AITooltip title="Grammar Check" description="Check this message for grammar and spelling errors">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleGrammarCheck(msg.id)}>
+                            {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
+                          </Button>
+                        </AITooltip>
+                      )}
+                      {!autoTranslateEnabled && (
+                        <AITooltip title="Translate Message" description="See this message in your learning language">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleTranslate(msg.id)}>
+                            <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
+                          </Button>
+                        </AITooltip>
+                      )}
+                      {!isMyMessage && (
+                        <AITooltip title="Ask AI for Help" description="Get AI suggestions for how to respond to this message">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => setShowAIModal(true)}>
+                            <HelpCircle size={10} />
+                          </Button>
+                        </AITooltip>
+                      )}
+                      {isUserModerator && (
+                        <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => handlePinMessage(msg.id)}>
+                          <Pin size={10} />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '👍')}
-                        >
-                          👍
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '😊')}
-                        >
-                          😊
-                        </Button>
-
-                        {/* Message actions */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1"
-                          onClick={() => handleReplyToMessage(msg.id)}
-                        >
-                          <Reply size={10} />
-                        </Button>
-
-                        {isMyMessage && !msg.isDeleted && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleEditMessage(msg.id)}
-                            >
-                              <Edit3 size={10} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1 text-red-500"
-                              onClick={() => handleDeleteMessage(msg.id)}
-                            >
-                              <Trash2 size={10} />
-                            </Button>
-                          </>
-                        )}
-
-                        {/* Other actions */}
-                        {isMyMessage && practiceMode && (
-                          <AITooltip 
-                            title="Grammar Check"
-                            description="Check this message for grammar and spelling errors"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleGrammarCheck(msg.id)}
-                            >
-                              {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
-                            </Button>
-                          </AITooltip>
-                        )}
-                        
-                        {!autoTranslateEnabled && (
-                          <AITooltip 
-                            title="Translate Message"
-                            description="See this message in your learning language"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleTranslate(msg.id)}
-                            >
-                              <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
-                            </Button>
-                          </AITooltip>
-                        )}
-
-                        {!isMyMessage && (
-                          <AITooltip 
-                            title="Ask AI for Help"
-                            description="Get AI suggestions for how to respond to this message"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => setShowAIModal(true)}
-                            >
-                              <HelpCircle size={10} />
-                            </Button>
-                          </AITooltip>
-                        )}
-
-                        {isUserModerator && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handlePinMessage(msg.id)}
-                            >
-                              <Pin size={10} />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1334,7 +1242,7 @@ const ChatRoom = () => {
             Anonymous mode active
           </div>
         )}
-        <div className="flex gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2">
           <AITooltip 
             title="AI Assistant"
             description="Get conversation help, grammar checks, and language practice support"
@@ -1345,7 +1253,7 @@ const ChatRoom = () => {
               onClick={() => setShowAIModal(true)}
             >
               <Bot size={14} />
-              <span className="ml-1 text-xs">AI Help</span>
+              <span className="ml-1 text-xs hidden sm:inline">AI Help</span>
             </Button>
           </AITooltip>
           
@@ -1359,15 +1267,12 @@ const ChatRoom = () => {
               onClick={() => {
                 if (message.trim()) {
                   const translation = simulateTranslation(message, learningLanguage);
-                  toast({
-                    title: "Translation",
-                    description: `"${message}" → ${translation}`,
-                  });
+                  // Translation - toast removed per user request
                 }
               }}
             >
               <Languages size={14} />
-              <span className="ml-1 text-xs">Translate</span>
+              <span className="ml-1 text-xs hidden sm:inline">Translate</span>
             </Button>
           </AITooltip>
 
@@ -1382,14 +1287,14 @@ const ChatRoom = () => {
               className={showLanguagePanel ? 'text-primary' : ''}
             >
               <BookOpen size={14} />
-              <span className="ml-1 text-xs">Language Tools</span>
+              <span className="ml-1 text-xs hidden sm:inline">Language Tools</span>
             </Button>
           </AITooltip>
 
           {practiceMode && (
             <Badge variant="secondary" className="text-xs px-2 py-1">
               <Zap size={10} className="mr-1" />
-              Practice Active
+              <span className="hidden sm:inline">Practice Active</span>
             </Badge>
           )}
         </div>
@@ -1397,7 +1302,7 @@ const ChatRoom = () => {
         {/* Attachment panel */}
         {showAttachments && (
           <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -1483,7 +1388,7 @@ const ChatRoom = () => {
 
         {/* Recording indicator */}
         {isRecording && (
-          <div className="mt-2 flex items-center justify-between bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
             <div className="flex items-center gap-2 text-red-600">
               <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">
@@ -1531,6 +1436,29 @@ const ChatRoom = () => {
         isOpen={showAIModal} 
         onClose={() => setShowAIModal(false)} 
       />
+
+      {/* Mobile actions sheet (long-press) */}
+      <Sheet open={actionSheetMessageId !== null} onOpenChange={(open) => !open && setActionSheetMessageId(null)}>
+        <SheetContent side="bottom" className="max-w-md mx-auto" aria-describedby="message-actions-description">
+          <SheetHeader>
+            <SheetTitle>Message actions</SheetTitle>
+            <SheetDescription id="message-actions-description">
+              Choose an action to perform on this message
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 grid grid-cols-4 gap-3">
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '❤️'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">❤️<span className="text-xs mt-1">Love</span></Button>
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '👍'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">👍<span className="text-xs mt-1">Like</span></Button>
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '😊'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">😊<span className="text-xs mt-1">Smile</span></Button>
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReplyToMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Reply size={16} /><span className="text-xs mt-1">Reply</span></Button>
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleTranslate(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Languages size={16} /><span className="text-xs mt-1">Translate</span></Button>
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleGrammarCheck(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><BookOpen size={16} /><span className="text-xs mt-1">Grammar</span></Button>
+            {/** Edit/Delete available for own messages; handlers will no-op otherwise */}
+            <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleEditMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Edit3 size={16} /><span className="text-xs mt-1">Edit</span></Button>
+            <Button variant="destructive" onClick={() => { if (actionSheetMessageId) handleDeleteMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Trash2 size={16} /><span className="text-xs mt-1">Delete</span></Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

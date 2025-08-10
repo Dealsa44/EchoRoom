@@ -13,6 +13,7 @@ import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 
@@ -36,11 +37,13 @@ const PrivateChat = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
+  const [actionSheetMessageId, setActionSheetMessageId] = useState<number | null>(null);
   const [showCompatibilityDashboard, setShowCompatibilityDashboard] = useState(false);
   const [showMoodThemeSelector, setShowMoodThemeSelector] = useState(false);
   const [currentMoodTheme, setCurrentMoodTheme] = useState('default');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mock user data - in real app this would come from API
   const getUserById = (id: string) => {
@@ -60,7 +63,6 @@ const PrivateChat = () => {
     name: userInfo.name,
     avatar: userInfo.avatar,
     status: userInfo.status,
-    safeMode: true,
     languageLearning: userInfo.languageLearning
   };
 
@@ -213,6 +215,9 @@ const PrivateChat = () => {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
     };
   }, []);
 
@@ -243,10 +248,7 @@ const PrivateChat = () => {
       return msg;
     }));
     
-    toast({
-      title: "Reaction added",
-      description: `You reacted with ${emoji}`,
-    });
+    // Reaction added - toast removed per user request
   };
 
   // Message editing
@@ -267,10 +269,7 @@ const PrivateChat = () => {
       ));
       setEditingMessageId(null);
       setEditingText('');
-      toast({
-        title: "Message edited",
-        description: "Your message has been updated",
-      });
+      // Message edited - toast removed per user request
     }
   };
 
@@ -281,16 +280,25 @@ const PrivateChat = () => {
         ? { ...msg, content: 'This message was deleted', isDeleted: true, type: 'deleted' }
         : msg
     ));
-    toast({
-      title: "Message deleted",
-      description: "Message has been removed",
-    });
+    // Message deleted - toast removed per user request
   };
 
   // Reply to message
   const handleReplyToMessage = (messageId: number) => {
     setReplyingTo(messageId);
     // Focus input (would need ref in real implementation)
+  };
+
+  // Long-press helpers for mobile to open actions sheet
+  const startLongPress = (messageId: number) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => setActionSheetMessageId(messageId), 400);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   };
 
   // File attachment handlers
@@ -321,10 +329,7 @@ const PrivateChat = () => {
     setReplyingTo(null);
     setShowAttachments(false);
     
-    toast({
-      title: "Photo sent",
-      description: "Your photo has been shared",
-    });
+    // Photo sent - toast removed per user request
   };
 
   const handleVoiceRecord = () => {
@@ -409,10 +414,7 @@ const PrivateChat = () => {
     setReplyingTo(null);
     setShowAttachments(false);
     
-    toast({
-      title: "File sent",
-      description: "Your file has been shared",
-    });
+    // File sent - toast removed per user request
   };
 
   const handleSendMessage = () => {
@@ -455,10 +457,7 @@ const PrivateChat = () => {
     setIsTyping(false);
 
     if (hasErrors && practiceMode) {
-      toast({
-        title: "Grammar suggestion",
-        description: "I found a small error in your message. Click the underlined word to learn more!",
-      });
+      // Grammar suggestion - toast removed per user request
     }
 
     // Simulate response
@@ -506,10 +505,7 @@ const PrivateChat = () => {
         : msg
     ));
     
-    toast({
-      title: "Grammar Checked",
-      description: "Your message looks great! No corrections needed.",
-    });
+    // Grammar checked - toast removed per user request
   };
 
   const handleTranslate = (messageId: number) => {
@@ -524,10 +520,7 @@ const PrivateChat = () => {
     ));
     
     if (!messages.find(msg => msg.id === messageId)?.translated) {
-      toast({
-        title: "Translation Ready",
-        description: "Message translated to your learning language",
-      });
+      // Translation ready - toast removed per user request
     }
   };
 
@@ -570,50 +563,41 @@ const PrivateChat = () => {
   };
 
   const handleBlock = () => {
-    toast({
-      title: "User Blocked",
-      description: `${chatPartner.name} has been blocked and reported.`,
-      variant: "destructive",
-    });
+    // User blocked - toast removed per user request
     navigate('/match');
   };
 
   const handleReport = () => {
-    toast({
-      title: "Report Submitted",
-      description: "Thank you for helping keep EchoRoom safe.",
-    });
+    // Report submitted - toast removed per user request
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-card border-b border-border shadow-soft">
-        <div className="flex items-center justify-between p-4 max-w-md mx-auto">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
+              className="flex-shrink-0"
             >
               <ArrowLeft size={20} />
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl">{chatPartner.avatar}</div>
-              <div>
-                <h1 className="font-semibold">{chatPartner.name}</h1>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="text-2xl flex-shrink-0">{chatPartner.avatar}</div>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-semibold truncate">{chatPartner.name}</h1>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-muted-foreground">{chatPartner.status}</span>
-                  {chatPartner.safeMode && (
-                    <Badge variant="secondary" className="text-xs">Safe Mode</Badge>
-                  )}
+                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs text-muted-foreground truncate">{chatPartner.status}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -665,10 +649,14 @@ const PrivateChat = () => {
                 key={msg.id}
                 className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
               >
-                <Card className={`max-w-[80%] relative group ${
+                <Card
+                  onTouchStart={() => startLongPress(msg.id)}
+                  onTouchEnd={cancelLongPress}
+                  onTouchMove={cancelLongPress}
+                  className={`max-w-[80%] relative group transition-colors ${
                   msg.sender === 'me' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-card'
+                    ? 'bg-primary text-primary-foreground hover:!bg-primary hover:brightness-95' 
+                    : 'bg-card hover:bg-muted/60 dark:hover:bg-white/10'
                 } ${msg.isDeleted ? 'opacity-60' : ''}`}>
                   <CardContent className="p-3">
                     {/* Reply indicator */}
@@ -711,14 +699,12 @@ const PrivateChat = () => {
                         <>
                           {msg.type === 'image' && (msg as any).imageUrl && (
                             <div className="mb-2">
-                              <img 
-                                src={(msg as any).imageUrl} 
-                                alt="Shared image" 
+                              <img
+                                src={(msg as any).imageUrl}
+                                alt="Shared image"
                                 className="rounded-lg max-w-full h-auto"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = 'https://picsum.photos/300/200?random=fallback';
-                                }}
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                           )}
@@ -809,8 +795,8 @@ const PrivateChat = () => {
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
+                    {/* Meta row: time + delivery */}
+                    <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs opacity-70">{msg.timestamp}</span>
                         {msg.isEncrypted && (
                           <Lock size={10} className="opacity-50" />
@@ -822,115 +808,41 @@ const PrivateChat = () => {
                             {msg.deliveryStatus === 'read' && <CheckCheck size={10} className="text-blue-500" />}
                           </div>
                         )}
-                      </div>
-                      
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {/* Quick reactions */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '❤️')}
-                        >
-                          ❤️
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '👍')}
-                        >
-                          👍
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1 text-xs"
-                          onClick={() => handleReaction(msg.id, '😊')}
-                        >
-                          😊
-                        </Button>
+                    </div>
 
-                        {/* Message actions */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-1"
-                          onClick={() => handleReplyToMessage(msg.id)}
-                        >
-                          <Reply size={10} />
-                        </Button>
-
-                        {msg.sender === 'me' && !msg.isDeleted && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleEditMessage(msg.id)}
-                            >
-                              <Edit3 size={10} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1 text-red-500"
-                              onClick={() => handleDeleteMessage(msg.id)}
-                            >
-                              <Trash2 size={10} />
-                            </Button>
-                          </>
-                        )}
-
-                        {/* Other actions */}
-                        {msg.sender === 'me' && practiceMode && (
-                          <AITooltip 
-                            title="Grammar Check"
-                            description="Check this message for grammar and spelling errors"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleGrammarCheck(msg.id)}
-                            >
-                              {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
-                            </Button>
-                          </AITooltip>
-                        )}
-                        
-                        {!autoTranslateEnabled && (
-                          <AITooltip 
-                            title="Translate Message"
-                            description="See this message in your learning language"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => handleTranslate(msg.id)}
-                            >
-                              <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
-                            </Button>
-                          </AITooltip>
-                        )}
-
-                        {msg.sender === 'them' && (
-                          <AITooltip 
-                            title="Ask AI for Help"
-                            description="Get AI suggestions for how to respond to this message"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1"
-                              onClick={() => setShowAIModal(true)}
-                            >
-                              <HelpCircle size={10} />
-                            </Button>
-                          </AITooltip>
-                        )}
-                      </div>
+                    {/* Desktop actions (hover to reveal) */}
+                    <div className="mt-1 hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '❤️')}>❤️</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '👍')}>👍</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 text-xs hover:bg-primary/10" onClick={() => handleReaction(msg.id, '😊')}>😊</Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleReplyToMessage(msg.id)}><Reply size={10} /></Button>
+                      {msg.sender === 'me' && !msg.isDeleted && (
+                        <>
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleEditMessage(msg.id)}><Edit3 size={10} /></Button>
+                          <Button variant="ghost" size="sm" className="h-6 px-1 text-red-500 hover:bg-red-50" onClick={() => handleDeleteMessage(msg.id)}><Trash2 size={10} /></Button>
+                        </>
+                      )}
+                      {msg.sender === 'me' && practiceMode && (
+                        <AITooltip title="Grammar Check" description="Check this message for grammar and spelling errors">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleGrammarCheck(msg.id)}>
+                            {msg.corrected ? <CheckCircle size={10} className="text-green-500" /> : <BookOpen size={10} />}
+                          </Button>
+                        </AITooltip>
+                      )}
+                      {!autoTranslateEnabled && (
+                        <AITooltip title="Translate Message" description="See this message in your learning language">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => handleTranslate(msg.id)}>
+                            <Languages size={10} className={msg.translated ? 'text-primary' : ''} />
+                          </Button>
+                        </AITooltip>
+                      )}
+                      {msg.sender === 'them' && (
+                        <AITooltip title="Ask AI for Help" description="Get AI suggestions for how to respond to this message">
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => setShowAIModal(true)}>
+                            <HelpCircle size={10} />
+                          </Button>
+                        </AITooltip>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -993,7 +905,7 @@ const PrivateChat = () => {
         {/* Attachment panel */}
         {showAttachments && (
           <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -1037,7 +949,7 @@ const PrivateChat = () => {
           </div>
         )}
 
-        <div className="flex gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2">
           <AITooltip 
             title="AI Assistant"
             description="Get conversation help, grammar checks, and language practice support"
@@ -1049,7 +961,7 @@ const PrivateChat = () => {
               className={aiAssistantEnabled ? 'text-primary' : ''}
             >
               <Bot size={14} />
-              <span className="ml-1 text-xs">AI Help</span>
+              <span className="ml-1 text-xs hidden sm:inline">AI Help</span>
             </Button>
           </AITooltip>
           
@@ -1062,15 +974,12 @@ const PrivateChat = () => {
               size="sm"
               onClick={() => {
                 if (message.trim()) {
-                  toast({
-                    title: "Translation",
-                    description: `"${message}" → [${targetLanguage.toUpperCase()}] ${message}`,
-                  });
+                  // Translation - toast removed per user request
                 }
               }}
             >
               <Languages size={14} />
-              <span className="ml-1 text-xs">Translate</span>
+              <span className="ml-1 text-xs hidden sm:inline">Translate</span>
             </Button>
           </AITooltip>
 
@@ -1085,14 +994,14 @@ const PrivateChat = () => {
               className={showLanguagePanel ? 'text-primary' : ''}
             >
               <BookOpen size={14} />
-              <span className="ml-1 text-xs">Language Tools</span>
+              <span className="ml-1 text-xs hidden sm:inline">Language Tools</span>
             </Button>
           </AITooltip>
 
           {practiceMode && (
             <Badge variant="secondary" className="text-xs px-2 py-1">
               <Zap size={10} className="mr-1" />
-              Practice Active
+              <span className="hidden sm:inline">Practice Active</span>
             </Badge>
           )}
         </div>
@@ -1139,7 +1048,7 @@ const PrivateChat = () => {
 
         {/* Recording indicator */}
         {isRecording && (
-          <div className="mt-2 flex items-center justify-between bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
             <div className="flex items-center gap-2 text-red-600">
               <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">
@@ -1194,6 +1103,28 @@ const PrivateChat = () => {
           isOpen={showMoodThemeSelector}
           onClose={() => setShowMoodThemeSelector(false)}
         />
+        
+        {/* Mobile actions sheet (long-press) */}
+        <Sheet open={actionSheetMessageId !== null} onOpenChange={(open) => !open && setActionSheetMessageId(null)}>
+          <SheetContent side="bottom" className="max-w-md mx-auto" aria-describedby="message-actions-description">
+            <SheetHeader>
+              <SheetTitle>Message actions</SheetTitle>
+              <SheetDescription id="message-actions-description">
+                Choose an action to perform on this message
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '❤️'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">❤️<span className="text-xs mt-1">Love</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '👍'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">👍<span className="text-xs mt-1">Like</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReaction(actionSheetMessageId, '😊'); setActionSheetMessageId(null); }} className="flex-col h-auto py-3">😊<span className="text-xs mt-1">Smile</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleReplyToMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Reply size={16} /><span className="text-xs mt-1">Reply</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleTranslate(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Languages size={16} /><span className="text-xs mt-1">Translate</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleGrammarCheck(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><BookOpen size={16} /><span className="text-xs mt-1">Grammar</span></Button>
+              <Button variant="outline" onClick={() => { if (actionSheetMessageId) handleEditMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Edit3 size={16} /><span className="text-xs mt-1">Edit</span></Button>
+              <Button variant="destructive" onClick={() => { if (actionSheetMessageId) handleDeleteMessage(actionSheetMessageId); setActionSheetMessageId(null); }} className="flex-col h-auto py-3"><Trash2 size={16} /><span className="text-xs mt-1">Delete</span></Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );

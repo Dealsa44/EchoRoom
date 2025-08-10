@@ -1,10 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Edit, BarChart3, LogOut, Mail, User, Users, MessageCircle, Heart, ArrowLeft, Shield, Settings } from 'lucide-react';
+import { Edit, BarChart3, LogOut, Mail, User, Users, MessageCircle, Heart, ArrowLeft, Shield, Settings, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp, getAttractionPreferences } from '@/contexts/AppContext';
@@ -47,11 +48,7 @@ const Profile = () => {
             customOrientation: undefined
           } as any);
         } else {
-          toast({
-            title: "Profile not found",
-            description: "The user profile you're looking for doesn't exist.",
-            variant: "destructive",
-          });
+          // Profile not found - toast removed per user request
           navigate('/match');
         }
         setLoading(false);
@@ -68,11 +65,12 @@ const Profile = () => {
   };
 
   const handleLikeProfile = () => {
-    toast({
-      title: "Liked! 💚",
-      description: `You liked ${(displayUser as any)?.username || (displayUser as any)?.name}'s profile!`,
-    });
+    // Profile liked - toast removed per user request
   };
+
+  // Lightweight photo lightbox state for mobile-first dialog
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -91,52 +89,56 @@ const Profile = () => {
       />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
-        <Card>
+        <Card className="relative overflow-hidden animate-breathe">
+          {/* Floating background accents */}
+          <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
           <CardContent className="p-6 text-center">
-            <div className="relative">
-              <div className="text-4xl mb-3">{displayUser?.avatar || '🌟'}</div>
+            <div className="relative flex justify-center">
+              <div className="h-14 w-14 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft">
+                <div className="text-3xl">{displayUser?.avatar || '🌟'}</div>
+              </div>
               {!isOwnProfile && profileData?.isVerified && (
-                <Shield className="absolute -top-1 -right-1 h-5 w-5 text-blue-500" />
+                <Shield className="absolute -top-1 right-[calc(50%-28px)] h-5 w-5 text-blue-500" />
               )}
             </div>
-            <h2 className="text-xl font-bold">{(displayUser as any)?.username || (displayUser as any)?.name || 'Guest'}</h2>
-            <p className="text-muted-foreground">{displayUser?.bio || 'Welcome to EchoRoom'}</p>
-            
+            <h2 className="mt-2 text-xl font-bold">{(displayUser as any)?.username || (displayUser as any)?.name || 'Guest'}</h2>
+            <div className="mt-2 h-1 w-24 mx-auto rounded-full bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
+            <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{displayUser?.bio || 'Welcome to EchoRoom'}</p>
+
             {/* User Info */}
-            <div className="mt-4 space-y-2 text-sm">
-              {isOwnProfile && (
-                <>
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <div className="mt-4 text-sm">
+              {isOwnProfile ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1">
                     <Mail size={14} />
-                                         <span>{(displayUser as any)?.email}</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <span>{(displayUser as any)?.email}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1">
                     <User size={14} />
                     <span>ID: {displayUser?.id}</span>
-                  </div>
-                </>
-              )}
-              
-                             {!isOwnProfile && profileData && (
-                 <>
-                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                     <span>{profileData.age} years old</span>
-                     {profileData.isOnline && (
-                       <>
-                         <span>•</span>
-                         <span className="text-green-600">Online now</span>
-                       </>
-                     )}
-                   </div>
-                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                     <span>{profileData.location.split(',')[0]}</span>
-                     <span>•</span>
-                     <span>{profileData.distance}km away</span>
-                   </div>
-                 </>
-               )}
+                  </span>
+                </div>
+              ) : profileData ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1">
+                    <span>{profileData.age} years old</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border-2 border-border bg-card/60 px-3 py-1">
+                    <span>{profileData.location.split(',')[0]}</span>
+                    <span className="opacity-60">•</span>
+                    <span>{profileData.distance}km away</span>
+                  </span>
+                  {profileData.isOnline && (
+                    <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1 text-green-600">
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                      <span>Online now</span>
+                    </span>
+                  )}
+                </div>
+              ) : null}
             </div>
-            
+
             {/* Action Buttons */}
             <div className="mt-4 space-y-2">
               {isOwnProfile && (
@@ -166,92 +168,92 @@ const Profile = () => {
         {/* Photo Gallery */}
         {((isOwnProfile && (user as any)?.photos && (user as any).photos.length > 0) || 
           (!isOwnProfile && profileData?.photos && profileData.photos.length > 0)) && (
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold flex items-center gap-2 mb-4">
-                <User size={16} />
-                Photos
-              </h3>
+          <Card className="relative overflow-hidden animate-breathe">
+            {/* Floating background accents */}
+            <div className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full bg-tertiary/12 blur-2xl animate-float-ambient" aria-hidden />
+            <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
+            <CardHeader className="pb-0">
+              <div className="flex items-center gap-3 animate-float-ambient">
+                <div className="h-9 w-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <CardTitle className="text-base">Photos</CardTitle>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-secondary via-primary to-accent shadow-[0_0_12px_hsl(var(--secondary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--secondary)_/_0.45)]" />
+            </CardHeader>
+            <CardContent className="p-4 pt-4">
               <div className="grid grid-cols-2 gap-2">
-                                 {(isOwnProfile ? (user as any)?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
-                  <div key={index} className="aspect-square rounded-lg overflow-hidden">
-                    <img 
-                      src={photo} 
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://picsum.photos/200/200?random=' + (index + 100);
-                      }}
-                    />
-                  </div>
+                {(isOwnProfile ? (user as any)?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
+                  <PhotoLightboxThumb key={index} src={photo} index={index} delayMs={index * 120} />
                 ))}
               </div>
-                             {((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
-                 <p className="text-center text-sm text-muted-foreground mt-2">
-                   +{((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
-                 </p>
-               )}
+              {((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                  +{((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
 
         {/* Identity & Basic Info */}
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Users size={16} />
-              Identity & Basic Info
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
+        <Card className="relative overflow-hidden animate-breathe">
+          {/* Floating background accents */}
+          <div className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
+          <CardHeader className="pb-0">
+            <div className="flex items-center gap-3 animate-float-ambient">
+              <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
+              <CardTitle className="text-base">Identity & Basic Info</CardTitle>
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent shadow-[0_0_12px_hsl(var(--primary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--primary)_/_0.45)]" />
+          </CardHeader>
+          <CardContent className="p-4 pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '0ms' }}>
                 <p className="text-muted-foreground">Gender</p>
-                <Badge variant="outline" className="mt-1">
-                  {isOwnProfile 
-                    ? (user?.genderIdentity === 'other' && user?.customGender 
-                        ? user.customGender 
-                        : user?.genderIdentity === 'prefer-not-to-say' 
-                        ? 'Prefer not to say' 
-                        : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set')
-                    : (profileData?.genderIdentity?.charAt(0).toUpperCase() + profileData?.genderIdentity?.slice(1) || 'Not specified')
-                  }
-                </Badge>
+                <div className="mt-1">
+                  <Badge variant="outline">
+                    {isOwnProfile
+                      ? (user?.genderIdentity === 'other' && user?.customGender
+                          ? user.customGender
+                          : user?.genderIdentity === 'prefer-not-to-say'
+                          ? 'Prefer not to say'
+                          : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set')
+                      : (profileData?.genderIdentity?.charAt(0).toUpperCase() + profileData?.genderIdentity?.slice(1) || 'Not specified')}
+                  </Badge>
+                </div>
               </div>
-              <div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '150ms' }}>
                 <p className="text-muted-foreground">Orientation</p>
-                <Badge variant="outline" className="mt-1">
-                  {isOwnProfile 
-                    ? (user?.orientation === 'other' && user?.customOrientation 
-                        ? user.customOrientation 
-                        : user?.orientation?.charAt(0).toUpperCase() + user?.orientation?.slice(1) || 'Not set')
-                    : (profileData?.orientation?.charAt(0).toUpperCase() + profileData?.orientation?.slice(1) || 'Not specified')
-                  }
-                </Badge>
+                <div className="mt-1">
+                  <Badge variant="outline">
+                    {isOwnProfile
+                      ? (user?.orientation === 'other' && user?.customOrientation
+                          ? user.customOrientation
+                          : user?.orientation?.charAt(0).toUpperCase() + user?.orientation?.slice(1) || 'Not set')
+                      : (profileData?.orientation?.charAt(0).toUpperCase() + profileData?.orientation?.slice(1) || 'Not specified')}
+                  </Badge>
+                </div>
               </div>
-              <div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '300ms' }}>
                 <p className="text-muted-foreground">Age</p>
-                <p className="font-medium">
-                  {isOwnProfile 
-                    ? (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : 'Not set')
-                    : profileData?.age
-                  } years old
+                <p className="mt-1 font-medium">
+                  {isOwnProfile ? (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : 'Not set') : profileData?.age} years old
                 </p>
               </div>
-              <div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
                 <p className="text-muted-foreground">Location</p>
-                <p className="font-medium">
-                  {isOwnProfile 
-                                         ? ((user as any)?.location || 'Not set')
-                    : (profileData?.location || 'Not specified')
-                  }
+                <p className="mt-1 font-medium">
+                  {isOwnProfile ? ((user as any)?.location || 'Not set') : (profileData?.location || 'Not specified')}
                 </p>
               </div>
             </div>
-
             {(isOwnProfile ? user?.about : (profileData as any)?.about) && (
-              <div>
-                <p className="text-muted-foreground text-sm mb-2">About</p>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
+                <p className="text-muted-foreground text-sm mb-1">About</p>
                 <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : (profileData as any)?.about}</p>
               </div>
             )}
@@ -260,28 +262,28 @@ const Profile = () => {
 
         {/* Settings & Preferences - Only for own profile */}
         {isOwnProfile && (
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Settings & Preferences
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Looking for relationship</span>
-                  <Switch 
-                    checked={user?.lookingForRelationship || false} 
-                    disabled 
-                  />
+          <Card className="relative overflow-hidden animate-breathe">
+            {/* Floating background accents */}
+            <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-secondary/12 blur-2xl animate-float-ambient" aria-hidden />
+            <div className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl animate-float-slow" aria-hidden />
+            <CardHeader className="pb-0">
+              <div className="flex items-center gap-3 animate-float-ambient">
+                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Settings className="w-4 h-4" />
                 </div>
-                
-                <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Settings & Preferences</CardTitle>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent shadow-[0_0_12px_hsl(var(--primary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--primary)_/_0.45)]" />
+            </CardHeader>
+            <CardContent className="p-4 pt-4 space-y-3">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 flex items-center justify-between animate-float-ambient" style={{ animationDelay: '0ms' }}>
+                  <span className="text-sm">Looking for relationship</span>
+                  <Switch checked={user?.lookingForRelationship || false} disabled />
+                </div>
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 flex items-center justify-between animate-float-ambient" style={{ animationDelay: '150ms' }}>
                   <span className="text-sm">Looking for friendship</span>
-                  <Switch 
-                    checked={user?.lookingForFriendship || false} 
-                    disabled 
-                  />
+                  <Switch checked={user?.lookingForFriendship || false} disabled />
                 </div>
               </div>
             </CardContent>
@@ -289,67 +291,71 @@ const Profile = () => {
         )}
 
         {/* Interests & Preferences */}
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Heart size={16} />
-              Interests & Preferences
-            </h3>
-            
-            <div className="space-y-3">
-              <div>
+        <Card className="relative overflow-hidden animate-breathe">
+          {/* Floating background accents */}
+          <div className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full bg-secondary/15 blur-2xl animate-float-ambient" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-accent/10 blur-2xl animate-float-slow" aria-hidden />
+          <CardHeader className="pb-0">
+            <div className="flex items-center gap-3 animate-float-ambient">
+              <div className="h-9 w-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
+                <Heart className="w-4 h-4" />
+              </div>
+              <CardTitle className="text-base">Interests & Preferences</CardTitle>
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-secondary via-primary to-accent shadow-[0_0_12px_hsl(var(--secondary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--secondary)_/_0.45)]" />
+          </CardHeader>
+          <CardContent className="p-4 pt-4 space-y-4">
+            <div className="space-y-4">
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '0ms' }}>
                 <p className="text-sm text-muted-foreground mb-2">Interests</p>
                 {(isOwnProfile ? user?.interests : profileData?.interests) && (isOwnProfile ? user?.interests : profileData?.interests)?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest) => (
-                      <Badge key={interest} variant="secondary" className="text-xs">
+                    {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest, idx) => (
+                      <Badge
+                        key={interest}
+                        variant="secondary"
+                        className="text-xs rounded-full px-3 py-1 bg-secondary/15 text-foreground border-2 border-border hover:border-secondary/40 transition-smooth animate-breathe"
+                        style={{ animationDelay: `${(idx % 6) * 120}ms` }}
+                      >
                         {interest}
                       </Badge>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No interests selected yet</p>
+                  <span className="text-sm text-muted-foreground">No interests selected yet</span>
                 )}
               </div>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe">
                   <p className="text-muted-foreground">Language Level</p>
-                  <p className="font-medium">
-                                         {isOwnProfile 
-                       ? (user?.languageProficiency || 'Not set')
-                       : ((profileData as any)?.languageProficiency || 'Not specified')
-                     }
+                  <p className="mt-1 font-medium">
+                    {isOwnProfile ? (user?.languageProficiency || 'Not set') : ((profileData as any)?.languageProficiency || 'Not specified')}
                   </p>
                 </div>
-                <div>
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe" style={{ animationDelay: '150ms' }}>
                   <p className="text-muted-foreground">Personality</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.chatStyle || 'Not set')
-                      : (profileData?.chatStyle || 'Not specified')
-                    }
+                  <p className="mt-1 font-medium capitalize">
+                    {isOwnProfile ? (user?.chatStyle || 'Not set') : (profileData?.chatStyle || 'Not specified')}
                   </p>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe" style={{ animationDelay: '300ms' }}>
                   <p className="text-muted-foreground">Looking for</p>
-                  <p className="font-medium">
-                    {isOwnProfile 
-                      ? (user?.lookingForRelationship && user?.lookingForFriendship 
-                          ? 'Relationship, Friendship' 
-                          : user?.lookingForRelationship 
-                          ? 'Relationship' 
-                          : user?.lookingForFriendship 
-                          ? 'Friendship' 
+                  <p className="mt-1 font-medium">
+                    {isOwnProfile
+                      ? (user?.lookingForRelationship && user?.lookingForFriendship
+                          ? 'Relationship, Friendship'
+                          : user?.lookingForRelationship
+                          ? 'Relationship'
+                          : user?.lookingForFriendship
+                          ? 'Friendship'
                           : 'Not specified')
-                      : (profileData?.lookingForRelationship && profileData?.lookingForFriendship 
-                          ? 'Relationship, Friendship' 
-                          : profileData?.lookingForRelationship 
-                          ? 'Relationship' 
-                          : profileData?.lookingForFriendship 
-                          ? 'Friendship' 
-                          : 'Not specified')
-                    }
+                      : (profileData?.lookingForRelationship && profileData?.lookingForFriendship
+                          ? 'Relationship, Friendship'
+                          : profileData?.lookingForRelationship
+                          ? 'Relationship'
+                          : profileData?.lookingForFriendship
+                          ? 'Friendship'
+                          : 'Not specified')}
                   </p>
                 </div>
               </div>
@@ -358,99 +364,74 @@ const Profile = () => {
         </Card>
 
         {/* Lifestyle & Background */}
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <User size={16} />
-              Lifestyle & Background
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Smoking</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.smoking && user.smoking !== 'prefer-not-to-say' 
-                          ? user.smoking.replace('-', ' ') 
-                          : 'Not specified')
-                                             : ((profileData as any)?.smoking && (profileData as any).smoking !== 'prefer-not-to-say' 
-                           ? (profileData as any).smoking.replace('-', ' ') 
-                           : 'Not specified')
-                    }
-                  </p>
+        <Card className="relative overflow-hidden animate-float-ambient">
+          {/* Floating background accents */}
+          <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-tertiary/10 blur-2xl animate-float-slow" aria-hidden />
+          <CardHeader className="pb-0">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <User className="w-4 h-4" />
+              </div>
+              <CardTitle className="text-base">Lifestyle & Background</CardTitle>
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary shadow-[0_0_12px_hsl(var(--primary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--primary)_/_0.45)]" />
+          </CardHeader>
+          <CardContent className="p-4 pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient">
+                <p className="text-muted-foreground">Smoking</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.smoking && user.smoking !== 'prefer-not-to-say' ? user.smoking.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.smoking && (profileData as any).smoking !== 'prefer-not-to-say' ? (profileData as any).smoking.replace('-', ' ') : 'Not specified')}
+                </p>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '150ms' }}>
+                <p className="text-muted-foreground">Drinking</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.drinking && user.drinking !== 'prefer-not-to-say' ? user.drinking.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.drinking && (profileData as any).drinking !== 'prefer-not-to-say' ? (profileData as any).drinking.replace('-', ' ') : 'Not specified')}
+                </p>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '300ms' }}>
+                <p className="text-muted-foreground">Children</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' ? user.hasChildren.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' ? (profileData as any).hasChildren.replace('-', ' ') : 'Not specified')}
+                </p>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
+                <p className="text-muted-foreground">Education</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.education && user.education !== 'prefer-not-to-say' ? user.education.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.education && (profileData as any).education !== 'prefer-not-to-say' ? (profileData as any).education.replace('-', ' ') : 'Not specified')}
+                </p>
+              </div>
+              {(isOwnProfile ? user?.occupation : (profileData as any)?.occupation) && (
+                <div className="col-span-2 rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
+                  <p className="text-muted-foreground">Occupation</p>
+                  <p className="mt-1 font-medium">{isOwnProfile ? user?.occupation : (profileData as any)?.occupation}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Drinking</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.drinking && user.drinking !== 'prefer-not-to-say' 
-                          ? user.drinking.replace('-', ' ') 
-                          : 'Not specified')
-                                             : ((profileData as any)?.drinking && (profileData as any).drinking !== 'prefer-not-to-say' 
-                           ? (profileData as any).drinking.replace('-', ' ') 
-                           : 'Not specified')
-                    }
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Children</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' 
-                          ? user.hasChildren.replace('-', ' ') 
-                          : 'Not specified')
-                                             : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' 
-                           ? (profileData as any).hasChildren.replace('-', ' ') 
-                           : 'Not specified')
-                    }
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Education</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.education && user.education !== 'prefer-not-to-say' 
-                          ? user.education.replace('-', ' ') 
-                          : 'Not specified')
-                                             : ((profileData as any)?.education && (profileData as any).education !== 'prefer-not-to-say' 
-                           ? (profileData as any).education.replace('-', ' ') 
-                           : 'Not specified')
-                    }
-                  </p>
-                </div>
-                {(isOwnProfile ? user?.occupation : (profileData as any)?.occupation) && (
-                  <div className="col-span-2">
-                    <p className="text-muted-foreground">Occupation</p>
-                    <p className="font-medium">{isOwnProfile ? user?.occupation : (profileData as any)?.occupation}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-muted-foreground">Religion</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.religion && user.religion !== 'prefer-not-to-say' 
-                          ? user.religion.replace('-', ' ') 
-                          : 'Not specified')
-                                             : ((profileData as any)?.religion && (profileData as any).religion !== 'prefer-not-to-say' 
-                           ? (profileData as any).religion.replace('-', ' ') 
-                           : 'Not specified')
-                    }
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Political Views</p>
-                  <p className="font-medium capitalize">
-                    {isOwnProfile 
-                      ? (user?.politicalViews && user.politicalViews !== 'prefer-not-to-say' 
-                          ? user.politicalViews.replace('-', ' ') 
-                          : 'Not specified')
-                      : ((profileData as any)?.politicalViews && (profileData as any).politicalViews !== 'prefer-not-to-say' 
-                          ? (profileData as any).politicalViews.replace('-', ' ') 
-                          : 'Not specified')
-                    }
-                  </p>
-                </div>
+              )}
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
+                <p className="text-muted-foreground">Religion</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.religion && user.religion !== 'prefer-not-to-say' ? user.religion.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.religion && (profileData as any).religion !== 'prefer-not-to-say' ? (profileData as any).religion.replace('-', ' ') : 'Not specified')}
+                </p>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '900ms' }}>
+                <p className="text-muted-foreground">Political Views</p>
+                <p className="mt-1 font-medium capitalize">
+                  {isOwnProfile
+                    ? (user?.politicalViews && user.politicalViews !== 'prefer-not-to-say' ? user.politicalViews.replace('-', ' ') : 'Not specified')
+                    : ((profileData as any)?.politicalViews && (profileData as any).politicalViews !== 'prefer-not-to-say' ? (profileData as any).politicalViews.replace('-', ' ') : 'Not specified')}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -460,33 +441,61 @@ const Profile = () => {
 
         {/* Profile Questions Section */}
         {(isOwnProfile || (!isOwnProfile && profileData?.profileQuestions && profileData.profileQuestions.some(q => q.answer))) && (
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-primary" />
-                {isOwnProfile ? "Get to Know Me" : "Get to Know Them"}
-              </h3>
-              
-              <div className="space-y-4">
+          <Card className="relative overflow-hidden animate-float-ambient">
+            {/* Floating background accents */}
+            <div
+              className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/15 blur-2xl animate-float-ambient"
+              style={{ animationDelay: '250ms' }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-accent/10 blur-2xl animate-float-slow"
+              style={{ animationDelay: '900ms' }}
+              aria-hidden
+            />
+            <CardHeader className="pb-0">
+              <div className="group flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <MessageCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Get to Know Me</CardTitle>
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent shadow-[0_0_12px_hsl(var(--primary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--primary)_/_0.45)]" />
+            </CardHeader>
+            <CardContent className="p-4 pt-4 space-y-3">
+              <div className="space-y-3">
                 {(isOwnProfile ? user?.profileQuestions : profileData?.profileQuestions)?.map((question, index) => (
-                  <div key={question.id} className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">{question.question}</p>
-                    {question.answer ? (
-                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                        {question.answer}
-                      </p>
-                    ) : isOwnProfile ? (
-                      <p className="text-sm text-muted-foreground italic">
-                        Not answered yet
-                      </p>
-                    ) : null}
+                  <div
+                    key={question.id}
+                    className={`relative group/item rounded-xl border-2 border-border bg-card/60 hover:bg-card-hover hover:border-primary/40 transition-smooth p-4 shadow-none hover:shadow-large hover:shadow-glow-purple`}
+                  >
+                    <div className="animate-in fade-in-50 slide-in-from-bottom-1" style={{ animationDelay: `${index * 60}ms`, animationFillMode: 'both' }}>
+                      {/* Decorative floating spark */}
+                      <span className="pointer-events-none absolute -top-1 -right-1 h-8 w-8 rounded-full bg-primary/10 blur-lg opacity-60 transition-smooth" aria-hidden />
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/25 to-primary/10 text-primary text-xs font-semibold">
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">{question.question}</p>
+                          {question.answer ? (
+                            <p className="mt-2 text-sm text-muted-foreground bg-muted/70 p-3 rounded-lg leading-relaxed border-l-2 border-primary/30">
+                              {question.answer}
+                            </p>
+                          ) : isOwnProfile ? (
+                            <p className="mt-2 text-sm text-muted-foreground italic">Not answered yet</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                
                 {isOwnProfile && (!user?.profileQuestions || user.profileQuestions.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No profile questions yet. Edit your profile to add some!
-                  </p>
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  No profile questions yet. Edit your profile to add some!
+                </div>
                 )}
               </div>
             </CardContent>
@@ -516,3 +525,51 @@ const Profile = () => {
 };
 
 export default Profile;
+
+// Photo thumbnail with mobile-first lightbox
+function PhotoLightboxThumb({ src, index, delayMs = 0 }: { src: string; index: number; delayMs?: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        className="aspect-square rounded-lg overflow-hidden relative group focus:outline-none focus:ring-2 focus:ring-primary border-2 border-border bg-card/60 animate-float-ambient"
+        style={{ animationDelay: `${delayMs}ms` }}
+        onClick={() => setOpen(true)}
+      >
+        <img
+          src={src}
+          alt={`Photo ${index + 1}`}
+          className="w-full h-full object-cover transition-transform duration-200 group-active:scale-[0.99]"
+          loading="lazy"
+          decoding="async"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://picsum.photos/200/200?random=' + (index + 100);
+          }}
+        />
+        <span className="pointer-events-none absolute inset-0 bg-black/0 group-active:bg-black/10 transition-smooth" />
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[92vw] p-2 border-border-soft">
+          <DialogTitle className="sr-only">Photo {index + 1}</DialogTitle>
+          <DialogDescription className="sr-only">Full-size photo preview</DialogDescription>
+          <div className="relative w-full overflow-hidden rounded-lg bg-muted/30">
+            <img
+              src={src}
+              alt={`Photo ${index + 1}`}
+              className="w-full h-auto max-h-[75vh] object-contain"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = 'https://picsum.photos/600/800?random=' + (index + 200);
+              }}
+            />
+            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-background/70 to-transparent" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

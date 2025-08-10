@@ -124,24 +124,13 @@ const ProfileEdit = () => {
 
       if (result.success && result.user) {
         setUser(result.user);
-        toast({
-          title: "Profile Updated",
-          description: "Your profile has been updated successfully.",
-        });
+        // Profile updated - toast removed per user request
         navigate('/profile');
       } else {
-        toast({
-          title: "Update Failed",
-          description: result.errors?.join(', ') || "Please check your information and try again.",
-          variant: "destructive",
-        });
+        // Update failed - toast removed per user request
       }
     } catch (error) {
-      toast({
-        title: "Update Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      // Update error - toast removed per user request
     } finally {
       setLoading(false);
     }

@@ -18,7 +18,6 @@ import Register from "./pages/Register";
 import ChatRooms from "./pages/ChatRooms";
 import ChatRoom from "./pages/ChatRoom";
 import Match from "./pages/Match";
-import Matches from "./pages/Matches";
 import ChatInbox from "./pages/ChatInbox";
 import PrivateChat from "./pages/PrivateChat";
 import Forum from "./pages/Forum";
@@ -82,11 +81,7 @@ const App = () => (
                 <Match />
               </AuthGuard>
             } />
-            <Route path="/matches" element={
-              <AuthGuard>
-                <Matches />
-              </AuthGuard>
-            } />
+
             <Route path="/chat-inbox" element={
               <AuthGuard>
                 <ChatInbox />

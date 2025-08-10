@@ -23,7 +23,7 @@ import {
   Users,
   User,
   VolumeX,
-  Trash2
+  UserX
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -291,10 +291,7 @@ const ChatInbox = () => {
         : conv
     ));
     
-    toast({
-      title: newPinnedState ? "Pinned conversation" : "Unpinned conversation",
-      description: `${conv?.participant.name} ${newPinnedState ? 'added to' : 'removed from'} pinned conversations`,
-    });
+    // Pinned/unpinned conversation - toast removed per user request
   };
 
   const handleArchiveConversation = (conversationId: string) => {
@@ -311,10 +308,7 @@ const ChatInbox = () => {
         : conv
     ));
     
-    toast({
-      title: newArchivedState ? "Archived conversation" : "Unarchived conversation",
-      description: `${conv?.participant.name} ${newArchivedState ? 'moved to' : 'removed from'} archives`,
-    });
+    // Archived/unarchived conversation - toast removed per user request
   };
 
   const handleLeaveConversation = (conversationId: string) => {
@@ -334,10 +328,7 @@ const ChatInbox = () => {
       deleteConversationState(conversationId);
       setConversations(prev => prev.filter(conv => conv.id !== conversationId));
       
-      toast({
-        title: "Deleted conversation",
-        description: `Removed ${conv.participant.name} from your conversations`,
-      });
+      // Deleted conversation - toast removed per user request
     }
   };
 
@@ -356,22 +347,29 @@ const ChatInbox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen app-gradient-bg pb-20 relative">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
+        <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.4s' }} />
+        <div className="absolute top-1/2 right-4 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '2.8s' }} />
+      </div>
+
       <TopBar title="Messages" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-              id="conversationSearch"
-              name="conversationSearch"
-              placeholder="Search conversations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoComplete="off"
-              className="pl-10"
-            />
+        <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
+          <Input
+            id="conversationSearch"
+            name="conversationSearch"
+            placeholder="Search conversations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            autoComplete="off"
+            className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
+          />
         </div>
 
         {/* Tabs */}
@@ -392,7 +390,7 @@ const ChatInbox = () => {
           </TabsList>
         </Tabs>
 
-        {/* Discover Rooms Button */}
+        {/* Discover Rooms Button (revert to dashed outline style) */}
         <Button
           variant="outline"
           className="w-full border-dashed border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
@@ -403,30 +401,31 @@ const ChatInbox = () => {
         </Button>
 
         {/* Conversations List */}
-        <div className="space-y-2">
-          {filteredConversations.map((conversation) => (
+        <div className="space-y-3">
+          {filteredConversations.map((conversation, index) => (
             <Card 
-              key={conversation.id} 
-              className="cursor-pointer transition-all hover:shadow-medium hover:scale-[1.02]"
+              key={conversation.id}
+              className={`cursor-pointer transform-gpu will-change-transform transition-all active:scale-[0.98] hover:shadow-large animate-fade-in animate-slide-up ${conversation.unreadCount > 0 ? 'border-primary/20 shadow-glow-primary/40' : ''}`}
+              style={{ animationDelay: `${0.05 + index * 0.05}s` }}
               onClick={() => handleOpenChat(conversation)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="relative">
-                    <div className="text-2xl">{conversation.participant.avatar}</div>
+                  <div className="relative w-12 h-12 rounded-2xl bg-gradient-primary/10 grid place-items-center shadow-inner-soft animate-float-ambient">
+                    <div className="text-2xl select-none" aria-hidden>{conversation.participant.avatar}</div>
                     {conversation.participant.isOnline && (
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse-soft" />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <h3 className="font-medium truncate">{conversation.participant.name}</h3>
                         {conversation.isPinned && <Pin size={12} className="text-primary" />}
                         {conversation.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {formatTimestamp(conversation.lastMessage.timestamp)}
                       </span>
                     </div>
@@ -434,15 +433,19 @@ const ChatInbox = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {getMessageTypeIcon(conversation.lastMessage.type)}
-                        <p className="text-sm text-muted-foreground truncate">
-                          {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
-                          {conversation.lastMessage.content}
-                        </p>
+                        {conversation.isTyping ? (
+                          <p className="text-sm text-primary/80 truncate animate-pulse-soft">typing…</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
+                            {conversation.lastMessage.content}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="flex items-center gap-2 ml-2">
                         {conversation.unreadCount > 0 && (
-                          <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0.5 shadow-glow-destructive/30">
                             {conversation.unreadCount}
                           </Badge>
                         )}
@@ -454,6 +457,16 @@ const ChatInbox = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {conversation.type === 'private' && (
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/profile/${conversation.participant.id}`);
+                              }}>
+                                <User size={14} className="mr-2" />
+                                View Profile
+                              </DropdownMenuItem>
+                            )}
+                            
                             <DropdownMenuItem onClick={(e) => {
                               e.stopPropagation();
                               handlePinConversation(conversation.id);
@@ -489,8 +502,8 @@ const ChatInbox = () => {
                                 }}
                                 className="text-destructive"
                               >
-                                <Trash2 size={14} className="mr-2" />
-                                Delete
+                                <UserX size={14} className="mr-2" />
+                                Unmatch
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

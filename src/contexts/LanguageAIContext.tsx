@@ -263,18 +263,12 @@ export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
   // Language setters
   const setLearningLanguage = (language: LanguageCode) => {
     setSettings(prev => ({ ...prev, learningLanguage: language }));
-    toast({
-      title: "Learning Language Updated",
-      description: `Now learning ${getLanguageDisplayName(language)}`,
-    });
+    // Learning language updated - toast removed per user request
   };
 
   const setLanguageLevel = (level: LanguageLevel) => {
     setSettings(prev => ({ ...prev, languageLevel: level }));
-    toast({
-      title: "Level Updated",
-      description: `AI will now provide ${getLevelDisplayName(level)} level assistance`,
-    });
+    // Level updated - toast removed per user request
   };
 
   const setNativeLanguage = (language: LanguageCode) => {
@@ -284,19 +278,13 @@ export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
   // AI setters
   const setAIPersonality = (personality: AIPersonality) => {
     setSettings(prev => ({ ...prev, aiPersonality: personality }));
-    toast({
-      title: "AI Personality Updated",
-      description: getPersonalityDescription(personality),
-    });
+    // AI personality updated - toast removed per user request
   };
 
   const setAutoCorrect = (enabled: boolean) => {
     setSettings(prev => ({ ...prev, autoCorrect: enabled }));
     if (enabled) {
-      toast({
-        title: "Auto-Correct Enabled",
-        description: "AI will now automatically highlight grammar mistakes",
-      });
+      // Auto-correct enabled - toast removed per user request
     }
   };
 
@@ -309,15 +297,9 @@ export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
     }));
     
     if (enabled) {
-      toast({
-        title: "Practice Mode Active",
-        description: "AI will actively help improve your language skills",
-      });
+      // Practice mode active - toast removed per user request
     } else {
-      toast({
-        title: "Practice Mode Disabled",
-        description: "Switched back to casual conversation mode",
-      });
+      // Practice mode disabled - toast removed per user request
     }
   };
 
@@ -393,10 +375,7 @@ export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setSettings(prev => ({ ...prev, currentSession: session }));
-    toast({
-      title: "Learning Session Started",
-      description: "AI is now tracking your progress and providing assistance",
-    });
+    // Learning session started - toast removed per user request
   };
 
   const endLearningSession = () => {
@@ -411,11 +390,8 @@ export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
         learningSessions: [...prev.learningSessions, session],
         currentSession: null
       }));
-
-      toast({
-        title: "Session Complete",
-        description: `Great work! You practiced for ${Math.round(session.duration / 60000)} minutes`,
-      });
+      
+      // Session complete - toast removed per user request
     }
   };
 

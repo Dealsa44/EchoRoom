@@ -83,21 +83,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const handleOnline = () => {
       setIsOnline(true);
       setConnectionStatus('connected');
-      toast({
-        title: "Back online",
-        description: "Connection restored",
-      });
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       setConnectionStatus('disconnected');
       setLastSeen(new Date());
-      toast({
-        title: "Connection lost",
-        description: "You're currently offline",
-        variant: "destructive",
-      });
     };
 
     window.addEventListener('online', handleOnline);
@@ -205,12 +196,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Show toast notification if page is visible
-    if (!document.hidden) {
-      toast({
-        title: notification.title,
-        description: notification.body,
-      });
-    }
+    // Toast notifications removed per user request
 
     // Play notification sound (simulate)
     if (isOnline) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Portal } from '@radix-ui/react-portal';
 import SwipeableCard from '@/components/ui/SwipeableCard';
-import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Users, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck } from 'lucide-react';
+import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck, User } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
@@ -268,21 +268,25 @@ const Match = () => {
     }
   }, [currentProfileIndex, filteredProfiles]);
 
+  // Preload next profile images for smoother swipes
+  useEffect(() => {
+    const nextProfile = filteredProfiles[currentProfileIndex + 1];
+    if (nextProfile && Array.isArray(nextProfile.photos)) {
+      nextProfile.photos.slice(0, 2).forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    }
+  }, [filteredProfiles, currentProfileIndex]);
+
   const handleLike = () => {
     if (!currentProfile || isCardAnimating) return;
     
     setIsCardAnimating(true);
     
-    // Haptic feedback
+    // Simple haptic feedback
     if ('vibrate' in navigator) {
-      navigator.vibrate([50, 100, 50]);
-    }
-    
-    // Add haptic feedback class for visual feedback
-    const button = document.querySelector('.like-button');
-    if (button) {
-      button.classList.add('haptic-feedback');
-      setTimeout(() => button.classList.remove('haptic-feedback'), 100);
+      navigator.vibrate(50);
     }
     
     // Add to matches automatically
@@ -291,16 +295,10 @@ const Match = () => {
     // Show match animation
     setMatchAnimation(true);
     
+    // Reset card animation state after a short delay
     setTimeout(() => {
-      toast({
-        title: "It's a match! 💚",
-        description: `You and ${currentProfile.name} liked each other!`,
-        duration: 3000,
-      });
-      setMatchAnimation(false);
-      handleNextProfile();
       setIsCardAnimating(false);
-    }, 1500);
+    }, 300);
   };
 
   const handleSwipeProgress = useCallback((progress: number, direction: 'left' | 'right') => {
@@ -356,11 +354,7 @@ const Match = () => {
       navigator.vibrate([100, 50, 100]);
     }
     
-    toast({
-      title: "Super Liked! ⭐",
-      description: `${currentProfile.name} will be notified of your super like!`,
-      duration: 2000,
-    });
+    // Super liked - toast removed per user request
     
     setTimeout(() => {
       handleNextProfile();
@@ -372,10 +366,7 @@ const Match = () => {
     if (!currentProfile) return;
     
     if (selectedIceBreaker || customMessage) {
-      toast({
-        title: "Message sent! 💬",
-        description: `Your message has been sent to ${currentProfile.name}`,
-      });
+      // Message sent - toast removed per user request
       navigate(`/private-chat/${currentProfile.id}`);
     } else {
       setShowIceBreakers(true);
@@ -488,164 +479,15 @@ const Match = () => {
     target.src = 'https://picsum.photos/400/400?random=999';
   };
 
-  // Profile Card Content Component
-  const ProfileCardContent = ({ 
-    profile, 
-    currentPhotoIndex, 
-    onPhotoTap, 
-    onPhotoChange, 
-    onPhotoError,
-    getChatStyleColor,
-    navigate,
-    isPreview = false 
-  }: {
-    profile: Profile;
-    currentPhotoIndex: number;
-    onPhotoTap: (e: React.MouseEvent<HTMLDivElement>) => void;
-    onPhotoChange: (direction: 'next' | 'prev') => void;
-    onPhotoError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
-    getChatStyleColor: (style: string) => string;
-    navigate: (path: string) => void;
-    isPreview?: boolean;
-  }) => (
-    <>
-      {/* Photo Gallery */}
-      <div 
-        className="relative h-80 bg-gradient-to-br from-muted/50 to-muted cursor-pointer overflow-hidden"
-        onClick={onPhotoTap}
-      >
-        <img 
-          src={profile.photos[currentPhotoIndex]} 
-          alt={profile.name}
-          className="w-full h-full object-cover transition-opacity duration-300 ease-out"
-          onError={onPhotoError}
-          loading="lazy"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-        
-        {/* Photo Navigation Dots - Optimized */}
-        {profile.photos.length > 1 && !isPreview && (
-          <div className="absolute top-4 left-4 flex gap-2 z-30">
-            {profile.photos.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${
-                  index === currentPhotoIndex 
-                    ? 'bg-white shadow-lg scale-110' 
-                    : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Profile Info Button */}
-        {!isPreview && (
-          <Button
-            variant="glass"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              navigate(`/profile/${profile.id}`);
-            }}
-            className="absolute top-4 right-4 h-9 px-3 text-white hover:scale-110 transition-spring backdrop-blur-md z-30 border-white/20"
-          >
-            <UserCheck size={16} className="mr-1.5" />
-            <span className="text-sm font-medium">Info</span>
-          </Button>
-        )}
-
-        {/* Tap zones for photo navigation */}
-        {profile.photos.length > 1 && !isPreview && (
-          <>
-            <div className="absolute left-0 top-0 w-1/2 h-full z-10" />
-            <div className="absolute right-0 top-0 w-1/2 h-full z-20" />
-          </>
-        )}
-
-        {/* Enhanced Profile Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 text-white z-20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-bold drop-shadow-lg">{profile.name}</h2>
-              <span className="text-lg font-semibold text-white/90">{profile.age}</span>
-              {profile.isVerified && (
-                <div className="flex items-center justify-center w-6 h-6 bg-blue-500/80 backdrop-blur-sm rounded-full">
-                  <Shield size={14} className="text-white" />
-                </div>
-              )}
-            </div>
-            {profile.isOnline && (
-              <div className="flex items-center gap-1.5 bg-green-500/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs font-semibold">Online</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-1.5 text-sm mb-3 text-white/90">
-            <MapPin size={16} className="text-white/80" />
-            <span className="font-medium">{profile.location.split(',')[0]}</span>
-            <span className="text-white/60">•</span>
-            <span className="text-white/80">{profile.distance}km away</span>
-          </div>
-
-          {/* Enhanced badges */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
-              {profile.languageLevel}
-            </Badge>
-            <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
-              {profile.sharedInterests} shared
-            </Badge>
-            {profile.lookingForRelationship && (
-              <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
-                💕 Relationship
-              </Badge>
-            )}
-            {profile.lookingForFriendship && (
-              <Badge className="bg-white/25 backdrop-blur-md text-white text-sm border-white/30 h-7 px-3 font-medium">
-                🤝 Friendship
-              </Badge>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Enhanced bottom content - only for main card */}
-      {!isPreview && (
-        <CardContent className="p-5">
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4 font-medium">
-            {profile.bio}
-          </p>
-          
-          {/* Enhanced interests display */}
-          <div className="flex items-center gap-2">
-            {profile.interests.slice(0, 3).map(interest => (
-              <Badge key={interest} variant="secondary" className="text-xs h-7 px-3 rounded-full font-medium bg-muted/50">
-                {interest}
-              </Badge>
-            ))}
-            {profile.interests.length > 3 && (
-              <span className="text-xs text-muted-foreground font-medium">
-                +{profile.interests.length - 3} more
-              </span>
-            )}
-          </div>
-        </CardContent>
-      )}
-    </>
-  );
+  
+  // moved outside component scope and memoized below for fewer re-renders
+  // see bottom of file for implementation
 
   return (
-    <div className="min-h-screen bg-background pb-20 relative">
-      {/* Background Elements - Optimized for mobile performance */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-8 w-24 h-24 bg-gradient-accent rounded-full blur-2xl" />
-        <div className="absolute bottom-40 right-10 w-16 h-16 bg-gradient-secondary rounded-full blur-xl" />
-        <div className="absolute top-1/3 right-16 w-12 h-12 bg-gradient-primary rounded-full blur-lg" />
+    <div className="h-screen bg-background pb-20 relative overflow-hidden">
+      {/* Simplified background for performance (mobile-first) */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[480px] h-[240px] rounded-full bg-gradient-hero opacity-[0.08] blur-3xl" />
       </div>
 
       <TopBar 
@@ -669,70 +511,60 @@ const Match = () => {
         }
       />
       
-      {/* Header Section */}
-      <div className="py-5 relative z-10">
-        <div className="max-w-md mx-auto px-5">
-          <div className="flex items-center justify-between">
-            <div className="animate-fade-in">
-              <h1 className="text-2xl font-bold gradient-text-hero mb-1">Discover</h1>
-              <p className="text-sm text-muted-foreground font-medium">Find your perfect conversation partner</p>
-            </div>
-            <Button
-              variant="glass"
-              size="lg"
-              onClick={() => navigate('/matches')}
-              className="shadow-glow-accent/20 hover:scale-110 transition-spring animate-slide-up h-11 px-4"
-              style={{ animationDelay: '0.2s' }}
-            >
-              <Users size={18} className="mr-2" />
-              <span className="font-semibold text-sm">Matches</span>
-            </Button>
+      {/* Empty States - Full screen with fixed header */}
+      {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
+        <>
+          <div className="flex flex-col items-center justify-center px-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+            <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
+              <CardContent className="p-8 text-center">
+                <div className="text-5xl mb-6 animate-pulse">🔍</div>
+                <h3 className="font-bold mb-3 text-lg gradient-text-hero">No matches found</h3>
+                <p className="text-sm text-muted-foreground mb-6 font-medium">
+                  Try adjusting your filters or check back later for new profiles.
+                </p>
+                <Button 
+                  variant="gradient" 
+                  onClick={() => setFiltersExpanded(true)}
+                  className="shadow-glow-primary"
+                >
+                  Modify Filters
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      </div>
-      
-      <div className="px-5 py-3 max-w-md mx-auto space-y-4 relative z-10 pb-32">
-        {/* No Matches Message - With Filters Active */}
-        {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
-          <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted">
-            <CardContent className="p-8 text-center">
-              <div className="text-5xl mb-6 animate-pulse">🔍</div>
-              <h3 className="font-bold mb-3 text-lg gradient-text-hero">No matches found</h3>
-              <p className="text-sm text-muted-foreground mb-6 font-medium">
-                Try adjusting your filters or check back later for new profiles.
-              </p>
-              <Button 
-                variant="gradient" 
-                onClick={() => setFiltersExpanded(true)}
-                className="shadow-glow-primary"
-              >
-                Modify Filters
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        </>
+      )}
 
-        {/* All Caught Up Message - No Filters Active */}
-        {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
-          <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted">
-            <CardContent className="p-8 text-center">
-              <div className="text-6xl mb-6 animate-bounce">🎉</div>
-              <h3 className="text-xl font-bold mb-3 gradient-text-hero">You're all caught up!</h3>
-              <p className="text-muted-foreground mb-6 text-sm">Check back later for new profiles</p>
-              <Button 
-                onClick={() => setCurrentProfileIndex(0)} 
-                variant="gradient"
-                className="shadow-glow-primary"
-              >
-                <RotateCcw size={16} className="mr-2" />
-                Start Over
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
+        <>
+          <div className="flex flex-col items-center justify-center px-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+            <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
+              <CardContent className="p-8 text-center">
+                <div className="text-6xl mb-6 animate-bounce">🎉</div>
+                <h3 className="text-xl font-bold mb-3 gradient-text-hero">You're all caught up!</h3>
+                <p className="text-muted-foreground mb-6 text-sm">Check back later for new profiles</p>
+                <Button 
+                  onClick={() => setCurrentProfileIndex(0)} 
+                  variant="gradient"
+                  className="shadow-glow-primary"
+                >
+                  <RotateCcw size={16} className="mr-2" />
+                  Start Over
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
-        {/* Card Stack - Optimized for mobile performance */}
-        <div className="relative h-[520px] max-w-sm mx-auto mb-6">
+      {/* Normal Content - Header scrollable inside */}
+      {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto">
+
+          <div className="space-y-4 pb-40">
+
+        {/* Card Stack - optimized to render only top + preview */}
+        <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6 will-change-transform match-card-stack">
           {cardStack.slice(0, 2).map((profile, stackIndex) => {
             const isCurrentCard = stackIndex === 0;
             const zIndex = 2 - stackIndex;
@@ -743,7 +575,7 @@ const Match = () => {
             return (
               <div
                 key={`${profile.id}-${stackIndex}`}
-                className="absolute inset-0 transition-transform duration-300 ease-out"
+                className="absolute inset-0 transition-transform duration-300 ease-out card-stack-item"
                 style={{
                   zIndex,
                   transform: `scale(${scale}) translateY(${translateY}px)`,
@@ -767,6 +599,7 @@ const Match = () => {
                     onSwipeProgress={handleSwipeProgress}
                     onSwipeEnd={handleSwipeEnd}
                   >
+                    {/* Swipe labels removed per user request */}
                     <ProfileCardContent 
                       profile={profile} 
                       currentPhotoIndex={currentPhotoIndex}
@@ -778,11 +611,11 @@ const Match = () => {
                     />
                   </SwipeableCard>
                 ) : (
-                  <Card className="h-full shadow-lg border-0 overflow-hidden bg-gradient-to-br from-muted/20 to-muted/40 rounded-2xl">
+                  <Card className="h-full shadow-lg border-0 overflow-hidden bg-card/60 rounded-2xl">
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
                         <div className="w-12 h-12 bg-muted/30 rounded-full mx-auto mb-3 flex items-center justify-center">
-                          <Users size={20} className="text-muted-foreground/50" />
+                          <User size={20} className="text-muted-foreground/50" />
                         </div>
                         <div className="space-y-1.5">
                           <div className="h-3 bg-muted/30 rounded w-20 mx-auto"></div>
@@ -800,8 +633,8 @@ const Match = () => {
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
           <div className="fixed bottom-28 left-0 right-0 z-20 pt-2 pb-0">
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none"></div>
-            <div className="relative flex justify-center items-center gap-3 px-6">
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
+            <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}
               <div className="relative">
                 <Button
@@ -809,12 +642,12 @@ const Match = () => {
                   size="icon-lg"
                   onClick={handleDislike}
                   disabled={isCardAnimating}
-                  className="h-14 w-14 border-2 border-red-500/30 text-red-500 hover:border-red-500 hover:shadow-glow-destructive/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden dislike-button"
+                  className="h-14 w-14 sm:h-16 sm:w-16 border-2 border-red-500/30 text-red-500 hover:border-red-500 hover:shadow-glow-destructive/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden dislike-button"
                 >
                   <X size={20} className="relative z-10" />
                   {/* Fill animation for dislike - optimized */}
                   <div 
-                    className="absolute inset-0 bg-red-500 transition-transform duration-200 ease-out"
+                    className="absolute inset-0 bg-red-500 action-button-fill"
                     style={{
                       transform: swipeDirection === 'left' && swipeProgress > 0.1 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
                       transformOrigin: 'left center'
@@ -829,7 +662,7 @@ const Match = () => {
                 size="icon-lg"
                 onClick={handleSuperLike}
                 disabled={isCardAnimating}
-                className="h-12 w-12 border-2 border-blue-400/30 text-blue-400 hover:border-blue-400 hover:shadow-glow-blue/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-blue-400/30 text-blue-400 hover:border-blue-400 hover:shadow-glow-blue/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
                 <Star size={18} className="relative z-10" />
               </Button>
@@ -840,7 +673,7 @@ const Match = () => {
                 size="icon-lg"
                 onClick={handleSayHi}
                 disabled={isCardAnimating}
-                className="h-16 w-16 shadow-glow-primary hover:scale-110 transition-spring relative overflow-hidden group disabled:opacity-50 disabled:scale-100"
+                className="h-16 w-16 sm:h-20 sm:w-20 shadow-glow-primary hover:scale-110 transition-spring relative overflow-hidden group disabled:opacity-50 disabled:scale-100"
               >
                 <MessageCircle size={22} className="group-hover:scale-110 transition-spring relative z-10" />
               </Button>
@@ -851,7 +684,7 @@ const Match = () => {
                 size="icon-lg"
                 onClick={() => setShowConversationStarters(true)}
                 disabled={isCardAnimating}
-                className="h-12 w-12 border-2 border-purple-400/30 text-purple-400 hover:border-purple-400 hover:shadow-glow-purple/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
+                className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-purple-400/30 text-purple-400 hover:border-purple-400 hover:shadow-glow-purple/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden"
               >
                 <Zap size={18} className="relative z-10" />
               </Button>
@@ -863,12 +696,12 @@ const Match = () => {
                   size="icon-lg"
                   onClick={handleLike}
                   disabled={isCardAnimating}
-                  className="h-14 w-14 border-2 border-green-500/30 text-green-500 hover:border-green-500 hover:shadow-glow-green/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden like-button"
+                  className="h-14 w-14 sm:h-16 sm:w-16 border-2 border-green-500/30 text-green-500 hover:border-green-500 hover:shadow-glow-green/30 interactive-scale disabled:opacity-50 disabled:scale-100 relative overflow-hidden like-button"
                 >
                   <Heart size={20} className="relative z-10" />
                   {/* Fill animation for like - optimized */}
                   <div 
-                    className="absolute inset-0 bg-green-500 transition-transform duration-200 ease-out"
+                    className="absolute inset-0 bg-green-500 action-button-fill"
                     style={{
                       transform: swipeDirection === 'right' && swipeProgress > 0.1 ? `scaleX(${swipeProgress})` : 'scaleX(0)',
                       transformOrigin: 'right center'
@@ -879,55 +712,49 @@ const Match = () => {
             </div>
           </div>
         )}
-
-
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Match Celebration Animation */}
       {matchAnimation && (
-        <div className="fixed inset-0 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-blue-500/20 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fade-in">
-          <div className="text-center animate-scale-in">
-            <div className="text-8xl mb-6 animate-bounce">💚</div>
-            <h2 className="text-4xl font-bold gradient-text-hero mb-4">It's a Match!</h2>
-            <p className="text-lg text-muted-foreground mb-6">You and {currentProfile?.name} liked each other</p>
-            <div className="flex gap-4 justify-center">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fade-in p-4"
+          onClick={(e) => {
+            // Close modal if clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setMatchAnimation(false);
+            }
+          }}
+        >
+          <div className="bg-background rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+            <div className="text-4xl mb-4">💚</div>
+            <h2 className="text-2xl font-bold mb-2">It's a Match!</h2>
+            <p className="text-muted-foreground mb-6">You and {currentProfile?.name} liked each other</p>
+            <div className="flex gap-3 justify-center">
               <Button
                 variant="outline"
-                onClick={() => setMatchAnimation(false)}
-                className="bg-background/80 backdrop-blur-sm"
+                onClick={() => {
+                  setMatchAnimation(false);
+                  handleNextProfile();
+                }}
+                className="flex-1"
               >
                 Keep Swiping
               </Button>
               <Button
-                variant="gradient"
+                variant="default"
                 onClick={() => {
                   setMatchAnimation(false);
                   if (currentProfile) {
                     navigate(`/private-chat/${currentProfile.id}`);
                   }
                 }}
-                className="shadow-glow-primary"
+                className="flex-1"
               >
                 Send Message
               </Button>
             </div>
-          </div>
-          
-          {/* Floating Hearts Animation */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute animate-float text-2xl"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  animationDuration: `${3 + Math.random() * 2}s`
-                }}
-              >
-                {['💕', '💖', '💗', '💓', '💝'][Math.floor(Math.random() * 5)]}
-              </div>
-            ))}
           </div>
         </div>
       )}
@@ -1339,3 +1166,194 @@ const Match = () => {
 };
 
 export default Match;
+
+// Memoized Profile Card Content to avoid unnecessary re-renders
+const ProfileCardContent = memo(({
+  profile,
+  currentPhotoIndex,
+  onPhotoTap,
+  onPhotoChange,
+  onPhotoError,
+  getChatStyleColor,
+  navigate,
+  isPreview = false
+}: {
+  profile: Profile;
+  currentPhotoIndex: number;
+  onPhotoTap: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onPhotoChange: (direction: 'next' | 'prev') => void;
+  onPhotoError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
+  getChatStyleColor: (style: string) => string;
+  navigate: (path: string) => void;
+  isPreview?: boolean;
+}) => {
+  return (
+    <>
+      <div
+        className="relative h-80 bg-gradient-to-br from-muted/50 to-muted cursor-pointer overflow-hidden"
+        onClick={(e) => {
+          // Check if click is in Info button area
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
+          const rightEdge = rect.width - 100; // Info button area
+          const topEdge = 50; // Info button area
+          
+          // If clicking in Info button area, don't handle photo tap
+          if (clickX > rightEdge && clickY < topEdge) {
+            return;
+          }
+          
+          // Handle photo navigation directly here
+          if (!profile || profile.photos.length <= 1) return;
+          
+          // Haptic feedback for photo navigation
+          if ('vibrate' in navigator) {
+            navigator.vibrate(20);
+          }
+          
+          const width = rect.width;
+          const tapX = clickX;
+          
+          // Tap on right side = next photo, left side = previous photo
+          if (tapX > width / 2) {
+            onPhotoChange('next');
+          } else {
+            onPhotoChange('prev');
+          }
+        }}
+      >
+        <img
+          src={profile.photos[currentPhotoIndex]}
+          alt={profile.name}
+          className="w-full h-full object-cover transition-opacity duration-300 ease-out"
+          onError={onPhotoError}
+          loading="lazy"
+          decoding="async"
+          sizes="(max-width: 768px) 100vw, 768px"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+        {profile.photos.length > 1 && !isPreview && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+            {profile.photos.map((_, index) => (
+              <div
+                key={index}
+                className={`h-1.5 w-8 rounded-full transition-all duration-200 ${
+                  index === currentPhotoIndex ? 'bg-white/90' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {!isPreview && (
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              navigate(`/profile/${profile.id}`);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              navigate(`/profile/${profile.id}`);
+            }}
+            className="absolute top-4 right-4 h-9 px-3 hover:scale-110 transition-spring backdrop-blur-md z-[100] border-white/20 text-foreground dark:text-white touch-manipulation"
+            style={{ 
+              touchAction: 'manipulation',
+              pointerEvents: 'auto',
+              isolation: 'isolate'
+            }}
+          >
+            <UserCheck size={16} className="mr-1.5" />
+            <span className="text-sm font-medium">Info</span>
+          </Button>
+        )}
+
+        {profile.photos.length > 1 && !isPreview && (
+          <>
+            <div className="absolute left-0 top-0 w-1/2 h-full z-10" />
+            <div className="absolute right-0 top-0 w-1/2 h-full z-20" />
+          </>
+        )}
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-2xl font-bold drop-shadow-lg">{profile.name}</h2>
+              <span className="text-lg font-semibold text-white/90">{profile.age}</span>
+              {profile.isVerified && (
+                <div className="flex items-center justify-center w-6 h-6 bg-blue-500/80 backdrop-blur-sm rounded-full">
+                  <Shield size={14} className="text-white" />
+                </div>
+              )}
+            </div>
+            {profile.isOnline && (
+              <div className="flex items-center gap-1.5 bg-green-500/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs font-semibold">Online</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-sm mb-3 text-white/90">
+            <MapPin size={16} className="text-white/80" />
+            <span className="font-medium">{profile.location.split(',')[0]}</span>
+            <span className="text-white/60">•</span>
+            <span className="text-white/80">{profile.distance}km away</span>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
+              {profile.languageLevel}
+            </Badge>
+            <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
+              {profile.sharedInterests} shared
+            </Badge>
+            {profile.lookingForRelationship && (
+              <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
+                💕 Relationship
+              </Badge>
+            )}
+            {profile.lookingForFriendship && (
+              <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
+                🤝 Friendship
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {!isPreview && (
+        <CardContent className="p-4 sm:p-5">
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4 font-medium">
+            {profile.bio}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {profile.interests.slice(0, 3).map((interest) => (
+              <Badge
+                key={interest}
+                variant="outline"
+                className="text-xs h-7 px-3 rounded-full font-semibold bg-background/70 text-foreground border-border-soft"
+              >
+                {interest}
+              </Badge>
+            ))}
+            {profile.interests.length > 3 && (
+              <span className="text-xs text-muted-foreground font-medium">
+                +{profile.interests.length - 3} more
+              </span>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </>
+  );
+});
+ProfileCardContent.displayName = 'ProfileCardContent';

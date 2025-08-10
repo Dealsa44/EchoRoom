@@ -110,18 +110,12 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-    toast({
-      title: "All notifications marked as read",
-      description: "Your notifications have been updated.",
-    });
+    // All notifications marked as read - toast removed per user request
   };
 
   const deleteNotification = (id: number) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-    toast({
-      title: "Notification deleted",
-      description: "The notification has been removed.",
-    });
+    // Notification deleted - toast removed per user request
   };
 
   const unreadCount = notifications.filter(n => n.unread).length;

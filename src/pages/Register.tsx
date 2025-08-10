@@ -172,10 +172,7 @@ const Register = () => {
       if (result.success && result.user) {
         setUser(result.user);
         setIsAuthenticated(true);
-        toast({
-          title: "Welcome to EchoRoom!",
-          description: "Your account has been created successfully.",
-        });
+        // Welcome to EchoRoom - toast removed per user request
         navigate('/match');
       } else {
         // Handle server-side validation errors
@@ -190,18 +187,10 @@ const Register = () => {
           setErrors(newErrors);
         }
         
-        toast({
-          title: "Registration Failed",
-          description: result.errors?.join(', ') || "Please check your information and try again.",
-          variant: "destructive",
-        });
+        // Registration failed - toast removed per user request
       }
     } catch (error) {
-      toast({
-        title: "Registration Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      // Registration error - toast removed per user request
     } finally {
       setLoading(false);
     }

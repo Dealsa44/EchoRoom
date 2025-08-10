@@ -34,34 +34,20 @@ const Login = () => {
       if (result.success && result.user) {
         setUser(result.user);
         setIsAuthenticated(true);
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in to EchoRoom.",
-        });
+        // Welcome back - toast removed per user request
         navigate('/match');
       } else {
-        toast({
-          title: "Login Failed",
-          description: result.errors?.join(', ') || "Invalid email or password.",
-          variant: "destructive",
-        });
+        // Login failed - toast removed per user request
       }
     } catch (error) {
-      toast({
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      // Login error - toast removed per user request
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    toast({
-      title: "Password Recovery",
-      description: "Password recovery instructions sent to your email.",
-    });
+    // Password recovery - toast removed per user request
   };
 
   return (

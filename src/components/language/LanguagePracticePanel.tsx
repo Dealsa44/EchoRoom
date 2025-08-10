@@ -57,18 +57,12 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
 
   const handleStartSession = () => {
     startLearningSession();
-    toast({
-      title: "Learning Session Started",
-      description: "AI is now tracking your progress and providing assistance",
-    });
+    // Learning session started - toast removed per user request
   };
 
   const handleEndSession = () => {
     endLearningSession();
-    toast({
-      title: "Session Complete",
-      description: "Great work! Your progress has been saved.",
-    });
+    // Session complete - toast removed per user request
   };
 
   const handleTestGrammar = () => {
@@ -86,10 +80,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
       ];
 
       corrections.forEach(correction => {
-        toast({
-          title: "Grammar Correction",
-          description: correction.explanation,
-        });
+        // Grammar correction - toast removed per user request
       });
     }
   };
@@ -99,10 +90,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
     const randomTopic = topics[Math.floor(Math.random() * topics.length)];
     const suggestions = simulateVocabularySuggestion(randomTopic);
     
-    toast({
-      title: `Vocabulary - ${randomTopic.charAt(0).toUpperCase() + randomTopic.slice(1)}`,
-      description: `Try these words: ${suggestions.slice(0, 3).join(', ')}`,
-    });
+    // Vocabulary suggestions - toast removed per user request
   };
 
   const handleGetConversationStarters = () => {
@@ -110,10 +98,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
     const randomTopic = topics[Math.floor(Math.random() * topics.length)];
     const starters = simulateConversationStarter(randomTopic, languageLevel);
     
-    toast({
-      title: `Conversation Starters - ${randomTopic.charAt(0).toUpperCase() + randomTopic.slice(1)}`,
-      description: starters[0] || "Tell me about yourself",
-    });
+    // Conversation starters - toast removed per user request
   };
 
   const handleQuickPractice = (skill: 'speaking' | 'listening' | 'writing' | 'reading') => {
@@ -124,10 +109,7 @@ const LanguagePracticePanel = ({ isOpen, onClose }: LanguagePracticePanelProps) 
       reading: "Awesome! Read a short article or story in your target language."
     };
 
-    toast({
-      title: `${skill.charAt(0).toUpperCase() + skill.slice(1)} Practice`,
-      description: practiceMessages[skill],
-    });
+    // Quick practice - toast removed per user request
   };
 
   return (

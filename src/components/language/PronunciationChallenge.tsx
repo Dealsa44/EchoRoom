@@ -177,15 +177,9 @@ const PronunciationChallenge = () => {
     setOverallScore(averageScore);
     
     if (currentChallenge && averageScore >= currentChallenge.targetAccuracy) {
-      toast({
-        title: "Challenge Completed! 🎉",
-        description: `You earned ${currentChallenge.reward.points} points and the "${currentChallenge.reward.badge}" badge!`,
-      });
+      // Challenge completed - toast removed per user request
     } else {
-      toast({
-        title: "Challenge Complete",
-        description: `You scored ${averageScore.toFixed(1)}%. Keep practicing!`,
-      });
+      // Challenge complete - toast removed per user request
     }
   };
 
@@ -221,11 +215,7 @@ const PronunciationChallenge = () => {
       }, 5000);
 
     } catch (error) {
-      toast({
-        title: "Microphone Error",
-        description: "Could not access microphone. Please check permissions.",
-        variant: "destructive",
-      });
+      // Microphone error - toast removed per user request
     }
   };
 
@@ -260,10 +250,7 @@ const PronunciationChallenge = () => {
 
     setResults(prev => [...prev, result]);
     
-    toast({
-      title: `${accuracy}% Accuracy`,
-      description: result.feedback,
-    });
+    // Accuracy result - toast removed per user request
   };
 
   const playExample = () => {
@@ -297,10 +284,7 @@ const PronunciationChallenge = () => {
       });
     } else {
       navigator.clipboard.writeText(message);
-      toast({
-        title: "Copied to clipboard!",
-        description: "Share your progress on social media",
-      });
+      // Copied to clipboard - toast removed per user request
     }
   };
 

@@ -105,11 +105,7 @@ const PrivacyGuard: React.FC = () => {
         
         setSecurityEvents(prev => [event, ...prev.slice(0, 9)]);
         
-        toast({
-          title: "Privacy Alert",
-          description: "Screenshot attempt detected and logged",
-          variant: "destructive",
-        });
+        // Privacy alert - toast removed per user request
       }
     };
 
@@ -125,11 +121,7 @@ const PrivacyGuard: React.FC = () => {
         e.preventDefault();
         setScreenshotAttempts(prev => prev + 1);
         
-        toast({
-          title: "Screenshot Blocked",
-          description: "Screenshots are disabled for privacy protection",
-          variant: "destructive",
-        });
+        // Screenshot blocked - toast removed per user request
       }
     };
 
@@ -216,12 +208,7 @@ const PrivacyGuard: React.FC = () => {
   ) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     
-    toast({
-      title: "Privacy Setting Updated",
-      description: `${key.replace(/([A-Z])/g, ' $1').toLowerCase()} has been ${
-        typeof value === 'boolean' ? (value ? 'enabled' : 'disabled') : 'updated'
-      }`,
-    });
+    // Privacy setting updated - toast removed per user request
   };
 
   const handleSecurityEvent = (eventId: string) => {
@@ -232,10 +219,7 @@ const PrivacyGuard: React.FC = () => {
 
   const clearSecurityLog = () => {
     setSecurityEvents([]);
-    toast({
-      title: "Security Log Cleared",
-      description: "All security events have been removed",
-    });
+    // Security log cleared - toast removed per user request
   };
 
   const getSeverityColor = (severity: string) => {

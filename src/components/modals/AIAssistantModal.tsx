@@ -148,18 +148,12 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
 
   const handleStartSession = () => {
     startLearningSession();
-    toast({
-      title: "Learning Session Started",
-      description: "AI is now tracking your progress and providing assistance",
-    });
+    // Learning session started - toast removed per user request
   };
 
   const handleEndSession = () => {
     endLearningSession();
-    toast({
-      title: "Session Complete",
-      description: "Great work! Your progress has been saved.",
-    });
+    // Session complete - toast removed per user request
   };
 
   const handleQuickVocabulary = () => {

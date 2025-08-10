@@ -60,20 +60,13 @@ export const useOfflineSupport = () => {
   useEffect(() => {
     const handleOnline = () => {
       setState(prev => ({ ...prev, isOnline: true }));
-      toast({
-        title: "Back online",
-        description: "Syncing queued messages...",
-      });
+      // Back online - toast removed per user request
       syncQueuedMessages();
     };
 
     const handleOffline = () => {
       setState(prev => ({ ...prev, isOnline: false }));
-      toast({
-        title: "You're offline",
-        description: "Messages will be queued until connection is restored",
-        variant: "destructive",
-      });
+      // You're offline - toast removed per user request
     };
 
     window.addEventListener('online', handleOnline);
@@ -120,10 +113,7 @@ export const useOfflineSupport = () => {
       queuedMessages: [...prev.queuedMessages, queuedMessage]
     }));
 
-    toast({
-      title: "Message queued",
-      description: "Your message will be sent when you're back online",
-    });
+    // Message queued - toast removed per user request
   }, []);
 
   const syncQueuedMessages = useCallback(async () => {
@@ -175,11 +165,7 @@ export const useOfflineSupport = () => {
     }
 
     if (failedMessages.length > 0) {
-      toast({
-        title: "Some messages failed to sync",
-        description: `${failedMessages.length} message(s) will be retried later`,
-        variant: "destructive",
-      });
+      // Some messages failed to sync - toast removed per user request
     }
   }, [state.queuedMessages, state.syncInProgress, state.isOnline]);
 
@@ -273,10 +259,7 @@ export const useOfflineSupport = () => {
     
     calculateCacheSize();
     
-    toast({
-      title: "Cache cleaned",
-      description: `Removed ${toRemove} old cache entries`,
-    });
+    // Cache cleaned - toast removed per user request
   }, []);
 
   const clearAllCache = useCallback(() => {
@@ -289,10 +272,7 @@ export const useOfflineSupport = () => {
     
     setState(prev => ({ ...prev, cacheSize: 0 }));
     
-    toast({
-      title: "Cache cleared",
-      description: "All cached data has been removed",
-    });
+    // Cache cleared - toast removed per user request
   }, []);
 
   const retrySync = useCallback(() => {

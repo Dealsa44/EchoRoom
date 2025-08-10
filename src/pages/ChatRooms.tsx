@@ -71,11 +71,7 @@ const ChatRooms = () => {
     
     setJoiningRoom(null);
     
-    toast({
-      title: "Joined room!",
-      description: "You can now access this room from your messages.",
-      duration: 3000,
-    });
+    // Joined room - toast removed per user request
     
     // Navigate directly to the chat room with source parameter
     const urlParams = new URLSearchParams(window.location.search);
@@ -86,9 +82,9 @@ const ChatRooms = () => {
 
 
   return (
-    <div className="min-h-screen bg-background pb-20 relative">
+    <div className="min-h-screen app-gradient-bg pb-20 relative">
       {/* Background Elements */}
-      <div className="absolute inset-0 opacity-15">
+      <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
         <div className="absolute bottom-32 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
         <div className="absolute top-1/2 right-6 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '3s' }} />
@@ -117,7 +113,7 @@ const ChatRooms = () => {
 
         {/* Search and Filters */}
         <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <div className="relative glass rounded-2xl p-1 shadow-medium">
+          <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
             <Input
               id="roomSearch"
@@ -132,7 +128,7 @@ const ChatRooms = () => {
           
           <div className="flex gap-3">
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="flex-1 glass border-border-soft hover:border-border transition-smooth h-12 rounded-xl">
+              <SelectTrigger className="flex-1 glass border-border-soft transition-smooth h-12 rounded-xl shadow-soft animate-breathe-slow">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass border-border-soft shadow-large">
@@ -148,7 +144,7 @@ const ChatRooms = () => {
               variant="gradient"
               size="icon-lg"
               onClick={() => setShowCreateModal(true)}
-              className="shadow-glow-primary hover:scale-110 transition-spring"
+              className="shadow-glow-primary animate-breathe-slow active:scale-[0.98]"
             >
               <Plus size={22} />
             </Button>
@@ -190,21 +186,21 @@ const ChatRooms = () => {
               {filteredRooms.map((room, index) => (
             <Card 
               key={room.id} 
-              className="interactive-scale shadow-medium hover:shadow-large group animate-slide-up"
+              className="shadow-large animate-breathe-slow animate-slide-up animate-fade-in active:scale-[0.98] overflow-hidden"
               style={{ animationDelay: `${0.1 + index * 0.05}s` }}
             >
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="text-3xl p-3 bg-gradient-primary/10 rounded-2xl group-hover:scale-110 transition-spring">
-                    {room.icon}
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-primary/10 grid place-items-center shadow-inner-soft animate-float-ambient">
+                    <span className="text-2xl">{room.icon}</span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-heading-2 font-semibold group-hover:text-primary transition-smooth">{room.title}</h3>
+                      <h3 className="text-heading-2 font-semibold break-words">{room.title}</h3>
                       {room.isPrivate ? (
-                        <Lock size={16} className="text-muted-foreground group-hover:text-primary transition-smooth" />
+                        <Lock size={16} className="text-muted-foreground" />
                       ) : (
-                        <Globe size={16} className="text-muted-foreground group-hover:text-primary transition-smooth" />
+                        <Globe size={16} className="text-muted-foreground" />
                       )}
                     </div>
                     
@@ -212,7 +208,7 @@ const ChatRooms = () => {
                       {room.description}
                     </p>
                     
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                       <div className="flex items-center gap-4 text-caption text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <Users size={14} />
@@ -224,9 +220,9 @@ const ChatRooms = () => {
                         </span>
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         {room.tags.slice(0, 2).map(tag => (
-                          <Badge key={tag} variant="glass" size="sm" className="hover:scale-105 transition-spring">
+                          <Badge key={tag} variant="glass" size="sm" className="w-fit">
                             {tag}
                           </Badge>
                         ))}
@@ -239,7 +235,7 @@ const ChatRooms = () => {
                 <div className="pt-4 border-t border-border-soft">
                   <Button 
                     onClick={() => handleJoinRoom(room.id)}
-                    className="w-full shadow-glow-primary/20"
+                    className="w-full shadow-glow-primary/40 shadow-medium active:scale-[0.98]"
                     size="lg"
                     variant="gradient"
                     disabled={joiningRoom === room.id}

@@ -33,20 +33,13 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
     
     // Validate that category is selected
     if (!formData.category) {
-      toast({
-        title: "Category Required",
-        description: "Please select a category for your discussion.",
-        variant: "destructive"
-      });
+      // Category required - toast removed per user request
       return;
     }
     
     // Simulate thread creation
     const selectedCategory = categories.find(cat => cat.value === formData.category);
-    toast({
-      title: "Discussion Started!",
-      description: `Your thread "${formData.title}" has been posted in ${selectedCategory?.label}.`,
-    });
+    // Discussion started - toast removed per user request
     
     // Reset form and close modal
     setFormData({

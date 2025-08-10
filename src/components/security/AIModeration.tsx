@@ -160,10 +160,7 @@ const AIModeration: React.FC = () => {
       rule.id === ruleId ? { ...rule, enabled: !rule.enabled } : rule
     ));
     
-    toast({
-      title: "Moderation Rule Updated",
-      description: "AI moderation settings have been updated",
-    });
+    // Moderation rule updated - toast removed per user request
   };
 
   const reviewAction = (actionId: string, approved: boolean) => {
@@ -173,10 +170,7 @@ const AIModeration: React.FC = () => {
         : action
     ));
 
-    toast({
-      title: approved ? "Action Approved" : "Action Rejected",
-      description: `Moderation action has been ${approved ? 'approved' : 'rejected'}`,
-    });
+    // Action approved/rejected - toast removed per user request
   };
 
   const getModerationLevelColor = (level: string) => {

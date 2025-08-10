@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echoroom-v1';
+const CACHE_NAME = 'echoroom-v2';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -20,16 +20,30 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
+  const { request } = event;
+
+  // Images: Cache-first with stale-while-revalidate
+  if (request.destination === 'image') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(request);
+      const networkFetch = fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            cache.put(request, response.clone());
+          }
           return response;
-        }
-        return fetch(event.request);
-      }
-    )
+        })
+        .catch(() => cached);
+
+      return cached || networkFetch;
+    })());
+    return;
+  }
+
+  // Default: Cache falling back to network
+  event.respondWith(
+    caches.match(request).then((cached) => cached || fetch(request))
   );
 });
 
