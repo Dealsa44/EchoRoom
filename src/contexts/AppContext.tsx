@@ -102,6 +102,8 @@ export interface User {
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   languageProficiency: string;
+  // Profile photos
+  photos?: string[];
   // Profile questions for fun and personality insights
   profileQuestions: ProfileQuestion[];
 }

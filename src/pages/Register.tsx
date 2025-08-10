@@ -7,15 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle, Camera } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
 import { GenderIdentity, Orientation } from '@/contexts/AppContext';
+import RegistrationPhotoUpload from '@/components/ui/RegistrationPhotoUpload';
+import { Photo, photoStorage } from '@/lib/photoStorage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'lifestyle' | 'preferences';
+type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'lifestyle' | 'photos' | 'preferences';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -23,6 +26,8 @@ const Register = () => {
   const [currentStage, setCurrentStage] = useState<RegistrationStage>('account');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -89,6 +94,12 @@ const Register = () => {
       icon: <User className="w-5 h-5" />
     },
     {
+      key: 'photos',
+      title: 'Profile Photos',
+      description: 'Add photos to boost your match potential',
+      icon: <Camera className="w-5 h-5" />
+    },
+    {
       key: 'preferences',
       title: 'Personality',
       description: 'Choose how you prefer to communicate',
@@ -112,12 +123,27 @@ const Register = () => {
   };
 
   const nextStage = () => {
+    // Special handling for photos stage
+    if (currentStage === 'photos' && photos.length === 0) {
+      setShowSkipConfirm(true);
+      return;
+    }
+    
     if (validateCurrentStage()) {
       const currentIndex = stages.findIndex(stage => stage.key === currentStage);
       if (currentIndex < stages.length - 1) {
         setCurrentStage(stages[currentIndex + 1].key);
         setErrors({}); // Clear errors when moving to next stage
       }
+    }
+  };
+
+  const skipPhotosStage = () => {
+    setShowSkipConfirm(false);
+    const currentIndex = stages.findIndex(stage => stage.key === currentStage);
+    if (currentIndex < stages.length - 1) {
+      setCurrentStage(stages[currentIndex + 1].key);
+      setErrors({});
     }
   };
 
@@ -140,6 +166,17 @@ const Register = () => {
     setLoading(true);
 
     try {
+      // Save photos to localStorage before registration
+      const tempUserId = `temp-${Date.now()}`;
+      if (photos.length > 0) {
+        const saveResult = photoStorage.savePhotos(tempUserId, photos);
+        if (!saveResult.success) {
+          setErrors({ photos: saveResult.error || 'Failed to save photos' });
+          setLoading(false);
+          return;
+        }
+      }
+
       const registerData: RegisterData = {
         username: formData.username,
         email: formData.email,
@@ -165,11 +202,23 @@ const Register = () => {
         religion: formData.religion,
         politicalViews: formData.politicalViews,
         about: formData.about,
+        // Include photos
+        photos: photos.map(photo => photo.url),
       };
 
       const result = await registerUser(registerData);
 
       if (result.success && result.user) {
+        // Transfer photos from temp storage to actual user storage
+        if (photos.length > 0) {
+          const finalSaveResult = photoStorage.savePhotos(result.user.id, photos);
+          if (finalSaveResult.success) {
+            photoStorage.clearPhotos(tempUserId); // Clean up temp storage
+          } else {
+            console.warn('Failed to save photos to final user storage:', finalSaveResult.error);
+          }
+        }
+        
         setUser(result.user);
         setIsAuthenticated(true);
         // Welcome to EchoRoom - toast removed per user request
@@ -357,6 +406,9 @@ const Register = () => {
           newErrors.about = 'Please tell us a bit about yourself';
         }
         break;
+      case 'photos':
+        // Photos are optional, no validation required
+        break;
       case 'preferences':
         if (!formData.chatStyle) {
           newErrors.chatStyle = 'Please select your personality type';
@@ -389,6 +441,8 @@ const Register = () => {
         return formData.genderIdentity && formData.orientation;
       case 'lifestyle':
         return formData.about.trim().length > 0;
+      case 'photos':
+        return true; // Photos are optional
       case 'preferences':
         return formData.chatStyle;
       default:
@@ -908,13 +962,31 @@ const Register = () => {
           </div>
         );
 
+      case 'photos':
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2 mb-4">
+              <div className="text-lg font-semibold">📸 Add Your Photos</div>
+              <div className="text-sm text-muted-foreground">
+                Photos help others get to know you better and significantly increase your match potential
+              </div>
+            </div>
+            
+            <RegistrationPhotoUpload 
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={6}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute top-24 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />
@@ -922,7 +994,7 @@ const Register = () => {
         <div className="absolute top-1/2 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 px-2 sm:px-0">
         {/* Back Button */}
         <Button
           variant="ghost"
@@ -969,8 +1041,12 @@ const Register = () => {
           
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit}>
-              <div className="min-h-[150px] sm:min-h-[180px] flex items-start justify-center py-2">
-                <div className="w-full animate-in fade-in duration-300">
+              <div className={`${
+                currentStage === 'photos' 
+                  ? 'min-h-[300px] sm:min-h-[400px]' 
+                  : 'min-h-[150px] sm:min-h-[180px]'
+              } flex items-start justify-center py-2`}>
+                <div className="w-full animate-in fade-in duration-300 overflow-hidden">
                   {renderStageContent()}
                 </div>
               </div>
@@ -1037,6 +1113,54 @@ const Register = () => {
           </p>
         </div>
       </div>
+
+      {/* Skip Photos Confirmation Modal */}
+      <Dialog open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle className="text-center">Skip Adding Photos?</DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              Are you sure you want to continue without adding any photos?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">⚠️</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="font-medium text-orange-800">
+                    Consider the impact:
+                  </div>
+                  <ul className="space-y-1 text-orange-700">
+                    <li>• Profiles with photos get 5x more matches</li>
+                    <li>• Photos help build trust and connections</li>
+                    <li>• Your current match potential is only 35%</li>
+                    <li>• Adding just one photo boosts it to 42.5%</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => setShowSkipConfirm(false)}
+                className="w-full"
+              >
+                Add Photos Now
+              </Button>
+              <Button
+                variant="outline"
+                onClick={skipPhotosStage}
+                className="w-full"
+              >
+                Continue Without Photos
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { getProfileById } from '@/data/mockProfiles';
 import { LoadingState } from '@/components/ui/LoadingSpinner';
 import { toast } from '@/hooks/use-toast';
 import { calculateAge } from '@/lib/auth';
+import { photoStorage } from '@/lib/photoStorage';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const Profile = () => {
   const { user, safeMode, setSafeMode, logout } = useApp();
   const [profileData, setProfileData] = useState<ProfileType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userPhotos, setUserPhotos] = useState<any[]>([]);
   
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
@@ -57,6 +59,14 @@ const Profile = () => {
       return () => clearTimeout(timer);
     }
   }, [userId, isOwnProfile, navigate]);
+
+  // Load user photos from localStorage for own profile
+  useEffect(() => {
+    if (isOwnProfile && user?.id) {
+      const photos = photoStorage.loadPhotos(user.id);
+      setUserPhotos(photos);
+    }
+  }, [isOwnProfile, user?.id]);
 
   const handleSendMessage = () => {
     if (profileData) {
@@ -166,35 +176,65 @@ const Profile = () => {
         </Card>
 
         {/* Photo Gallery */}
-        {((isOwnProfile && (user as any)?.photos && (user as any).photos.length > 0) || 
-          (!isOwnProfile && profileData?.photos && profileData.photos.length > 0)) && (
-          <Card className="relative overflow-hidden animate-breathe">
-            {/* Floating background accents */}
-            <div className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full bg-tertiary/12 blur-2xl animate-float-ambient" aria-hidden />
-            <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
-            <CardHeader className="pb-0">
-              <div className="flex items-center gap-3 animate-float-ambient">
-                <div className="h-9 w-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
-                  <User className="w-4 h-4" />
+        <Card className="relative overflow-hidden animate-breathe">
+          {/* Floating background accents */}
+          <div className="pointer-events-none absolute -top-8 -left-8 h-24 w-24 rounded-full bg-tertiary/12 blur-2xl animate-float-ambient" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
+          <CardHeader className="pb-0">
+            <div className="flex items-center gap-3 animate-float-ambient">
+              <div className="h-9 w-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
+                <User className="w-4 h-4" />
+              </div>
+              <CardTitle className="text-base">Photos</CardTitle>
+                              {/* Verification status */}
+                {isOwnProfile && userPhotos.length > 0 && (
+                  <Badge className="bg-green-100 text-green-800 text-xs ml-auto">
+                    ✓ {userPhotos.filter(photo => photo.isVerified).length} verified
+                  </Badge>
+                )}
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-secondary via-primary to-accent shadow-[0_0_12px_hsl(var(--secondary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--secondary)_/_0.45)]" />
+          </CardHeader>
+          <CardContent className="p-4 pt-4">
+            {((isOwnProfile && userPhotos.length > 0) || 
+              (!isOwnProfile && profileData?.photos && profileData.photos.length > 0)) ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  {(isOwnProfile ? userPhotos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
+                    <PhotoLightboxThumb 
+                      key={index} 
+                      src={isOwnProfile ? photo.url : photo} 
+                      index={index} 
+                      delayMs={index * 120}
+                      isVerified={isOwnProfile ? photo.isVerified : (index === 0)} // Use actual verification status for own profile
+                    />
+                  ))}
                 </div>
-                <CardTitle className="text-base">Photos</CardTitle>
-              </div>
-              <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-secondary via-primary to-accent shadow-[0_0_12px_hsl(var(--secondary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--secondary)_/_0.45)]" />
-            </CardHeader>
-            <CardContent className="p-4 pt-4">
-              <div className="grid grid-cols-2 gap-2">
-                {(isOwnProfile ? (user as any)?.photos : profileData?.photos)?.slice(0, 4).map((photo, index) => (
-                  <PhotoLightboxThumb key={index} src={photo} index={index} delayMs={index * 120} />
-                ))}
-              </div>
-              {((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) > 4 && (
-                <p className="text-center text-sm text-muted-foreground mt-2">
-                  +{((isOwnProfile ? (user as any)?.photos?.length : profileData?.photos?.length) || 0) - 4} more photos
+                {((isOwnProfile ? userPhotos.length : profileData?.photos?.length) || 0) > 4 && (
+                  <p className="text-center text-sm text-muted-foreground mt-2">
+                    +{((isOwnProfile ? userPhotos.length : profileData?.photos?.length) || 0) - 4} more photos
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">📸</div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {isOwnProfile ? "No photos uploaded yet" : "No photos available"}
                 </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                {isOwnProfile && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate('/profile/edit')}
+                  >
+                    Add Photos
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Identity & Basic Info */}
         <Card className="relative overflow-hidden animate-breathe">
@@ -527,7 +567,17 @@ const Profile = () => {
 export default Profile;
 
 // Photo thumbnail with mobile-first lightbox
-function PhotoLightboxThumb({ src, index, delayMs = 0 }: { src: string; index: number; delayMs?: number }) {
+function PhotoLightboxThumb({ 
+  src, 
+  index, 
+  delayMs = 0, 
+  isVerified = false 
+}: { 
+  src: string; 
+  index: number; 
+  delayMs?: number;
+  isVerified?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -548,6 +598,15 @@ function PhotoLightboxThumb({ src, index, delayMs = 0 }: { src: string; index: n
           }}
         />
         <span className="pointer-events-none absolute inset-0 bg-black/0 group-active:bg-black/10 transition-smooth" />
+        
+        {/* Verification badge */}
+        {isVerified && (
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-green-100 text-green-800 text-xs">
+              ✓ Verified
+            </Badge>
+          </div>
+        )}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users, MessageCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users, MessageCircle, ChevronDown, ChevronRight, Camera } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { updateUserProfile } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
+import PhotoUpload from '@/components/ui/PhotoUpload';
+import { Photo, photoStorage } from '@/lib/photoStorage';
 
 // CollapsibleSection Component
 interface CollapsibleSectionProps {
@@ -54,6 +56,31 @@ const ProfileEdit = () => {
   const navigate = useNavigate();
   const { user, setUser } = useApp();
   const [loading, setLoading] = useState(false);
+  
+  // Load photos from localStorage on component mount
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  
+  useEffect(() => {
+    if (user?.id) {
+      const savedPhotos = photoStorage.loadPhotos(user.id);
+      if (savedPhotos.length > 0) {
+        setPhotos(savedPhotos);
+      } else {
+        // Convert existing photos to new format if no localStorage data
+        const existingPhotos = user.photos || [];
+        const convertedPhotos = existingPhotos.map((url, index) => ({
+          id: `photo-${index}`,
+          url,
+          isVerified: index === 0,
+          isPrimary: index === 0,
+          uploadDate: new Date(),
+          verificationStatus: index === 0 ? 'approved' : 'not_submitted'
+        }));
+        setPhotos(convertedPhotos);
+      }
+    }
+  }, [user?.id, user?.photos]);
+
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -87,11 +114,23 @@ const ProfileEdit = () => {
     setLoading(true);
 
     try {
+      // Save photos to localStorage
+      const saveResult = photoStorage.savePhotos(user.id, photos);
+      if (!saveResult.success) {
+        // Handle storage quota exceeded
+        console.error('Failed to save photos:', saveResult.error);
+        // Continue with profile update even if photos fail to save
+      }
+
+      // Convert photos back to URL array for storage
+      const photoUrls = photos.map(photo => photo.url);
+
       const updates: any = {
         username: formData.username,
         email: formData.email,
         bio: formData.bio,
         interests: formData.interests,
+        photos: photoUrls, // Add photos to updates
         // New fields for identity and preferences
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
@@ -142,8 +181,24 @@ const ProfileEdit = () => {
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Photos Section */}
+          <CollapsibleSection title="Profile Photos" icon={<Camera className="w-4 h-4" />} defaultOpen={true}>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                <p>Add up to 6 photos to your profile. Your first photo will be your primary photo.</p>
+                <p className="mt-1">Verified photos increase your chances of getting matches!</p>
+              </div>
+              
+              <PhotoUpload 
+                photos={photos}
+                onPhotosChange={setPhotos}
+                maxPhotos={6}
+              />
+            </div>
+          </CollapsibleSection>
+
           {/* Basic Information Section */}
-          <CollapsibleSection title="Basic Information" icon={<User className="w-4 h-4" />} defaultOpen={true}>
+          <CollapsibleSection title="Basic Information" icon={<User className="w-4 h-4" />} defaultOpen={false}>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input

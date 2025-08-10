@@ -29,6 +29,7 @@ export interface RegisterData {
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   about: string;
+  photos?: string[];
 }
 
 export interface LoginData {
@@ -198,6 +199,11 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       politicalViews: data.politicalViews,
       about: data.about,
       languageProficiency: data.languageProficiency,
+      // Use photos from registration data, or sample photos if none provided
+      photos: data.photos && data.photos.length > 0 ? data.photos : [
+        'https://picsum.photos/400/400?random=1',
+        'https://picsum.photos/400/400?random=2'
+      ],
       profileQuestions: getRandomProfileQuestions(5)
     } as User;
     

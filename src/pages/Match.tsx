@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Portal } from '@radix-ui/react-portal';
 import SwipeableCard from '@/components/ui/SwipeableCard';
-import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck, User } from 'lucide-react';
+import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, Star, Shield, Lightbulb, Sparkles, RotateCcw, Zap, UserCheck, User, Check } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
@@ -1291,6 +1291,12 @@ const ProfileCardContent = memo(({
               {profile.isVerified && (
                 <div className="flex items-center justify-center w-6 h-6 bg-blue-500/80 backdrop-blur-sm rounded-full">
                   <Shield size={14} className="text-white" />
+                </div>
+              )}
+              {/* Photo verification badge */}
+              {profile.photos && profile.photos.length > 0 && (
+                <div className="flex items-center justify-center w-6 h-6 bg-green-500/80 backdrop-blur-sm rounded-full">
+                  <Check size={12} className="text-white" />
                 </div>
               )}
             </div>
