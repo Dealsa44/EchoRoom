@@ -54,7 +54,7 @@ export const photoStorage = {
       const photosData = localStorage.getItem(storageKey);
       if (photosData) {
         const parsed = JSON.parse(photosData);
-        return parsed.map((photo: any) => ({
+        return parsed.map((photo: { uploadDate: string; [key: string]: unknown }) => ({
           ...photo,
           uploadDate: new Date(photo.uploadDate)
         }));
@@ -147,8 +147,8 @@ export const photoStorage = {
   getStorageInfo: (): { used: number; available: number; percentage: number } => {
     try {
       let used = 0;
-      for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+      for (const key in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           used += localStorage[key].length;
         }
       }
@@ -168,7 +168,7 @@ export const photoStorage = {
   clearOldPhotos: (keepCount: number = 10): number => {
     try {
       const photoKeys: string[] = [];
-      for (let key in localStorage) {
+      for (const key in localStorage) {
         if (key.startsWith(PHOTOS_STORAGE_KEY)) {
           photoKeys.push(key);
         }

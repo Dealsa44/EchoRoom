@@ -7,13 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle, Camera } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle, Camera, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/contexts/AppContext';
 import { toast } from '@/hooks/use-toast';
 import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
-import { GenderIdentity, Orientation } from '@/contexts/AppContext';
+import { GenderIdentity, Orientation } from '@/contexts/app-utils';
+
+// Define missing types
+type Ethnicity = 'white' | 'black-african-american' | 'hispanic-latino' | 'asian' | 'native-american' | 'pacific-islander' | 'middle-eastern' | 'mixed-race' | 'other' | 'prefer-not-to-say';
+type RelationshipType = 'casual-dating' | 'serious-relationship' | 'marriage' | 'open-relationship' | 'friends-with-benefits' | 'not-sure-yet' | 'prefer-not-to-say';
+type Language = string;
+type LanguageLevel = 'native' | 'c2' | 'c1' | 'b2' | 'b1' | 'a2' | 'a1' | '';
+
+interface UserLanguage {
+  language: Language;
+  level: LanguageLevel;
+}
 import RegistrationPhotoUpload from '@/components/ui/RegistrationPhotoUpload';
 import { Photo, photoStorage } from '@/lib/photoStorage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -34,14 +45,16 @@ const Register = () => {
     password: '',
     dateOfBirth: '',
     location: '',
-    languageProficiency: '',
+    languages: [] as UserLanguage[],
     chatStyle: '',
     interests: [] as string[],
     // Fields for gender and orientation
     genderIdentity: 'prefer-not-to-say' as GenderIdentity,
     orientation: 'other' as Orientation,
+    ethnicity: 'prefer-not-to-say' as Ethnicity,
     lookingForRelationship: false,
     lookingForFriendship: false,
+    relationshipType: 'not-sure-yet' as RelationshipType,
     customGender: '',
     customOrientation: '',
     // Lifestyle fields
@@ -56,6 +69,8 @@ const Register = () => {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [languageErrors, setLanguageErrors] = useState<{[key: number]: string}>({});
+  const [languageSearch, setLanguageSearch] = useState<{[key: number]: string}>({});
 
   const availableInterests = [
     'Philosophy', 'Books', 'Art', 'Science', 'Technology', 'Music', 
@@ -129,11 +144,37 @@ const Register = () => {
       return;
     }
     
+    // Validate languages if we're on the profile stage (language stage)
+    if (currentStage === 'profile') {
+      const newLanguageErrors: {[key: number]: string} = {};
+      formData.languages.forEach((lang, index) => {
+        if (!lang.language || !lang.level) {
+          newLanguageErrors[index] = 'Please select both language and level';
+        }
+      });
+
+      if (Object.keys(newLanguageErrors).length > 0) {
+        setLanguageErrors(newLanguageErrors);
+        // Scroll to the first error
+        setTimeout(() => {
+          const firstErrorElement = document.querySelector('.border-red-500');
+          if (firstErrorElement) {
+            firstErrorElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }, 100);
+        return; // Don't proceed to next stage
+      }
+    }
+    
     if (validateCurrentStage()) {
       const currentIndex = stages.findIndex(stage => stage.key === currentStage);
       if (currentIndex < stages.length - 1) {
         setCurrentStage(stages[currentIndex + 1].key);
         setErrors({}); // Clear errors when moving to next stage
+        setLanguageErrors({}); // Clear language errors when moving to next stage
       }
     }
   };
@@ -157,6 +198,29 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate languages before submitting
+    const newLanguageErrors: {[key: number]: string} = {};
+    formData.languages.forEach((lang, index) => {
+      if (!lang.language || !lang.level) {
+        newLanguageErrors[index] = 'Please select both language and level';
+      }
+    });
+
+    if (Object.keys(newLanguageErrors).length > 0) {
+      setLanguageErrors(newLanguageErrors);
+      // Scroll to the first error
+      setTimeout(() => {
+        const firstErrorElement = document.querySelector('.border-red-500');
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 100);
+      return;
+    }
     
     // Validate the final stage before submitting
     if (!validateCurrentStage()) {
@@ -183,14 +247,16 @@ const Register = () => {
         password: formData.password,
         dateOfBirth: formData.dateOfBirth,
         location: formData.location,
-        languageProficiency: formData.languageProficiency,
+        languages: formData.languages.filter(lang => lang.language && lang.level) as any,
         chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
         interests: formData.interests,
         // Fields for gender and orientation
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
+        ethnicity: formData.ethnicity as any,
         lookingForRelationship: formData.lookingForRelationship,
         lookingForFriendship: formData.lookingForFriendship,
+        relationshipType: formData.lookingForRelationship ? formData.relationshipType as any : undefined,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
         // Lifestyle fields
@@ -219,7 +285,7 @@ const Register = () => {
           }
         }
         
-        setUser(result.user);
+        setUser(result.user as any);
         setIsAuthenticated(true);
         // Welcome to EchoRoom - toast removed per user request
         navigate('/match');
@@ -245,16 +311,16 @@ const Register = () => {
     }
   };
 
-  const validateField = (field: string, value: any) => {
+  const validateField = (field: string, value: unknown) => {
     const newErrors = { ...errors };
     
     switch (field) {
       case 'username':
         if (!value) {
           newErrors.username = 'Username is required';
-        } else if (value.length < 3) {
+        } else if ((value as string).length < 3) {
           newErrors.username = 'Username must be at least 3 characters long';
-        } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+        } else if (!/^[a-zA-Z0-9_]+$/.test(value as string)) {
           newErrors.username = 'Username can only contain letters, numbers, and underscores';
         } else {
           delete newErrors.username;
@@ -264,7 +330,7 @@ const Register = () => {
       case 'email':
         if (!value) {
           newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value as string)) {
           newErrors.email = 'Please enter a valid email address';
         } else {
           delete newErrors.email;
@@ -274,13 +340,13 @@ const Register = () => {
       case 'password':
         if (!value) {
           newErrors.password = 'Password is required';
-        } else if (value.length < 8) {
+        } else if ((value as string).length < 8) {
           newErrors.password = 'Password must be at least 8 characters long';
-        } else if (!/[A-Z]/.test(value)) {
+        } else if (!/[A-Z]/.test(value as string)) {
           newErrors.password = 'Password must contain at least one uppercase letter';
-        } else if (!/[a-z]/.test(value)) {
+        } else if (!/[a-z]/.test(value as string)) {
           newErrors.password = 'Password must contain at least one lowercase letter';
-        } else if (!/\d/.test(value)) {
+        } else if (!/\d/.test(value as string)) {
           newErrors.password = 'Password must contain at least one number';
         } else {
           delete newErrors.password;
@@ -290,24 +356,39 @@ const Register = () => {
       case 'dateOfBirth':
         if (!value) {
           newErrors.dateOfBirth = 'Date of birth is required';
-        } else if (!validateAge(value)) {
-          const age = calculateAge(value);
+        } else if (!validateAge(value as string)) {
+          const age = calculateAge(value as string);
           newErrors.dateOfBirth = `You must be at least 18 years old to register (you are ${age} years old)`;
         } else {
           delete newErrors.dateOfBirth;
         }
         break;
         
-      case 'languageProficiency':
-        if (!value) {
-          newErrors.languageProficiency = 'Please select your language proficiency level';
+      case 'languages':
+        if (!value || (value as any[]).length === 0) {
+          newErrors.languages = 'Please add at least one language';
         } else {
-          delete newErrors.languageProficiency;
+          // Check if all languages have both language and level selected
+          const incompleteLanguages = (value as any[]).filter((lang: { language?: string; level?: string; [key: string]: unknown }) => !lang.language || !lang.level);
+          if (incompleteLanguages.length > 0) {
+            newErrors.languages = 'Please complete all language selections';
+            // Set specific errors for incomplete languages
+            const newLanguageErrors: {[key: number]: string} = {};
+            (value as any[]).forEach((lang: { language?: string; level?: string; [key: string]: unknown }, index: number) => {
+              if (!lang.language || !lang.level) {
+                newLanguageErrors[index] = 'Please select both language and level';
+              }
+            });
+            setLanguageErrors(newLanguageErrors);
+          } else {
+            delete newErrors.languages;
+            setLanguageErrors({});
+          }
         }
         break;
         
       case 'interests':
-        if (value.length < 3) {
+        if ((value as string[]).length < 3) {
           newErrors.interests = 'Please select at least 3 interests';
         } else {
           delete newErrors.interests;
@@ -322,10 +403,26 @@ const Register = () => {
         }
         break;
 
+      case 'ethnicity':
+        if (!value) {
+          newErrors.ethnicity = 'Please select your ethnicity';
+        } else {
+          delete newErrors.ethnicity;
+        }
+        break;
+
+      case 'relationshipType':
+        if (!value) {
+          newErrors.relationshipType = 'Please select your relationship type';
+        } else {
+          delete newErrors.relationshipType;
+        }
+        break;
+
       case 'location':
         if (!value) {
           newErrors.location = 'Location is required';
-        } else if (value.length < 2) {
+        } else if ((value as string).length < 2) {
           newErrors.location = 'Please enter a valid location';
         } else {
           delete newErrors.location;
@@ -382,8 +479,14 @@ const Register = () => {
         break;
         
       case 'profile':
-        if (!formData.languageProficiency) {
-          newErrors.languageProficiency = 'Please select your language proficiency level';
+        if (!formData.languages || formData.languages.length === 0) {
+          newErrors.languages = 'Please add at least one language';
+        } else {
+          // Check if all languages have both language and level selected
+          const incompleteLanguages = (formData.languages as any).filter((lang: { language?: string; level?: string; [key: string]: unknown }) => !lang.language || !lang.level);
+          if (incompleteLanguages.length > 0) {
+            newErrors.languages = 'Please complete all language selections';
+          }
         }
         break;
         
@@ -399,6 +502,12 @@ const Register = () => {
         }
         if (!formData.orientation) {
           newErrors.orientation = 'Please select your orientation';
+        }
+        if (!formData.ethnicity) {
+          newErrors.ethnicity = 'Please select your ethnicity';
+        }
+        if (formData.lookingForRelationship && !formData.relationshipType) {
+          newErrors.relationshipType = 'Please select your relationship type';
         }
         break;
       case 'lifestyle':
@@ -434,11 +543,12 @@ const Register = () => {
                /[a-z]/.test(formData.password) &&
                /\d/.test(formData.password);
       case 'profile':
-        return formData.languageProficiency;
+        return formData.languages && formData.languages.length > 0;
       case 'interests':
         return formData.interests.length >= 3;
       case 'identity':
-        return formData.genderIdentity && formData.orientation;
+        return formData.genderIdentity && formData.orientation && formData.ethnicity && 
+               (!formData.lookingForRelationship || formData.relationshipType);
       case 'lifestyle':
         return formData.about.trim().length > 0;
       case 'photos':
@@ -611,30 +721,396 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label htmlFor="languageProficiency">Language Proficiency</Label>
-                               <Select 
-                  name="languageProficiency"
-                  value={formData.languageProficiency} 
-                  onValueChange={(value) => {
-                    setFormData(prev => ({ ...prev, languageProficiency: value }));
-                    validateField('languageProficiency', value);
-                  }}
-                >
-                  <SelectTrigger id="languageProficiency" className={errors.languageProficiency ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select your level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A1">A1 - Beginner</SelectItem>
-                    <SelectItem value="A2">A2 - Elementary</SelectItem>
-                    <SelectItem value="B1">B1 - Intermediate</SelectItem>
-                    <SelectItem value="B2">B2 - Upper Intermediate</SelectItem>
-                    <SelectItem value="C1">C1 - Advanced</SelectItem>
-                    <SelectItem value="C2">C2 - Proficient</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.languageProficiency && (
-                  <p className="text-sm text-red-500">{errors.languageProficiency}</p>
-                )}
+               <Label htmlFor="languages-section">Languages</Label>
+               <p className="text-xs text-muted-foreground mb-3">
+                 Add the languages you speak and your proficiency level for each
+               </p>
+               
+               {/* Scrollable language container with max 3 visible */}
+               <div id="languages-section" className="max-h-[calc(3*4rem+2rem)] overflow-y-auto space-y-2 pr-2">
+                 {formData.languages.map((lang, index) => (
+                   <div key={index} className="space-y-2">
+                     <div className="flex gap-2 items-end">
+                       <div className="flex-1">
+                         <Label htmlFor={`language-${index}`} className="text-xs">Language</Label>
+                         <Select 
+                           name={`language-${index}`}
+                           value={lang.language || ''} 
+                           onValueChange={(value) => {
+                             const newLanguages = [...formData.languages];
+                             newLanguages[index] = { ...lang, language: value as Language };
+                             setFormData(prev => ({ ...prev, languages: newLanguages }));
+                             // Clear error when user selects a language
+                             if (value && languageErrors[index]) {
+                               setLanguageErrors(prev => {
+                                 const newErrors = { ...prev };
+                                 delete newErrors[index];
+                                 return newErrors;
+                               });
+                             }
+                           }}
+                           onOpenChange={(open) => {
+                             if (!open) {
+                               // Clear search when dropdown closes
+                               setLanguageSearch(prev => {
+                                 const newSearch = { ...prev };
+                                 delete newSearch[index];
+                                 return newSearch;
+                               });
+                             }
+                           }}
+                         >
+                           <SelectTrigger id={`language-${index}`} className={`h-9 ${languageErrors[index] ? 'border-red-500' : ''}`}>
+                             <SelectValue placeholder={lang.language ? undefined : "Select"}>
+                               {lang.language === 'english' ? '🇺🇸 English' : 
+                                lang.language === 'spanish' ? '🇪🇸 Spanish' :
+                                lang.language === 'french' ? '🇫🇷 French' :
+                                lang.language === 'german' ? '🇩🇪 German' :
+                                lang.language === 'italian' ? '🇮🇹 Italian' :
+                                lang.language === 'portuguese' ? '🇵🇹 Portuguese' :
+                                lang.language === 'russian' ? '🇷🇺 Russian' :
+                                lang.language === 'chinese' ? '🇨🇳 Chinese' :
+                                lang.language === 'japanese' ? '🇯🇵 Japanese' :
+                                lang.language === 'korean' ? '🇰🇷 Korean' :
+                                lang.language === 'arabic' ? '🇸🇦 Arabic' :
+                                lang.language === 'hindi' ? '🇮🇳 Hindi' :
+                                lang.language === 'bengali' ? '🇧🇩 Bengali' :
+                                lang.language === 'urdu' ? '🇵🇰 Urdu' :
+                                lang.language === 'indonesian' ? '🇮🇩 Indonesian' :
+                                lang.language === 'malay' ? '🇲🇾 Malay' :
+                                lang.language === 'thai' ? '🇹🇭 Thai' :
+                                lang.language === 'vietnamese' ? '🇻🇳 Vietnamese' :
+                                lang.language === 'turkish' ? '🇹🇷 Turkish' :
+                                lang.language === 'persian' ? '🇮🇷 Persian' :
+                                lang.language === 'hebrew' ? '🇮🇱 Hebrew' :
+                                lang.language === 'greek' ? '🇬🇷 Greek' :
+                                lang.language === 'polish' ? '🇵🇱 Polish' :
+                                lang.language === 'czech' ? '🇨🇿 Czech' :
+                                lang.language === 'slovak' ? '🇸🇰 Slovak' :
+                                lang.language === 'hungarian' ? '🇭🇺 Hungarian' :
+                                lang.language === 'romanian' ? '🇷🇴 Romanian' :
+                                lang.language === 'bulgarian' ? '🇧🇬 Bulgarian' :
+                                lang.language === 'croatian' ? '🇭🇷 Croatian' :
+                                lang.language === 'serbian' ? '🇷🇸 Serbian' :
+                                lang.language === 'slovenian' ? '🇸🇮 Slovenian' :
+                                lang.language === 'dutch' ? '🇳🇱 Dutch' :
+                                lang.language === 'swedish' ? '🇸🇪 Swedish' :
+                                lang.language === 'norwegian' ? '🇳🇴 Norwegian' :
+                                lang.language === 'danish' ? '🇩🇰 Danish' :
+                                lang.language === 'finnish' ? '🇫🇮 Finnish' :
+                                lang.language === 'icelandic' ? '🇮🇸 Icelandic' :
+                                lang.language === 'latvian' ? '🇱🇻 Latvian' :
+                                lang.language === 'lithuanian' ? '🇱🇹 Lithuanian' :
+                                lang.language === 'estonian' ? '🇪🇪 Estonian' :
+                                lang.language === 'ukrainian' ? '🇺🇦 Ukrainian' :
+                                lang.language === 'belarusian' ? '🇧🇾 Belarusian' :
+                                lang.language === 'kazakh' ? '🇰🇿 Kazakh' :
+                                lang.language === 'uzbek' ? '🇺🇿 Uzbek' :
+                                lang.language === 'kyrgyz' ? '🇰🇬 Kyrgyz' :
+                                lang.language === 'tajik' ? '🇹🇯 Tajik' :
+                                lang.language === 'turkmen' ? '🇹🇲 Turkmen' :
+                                lang.language === 'azerbaijani' ? '🇦🇿 Azerbaijani' :
+                                lang.language === 'armenian' ? '🇦🇲 Armenian' :
+                                lang.language === 'georgian' ? '🇬🇪 Georgian' :
+                                lang.language === 'mongolian' ? '🇲🇳 Mongolian' :
+                                lang.language === 'nepali' ? '🇳🇵 Nepali' :
+                                lang.language === 'sinhala' ? '🇱🇰 Sinhala' :
+                                lang.language === 'tamil' ? '🇮🇳 Tamil' :
+                                lang.language === 'telugu' ? '🇮🇳 Telugu' :
+                                lang.language === 'marathi' ? '🇮🇳 Marathi' :
+                                lang.language === 'gujarati' ? '🇮🇳 Gujarati' :
+                                lang.language === 'punjabi' ? '🇮🇳 Punjabi' :
+                                lang.language === 'kannada' ? '🇮🇳 Kannada' :
+                                lang.language === 'malayalam' ? '🇮🇳 Malayalam' :
+                                lang.language === 'odia' ? '🇮🇳 Odia' :
+                                lang.language === 'assamese' ? '🇮🇳 Assamese' :
+                                lang.language === 'maithili' ? '🇮🇳 Maithili' :
+                                lang.language === 'santali' ? '🇮🇳 Santali' :
+                                lang.language === 'kashmiri' ? '🇮🇳 Kashmiri' :
+                                lang.language === 'dogri' ? '🇮🇳 Dogri' :
+                                lang.language === 'konkani' ? '🇮🇳 Konkani' :
+                                lang.language === 'manipuri' ? '🇮🇳 Manipuri' :
+                                lang.language === 'bodo' ? '🇮🇳 Bodo' :
+                                lang.language === 'sanskrit' ? '🇮🇳 Sanskrit' :
+                                lang.language === 'khmer' ? '🇰🇭 Khmer' :
+                                lang.language === 'lao' ? '🇱🇦 Lao' :
+                                lang.language === 'myanmar' ? '🇲🇲 Myanmar' :
+                                lang.language === 'filipino' ? '🇵🇭 Filipino' :
+                                lang.language === 'swahili' ? '🇹🇿 Swahili' :
+                                lang.language === 'amharic' ? '🇪🇹 Amharic' :
+                                lang.language === 'yoruba' ? 'YO' :
+                                lang.language === 'igbo' ? 'IG' :
+                                lang.language === 'hausa' ? 'HA' :
+                                lang.language === 'zulu' ? 'ZU' :
+                                lang.language === 'xhosa' ? 'XH' :
+                                lang.language === 'afrikaans' ? 'AF' :
+                                lang.language === 'somali' ? 'SO' :
+                                lang.language === 'oromo' ? 'OM' :
+                                lang.language === 'tigrinya' ? 'TI' :
+                                lang.language === 'albanian' ? '🇦🇱 Albanian' :
+                                lang.language === 'macedonian' ? '🇲🇰 Macedonian' :
+                                lang.language === 'bosnian' ? '🇧🇦 Bosnian' :
+                                lang.language === 'montenegrin' ? '🇲🇪 Montenegrin' :
+                                lang.language === 'maltese' ? '🇲🇹 Maltese' :
+                                lang.language === 'catalan' ? '🇪🇸 Catalan' :
+                                lang.language === 'basque' ? '🇪🇸 Basque' :
+                                lang.language === 'galician' ? '🇪🇸 Galician' :
+                                lang.language === 'welsh' ? '🇬🇧 Welsh' :
+                                lang.language === 'scottish' ? '🇬🇧 Scottish Gaelic' :
+                                lang.language === 'irish' ? '🇮🇪 Irish' :
+                                lang.language === 'breton' ? '🇫🇷 Breton' :
+                                lang.language === 'corsican' ? '🇫🇷 Corsican' :
+                                lang.language === 'occitan' ? '🇫🇷 Occitan' :
+                                lang.language === 'luxembourgish' ? '🇱🇺 Luxembourgish' :
+                                lang.language === 'frisian' ? '🇳🇱 Frisian' :
+                                lang.language === 'faroese' ? '🇫🇴 Faroese' :
+                                lang.language === 'greenlandic' ? '🇬🇱 Greenlandic' :
+                                lang.language === 'sami' ? '🇳🇴 Sami' :
+                                lang.language === 'karelian' ? '🇫🇮 Karelian' :
+                                lang.language === 'votic' ? '🇪🇪 Votic' :
+                                lang.language === 'livonian' ? '🇱🇻 Livonian' :
+                                lang.language === 'ingrian' ? '🇷🇺 Ingrian' :
+                                lang.language === 'veps' ? '🇷🇺 Veps' :
+                                lang.language === 'ludic' ? '🇷🇺 Ludic' :
+                                lang.language === 'kven' ? '🇳🇴 Kven' :
+                                lang.language === 'meankieli' ? '🇫🇮 Meänkieli' :
+                                lang.language === 'tornedalen' ? '🇸🇪 Tornedalen Finnish' :
+                                lang.language || ''}
+                             </SelectValue>
+                           </SelectTrigger>
+                           <SelectContent className="max-h-[300px]">
+                             <div className="sticky top-0 z-10 bg-background border-b p-2">
+                               <Input
+                                 id={`language-search-${index}`}
+                                 name={`language-search-${index}`}
+                                 placeholder="Search..."
+                                 value={languageSearch[index] || ''}
+                                 onChange={(e) => setLanguageSearch(prev => ({ ...prev, [index]: e.target.value }))}
+                                 className="h-8 text-xs"
+                               />
+                             </div>
+                             <div className="max-h-[200px] overflow-y-auto">
+                               {[
+                                 { value: 'english', label: '🇺🇸 English' },
+                                 { value: 'spanish', label: '🇪🇸 Spanish' },
+                                 { value: 'french', label: '🇫🇷 French' },
+                                 { value: 'german', label: '🇩🇪 German' },
+                                 { value: 'italian', label: '🇮🇹 Italian' },
+                                 { value: 'portuguese', label: '🇵🇹 Portuguese' },
+                                 { value: 'russian', label: '🇷🇺 Russian' },
+                                 { value: 'chinese', label: '🇨🇳 Chinese' },
+                                 { value: 'japanese', label: '🇯🇵 Japanese' },
+                                 { value: 'korean', label: '🇰🇷 Korean' },
+                                 { value: 'arabic', label: '🇸🇦 Arabic' },
+                                 { value: 'hindi', label: '🇮🇳 Hindi' },
+                                 { value: 'bengali', label: '🇧🇩 Bengali' },
+                                 { value: 'urdu', label: '🇵🇰 Urdu' },
+                                 { value: 'indonesian', label: '🇮🇩 Indonesian' },
+                                 { value: 'malay', label: '🇲🇾 Malay' },
+                                 { value: 'thai', label: '🇹🇭 Thai' },
+                                 { value: 'vietnamese', label: '🇻🇳 Vietnamese' },
+                                 { value: 'turkish', label: '🇹🇷 Turkish' },
+                                 { value: 'persian', label: '🇮🇷 Persian' },
+                                 { value: 'hebrew', label: '🇮🇱 Hebrew' },
+                                 { value: 'greek', label: '🇬🇷 Greek' },
+                                 { value: 'polish', label: '🇵🇱 Polish' },
+                                 { value: 'czech', label: '🇨🇿 Czech' },
+                                 { value: 'slovak', label: '🇸🇰 Slovak' },
+                                 { value: 'hungarian', label: '🇭🇺 Hungarian' },
+                                 { value: 'romanian', label: '🇷🇴 Romanian' },
+                                 { value: 'bulgarian', label: '🇧🇬 Bulgarian' },
+                                 { value: 'croatian', label: '🇭🇷 Croatian' },
+                                 { value: 'serbian', label: '🇷🇸 Serbian' },
+                                 { value: 'slovenian', label: '🇸🇮 Slovenian' },
+                                 { value: 'dutch', label: '🇳🇱 Dutch' },
+                                 { value: 'swedish', label: '🇸🇪 Swedish' },
+                                 { value: 'norwegian', label: '🇳🇴 Norwegian' },
+                                 { value: 'danish', label: '🇩🇰 Danish' },
+                                 { value: 'finnish', label: '🇫🇮 Finnish' },
+                                 { value: 'icelandic', label: '🇮🇸 Icelandic' },
+                                 { value: 'latvian', label: '🇱🇻 Latvian' },
+                                 { value: 'lithuanian', label: '🇱🇹 Lithuanian' },
+                                 { value: 'estonian', label: '🇪🇪 Estonian' },
+                                 { value: 'ukrainian', label: '🇺🇦 Ukrainian' },
+                                 { value: 'belarusian', label: '🇧🇾 Belarusian' },
+                                 { value: 'kazakh', label: '🇰🇿 Kazakh' },
+                                 { value: 'uzbek', label: '🇺🇿 Uzbek' },
+                                 { value: 'kyrgyz', label: '🇰🇬 Kyrgyz' },
+                                 { value: 'tajik', label: '🇹🇯 Tajik' },
+                                 { value: 'turkmen', label: '🇹🇲 Turkmen' },
+                                 { value: 'azerbaijani', label: '🇦🇿 Azerbaijani' },
+                                 { value: 'armenian', label: '🇦🇲 Armenian' },
+                                 { value: 'georgian', label: '🇬🇪 Georgian' },
+                                 { value: 'mongolian', label: '🇲🇳 Mongolian' },
+                                 { value: 'nepali', label: '🇳🇵 Nepali' },
+                                 { value: 'sinhala', label: '🇱🇰 Sinhala' },
+                                 { value: 'tamil', label: '🇮🇳 Tamil' },
+                                 { value: 'telugu', label: '🇮🇳 Telugu' },
+                                 { value: 'marathi', label: '🇮🇳 Marathi' },
+                                 { value: 'gujarati', label: '🇮🇳 Gujarati' },
+                                 { value: 'punjabi', label: '🇮🇳 Punjabi' },
+                                 { value: 'kannada', label: '🇮🇳 Kannada' },
+                                 { value: 'malayalam', label: '🇮🇳 Malayalam' },
+                                 { value: 'odia', label: '🇮🇳 Odia' },
+                                 { value: 'assamese', label: '🇮🇳 Assamese' },
+                                 { value: 'maithili', label: '🇮🇳 Maithili' },
+                                 { value: 'santali', label: '🇮🇳 Santali' },
+                                 { value: 'kashmiri', label: '🇮🇳 Kashmiri' },
+                                 { value: 'dogri', label: '🇮🇳 Dogri' },
+                                 { value: 'konkani', label: '🇮🇳 Konkani' },
+                                 { value: 'manipuri', label: '🇮🇳 Manipuri' },
+                                 { value: 'bodo', label: '🇮🇳 Bodo' },
+                                 { value: 'sanskrit', label: '🇮🇳 Sanskrit' },
+                                 { value: 'khmer', label: '🇰🇭 Khmer' },
+                                 { value: 'lao', label: '🇱🇦 Lao' },
+                                 { value: 'myanmar', label: '🇲🇲 Myanmar' },
+                                 { value: 'filipino', label: '🇵🇭 Filipino' },
+                                 { value: 'swahili', label: '🇹🇿 Swahili' },
+                                 { value: 'amharic', label: '🇪🇹 Amharic' },
+                                 { value: 'yoruba', label: '🇳🇬 Yoruba' },
+                                 { value: 'igbo', label: '🇳🇬 Igbo' },
+                                 { value: 'hausa', label: '🇳🇬 Hausa' },
+                                 { value: 'zulu', label: '🇿🇦 Zulu' },
+                                 { value: 'xhosa', label: '🇿🇦 Xhosa' },
+                                 { value: 'afrikaans', label: '🇿🇦 Afrikaans' },
+                                 { value: 'somali', label: '🇸🇴 Somali' },
+                                 { value: 'oromo', label: '🇪🇹 Oromo' },
+                                 { value: 'tigrinya', label: '🇪🇷 Tigrinya' },
+                                 { value: 'albanian', label: '🇦🇱 Albanian' },
+                                 { value: 'macedonian', label: '🇲🇰 Macedonian' },
+                                 { value: 'bosnian', label: '🇧🇦 Bosnian' },
+                                 { value: 'montenegrin', label: '🇲🇪 Montenegrin' },
+                                 { value: 'maltese', label: '🇲🇹 Maltese' },
+                                 { value: 'catalan', label: '🇪🇸 Catalan' },
+                                 { value: 'basque', label: '🇪🇸 Basque' },
+                                 { value: 'galician', label: '🇪🇸 Galician' },
+                                 { value: 'welsh', label: '🇬🇧 Welsh' },
+                                 { value: 'scottish', label: '🇬🇧 Scottish Gaelic' },
+                                 { value: 'irish', label: '🇮🇪 Irish' },
+                                 { value: 'breton', label: '🇫🇷 Breton' },
+                                 { value: 'corsican', label: '🇫🇷 Corsican' },
+                                 { value: 'occitan', label: '🇫🇷 Occitan' },
+                                 { value: 'luxembourgish', label: '🇱🇺 Luxembourgish' },
+                                 { value: 'frisian', label: '🇳🇱 Frisian' },
+                                 { value: 'faroese', label: '🇫🇴 Faroese' },
+                                 { value: 'greenlandic', label: '🇬🇱 Greenlandic' },
+                                 { value: 'sami', label: '🇳🇴 Sami' },
+                                 { value: 'karelian', label: '🇫🇮 Karelian' },
+                                 { value: 'votic', label: '🇪🇪 Votic' },
+                                 { value: 'livonian', label: '🇱🇻 Livonian' },
+                                 { value: 'ingrian', label: '🇷🇺 Ingrian' },
+                                 { value: 'veps', label: '🇷🇺 Veps' },
+                                 { value: 'ludic', label: '🇷🇺 Ludic' },
+                                 { value: 'kven', label: '🇳🇴 Kven' },
+                                 { value: 'meankieli', label: '🇫🇮 Meänkieli' },
+                                 { value: 'tornedalen', label: '🇸🇪 Tornedalen Finnish' }
+                               ]
+                                 .filter(lang => 
+                                   lang.label.toLowerCase().includes((languageSearch[index] || '').toLowerCase()) ||
+                                   lang.value.toLowerCase().includes((languageSearch[index] || '').toLowerCase())
+                                 )
+                                 .filter(lang => 
+                                   // Filter out already selected languages (excluding the current language being edited)
+                                   !formData.languages.some((selectedLang, selectedIndex) => 
+                                     selectedLang.language === lang.value && selectedIndex !== index
+                                   )
+                                 )
+                                 .map(lang => (
+                                   <SelectItem key={lang.value} value={lang.value}>
+                                     {lang.label}
+                                   </SelectItem>
+                                 ))}
+                             </div>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <Label htmlFor={`level-${index}`} className="text-xs">Level</Label>
+                         <Select 
+                           name={`level-${index}`}
+                           value={lang.level || ''} 
+                           onValueChange={(value) => {
+                             const newLanguages = [...formData.languages];
+                             newLanguages[index] = { ...lang, level: value as LanguageLevel };
+                             setFormData(prev => ({ ...prev, languages: newLanguages }));
+                             // Clear error when user selects a level
+                             if (value && languageErrors[index]) {
+                               setLanguageErrors(prev => {
+                                 const newErrors = { ...prev };
+                                 delete newErrors[index];
+                                 return newErrors;
+                               });
+                             }
+                           }}
+                         >
+                           <SelectTrigger id={`level-${index}`} className={`h-9 ${languageErrors[index] ? 'border-red-500' : ''}`}>
+                             <SelectValue placeholder="Select">
+                               {lang.level === 'native' ? 'NS' : lang.level?.toUpperCase()}
+                             </SelectValue>
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="native">Native Speaker</SelectItem>
+                             <SelectItem value="c2">C2</SelectItem>
+                             <SelectItem value="c1">C1</SelectItem>
+                             <SelectItem value="b2">B2</SelectItem>
+                             <SelectItem value="b1">B1</SelectItem>
+                             <SelectItem value="a2">A2</SelectItem>
+                             <SelectItem value="a1">A1</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         className="h-9 px-2"
+                         onClick={() => {
+                           const newLanguages = formData.languages.filter((_, i) => i !== index);
+                           setFormData(prev => ({ ...prev, languages: newLanguages }));
+                           // Clear error when removing language
+                           setLanguageErrors(prev => {
+                             const newErrors = { ...prev };
+                             delete newErrors[index];
+                             return newErrors;
+                           });
+                         }}
+                       >
+                         <X size={16} />
+                       </Button>
+                     </div>
+                     {languageErrors[index] && (
+                       <p className="text-xs text-red-500 mt-1">{languageErrors[index]}</p>
+                     )}
+                   </div>
+                 ))}
+               </div>
+               
+               {/* Fixed Add Language button */}
+               <div className="pt-2 border-t">
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   onClick={() => {
+                     setFormData(prev => ({
+                       ...prev,
+                       languages: [...prev.languages, { language: '', level: '' }]
+                     }));
+                     // Clear any existing errors when adding a new language
+                     setLanguageErrors(prev => {
+                       const newErrors = { ...prev };
+                       delete newErrors[formData.languages.length];
+                       return newErrors;
+                     });
+                   }}
+                 >
+                   + Add Language
+                 </Button>
+               </div>
+               
+               {errors.languages && (
+                 <p className="text-sm text-red-500">{errors.languages}</p>
+               )}
              </div>
            </div>
          );
@@ -643,8 +1119,8 @@ const Register = () => {
          return (
            <div className="space-y-4">
              <div className="space-y-2">
-               <Label>Interests (Select 3-5)</Label>
-               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 max-h-48 overflow-y-auto pr-2">
+               <Label htmlFor="interests-section">Interests (Select 3-5)</Label>
+               <div id="interests-section" className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 max-h-48 overflow-y-auto pr-2">
                  {availableInterests.map((interest) => (
                    <Badge
                      key={interest}
@@ -746,23 +1222,82 @@ const Register = () => {
                {errors.orientation && (
                  <p className="text-sm text-red-500">{errors.orientation}</p>
                )}
-             </div>
+                         </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="ethnicity">Ethnicity</Label>
+              <Select 
+                name="ethnicity"
+                value={formData.ethnicity} 
+                onValueChange={(value) => {
+                  setFormData(prev => ({ ...prev, ethnicity: value as Ethnicity }));
+                  validateField('ethnicity', value);
+                }}
+              >
+                <SelectTrigger id="ethnicity" className={errors.ethnicity ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Select your ethnicity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="white">White</SelectItem>
+                  <SelectItem value="black-african-american">Black/African American</SelectItem>
+                  <SelectItem value="hispanic-latino">Hispanic/Latino</SelectItem>
+                  <SelectItem value="asian">Asian</SelectItem>
+                  <SelectItem value="native-american">Native American</SelectItem>
+                  <SelectItem value="pacific-islander">Pacific Islander</SelectItem>
+                  <SelectItem value="middle-eastern">Middle Eastern</SelectItem>
+                  <SelectItem value="mixed-race">Mixed Race</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.ethnicity && (
+                <p className="text-sm text-red-500">{errors.ethnicity}</p>
+              )}
+            </div>
 
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="lookingForRelationship" className="text-sm sm:text-base">Looking for a relationship?</Label>
+                <Switch
+                  id="lookingForRelationship"
+                  checked={formData.lookingForRelationship}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForRelationship: checked }))}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This will help others understand your intentions and improve your matches.
+              </p>
+            </div>
 
-             <div className="space-y-3">
-               <div className="flex items-center justify-between">
-                 <Label htmlFor="lookingForRelationship" className="text-sm sm:text-base">Looking for a relationship?</Label>
-                 <Switch
-                   id="lookingForRelationship"
-                   checked={formData.lookingForRelationship}
-                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, lookingForRelationship: checked }))}
-                 />
-               </div>
-               <p className="text-xs text-muted-foreground">
-                 This will help others understand your intentions and improve your matches.
-               </p>
-             </div>
+            {formData.lookingForRelationship && (
+              <div className="space-y-2">
+                <Label htmlFor="relationshipType">What type of relationship?</Label>
+                <Select 
+                  name="relationshipType"
+                  value={formData.relationshipType} 
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, relationshipType: value as RelationshipType }));
+                    validateField('relationshipType', value);
+                  }}
+                >
+                  <SelectTrigger id="relationshipType" className={errors.relationshipType ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select relationship type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="casual-dating">Casual Dating</SelectItem>
+                    <SelectItem value="serious-relationship">Serious Relationship</SelectItem>
+                    <SelectItem value="marriage">Marriage</SelectItem>
+                    <SelectItem value="open-relationship">Open Relationship</SelectItem>
+                    <SelectItem value="friends-with-benefits">Friends with Benefits</SelectItem>
+                    <SelectItem value="not-sure-yet">Not Sure Yet</SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.relationshipType && (
+                  <p className="text-sm text-red-500">{errors.relationshipType}</p>
+                )}
+              </div>
+            )}
 
              <div className="space-y-3">
                <div className="flex items-center justify-between">
@@ -829,7 +1364,7 @@ const Register = () => {
               <Select 
                 name="smoking"
                 value={formData.smoking} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, smoking: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, smoking: value as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="smoking">
                   <SelectValue placeholder="Select your smoking preference" />
@@ -849,7 +1384,7 @@ const Register = () => {
               <Select 
                 name="drinking"
                 value={formData.drinking} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, drinking: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, drinking: value as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="drinking">
                   <SelectValue placeholder="Select your drinking preference" />
@@ -869,7 +1404,7 @@ const Register = () => {
               <Select 
                 name="hasChildren"
                 value={formData.hasChildren} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, hasChildren: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, hasChildren: value as 'no' | 'yes' | 'planning' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="hasChildren">
                   <SelectValue placeholder="Select your answer" />
@@ -888,7 +1423,7 @@ const Register = () => {
               <Select 
                 name="education"
                 value={formData.education} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, education: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, education: value as 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="education">
                   <SelectValue placeholder="Select your education level" />
@@ -920,7 +1455,7 @@ const Register = () => {
               <Select 
                 name="religion"
                 value={formData.religion} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, religion: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, religion: value as 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="religion">
                   <SelectValue placeholder="Select your religion" />
@@ -944,7 +1479,7 @@ const Register = () => {
               <Select 
                 name="politicalViews"
                 value={formData.politicalViews} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, politicalViews: value as any }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, politicalViews: value as 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say' }))}
               >
                 <SelectTrigger id="politicalViews">
                   <SelectValue placeholder="Select your political views" />

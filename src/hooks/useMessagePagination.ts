@@ -5,7 +5,7 @@ interface Message {
   content: string;
   timestamp: string;
   sender: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface PaginationState {

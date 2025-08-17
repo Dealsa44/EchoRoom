@@ -2,74 +2,22 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
 import { ProfileQuestion } from '@/types';
 import { clearConversationStates } from '@/lib/conversationStorage';
+import { GenderIdentity, Orientation, AttractionPreference, getAttractionPreferences } from './app-utils';
+
+// Import UserLanguage type from auth.ts
+type UserLanguage = {
+  code: string;
+  name: string;
+  proficiency: 'beginner' | 'intermediate' | 'advanced' | 'native';
+};
 
 type SafeMode = 'light' | 'deep' | 'learning';
 type ChatStyle = 'introvert' | 'ambievert' | 'extrovert';
 type Language = 'en' | 'ka';
 
-// New types for gender and orientation features
-export type GenderIdentity = 
-  | 'female' 
-  | 'male' 
-  | 'non-binary' 
-  | 'transgender' 
-  | 'agender' 
-  | 'genderfluid' 
-  | 'other' 
-  | 'prefer-not-to-say'
-  | string; // For custom gender identities
+type RelationshipIntent = 'relationship' | 'friendship' | 'both';
 
-export type Orientation = 
-  | 'heterosexual' 
-  | 'homosexual' 
-  | 'bisexual' 
-  | 'asexual' 
-  | 'pansexual' 
-  | 'queer' 
-  | 'other'
-  | string; // For custom orientations
-
-export type AttractionPreference = 'women' | 'men' | 'non-binary' | 'all-genders';
-
-export type RelationshipIntent = 'relationship' | 'friendship' | 'both';
-
-// Helper function to derive attraction preferences from gender and orientation
-export const getAttractionPreferences = (genderIdentity: GenderIdentity, orientation: Orientation): AttractionPreference[] => {
-  // Handle custom orientations as 'other'
-  const normalizedOrientation = typeof orientation === 'string' && 
-    !['heterosexual', 'homosexual', 'bisexual', 'asexual', 'pansexual', 'queer'].includes(orientation) 
-    ? 'other' : orientation;
-
-  switch (normalizedOrientation) {
-    case 'heterosexual':
-      if (genderIdentity === 'male') return ['women'];
-      if (genderIdentity === 'female') return ['men'];
-      if (genderIdentity === 'non-binary') return ['all-genders']; // Non-binary hetero is complex, default to all
-      return ['all-genders'];
-      
-    case 'homosexual':
-      if (genderIdentity === 'male') return ['men'];
-      if (genderIdentity === 'female') return ['women'];
-      if (genderIdentity === 'non-binary') return ['non-binary'];
-      return ['all-genders'];
-      
-    case 'bisexual':
-      return ['women', 'men'];
-      
-    case 'pansexual':
-    case 'queer':
-      return ['all-genders'];
-      
-    case 'asexual':
-      return []; // Asexual people may not be sexually attracted to anyone, but could be romantically attracted
-      
-    case 'other':
-    default:
-      return ['all-genders']; // Default to all genders for unknown orientations
-  }
-};
-
-export interface User {
+interface User {
   id: string;
   username: string;
   email: string;
@@ -78,7 +26,7 @@ export interface User {
   bio: string;
   about: string; // New field for registration answers
   interests: string[];
-  languages: string[];
+  languages: UserLanguage[];
   chatStyle: ChatStyle;
   safeMode: SafeMode;
   anonymousMode: boolean;
@@ -101,7 +49,7 @@ export interface User {
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
-  languageProficiency: string;
+  languageProficiency: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
   // Profile photos
   photos?: string[];
   // Profile questions for fun and personality insights

@@ -92,7 +92,7 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
     let skillToUpdate: 'speaking' | 'listening' | 'writing' | 'reading' = 'writing';
     
     switch (selectedFeature) {
-      case 'grammar':
+      case 'grammar': {
         const corrections = simulateGrammarCheck(userInput);
         if (corrections.length > 0) {
           response = `I found ${corrections.length} grammar issue(s):\n\n${corrections.map((c, index) => 
@@ -103,35 +103,40 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
         }
         skillToUpdate = 'writing';
         break;
+      }
       
-      case 'translation':
+      case 'translation': {
         const translation = simulateTranslation(userInput, learningLanguage);
         response = `**Translation to ${getLanguageDisplayName(learningLanguage)}:**\n\n"${userInput}" → "${translation}"\n\n💡 Tip: Try to think in your target language rather than translating word by word.`;
         skillToUpdate = 'reading';
         break;
+      }
       
-      case 'pronunciation':
+      case 'pronunciation': {
         const pronunciation = simulatePronunciationFeedback(userInput);
         const emoji = pronunciation.score > 85 ? '🎉' : pronunciation.score > 70 ? '👍' : '💪';
         response = `${emoji} **Pronunciation Score: ${pronunciation.score}/100**\n\n**Feedback:** ${pronunciation.feedback}\n\n🎯 **Tip:** Practice saying this word 3 times daily for better results.`;
         skillToUpdate = 'speaking';
         break;
+      }
       
-      case 'vocabulary':
+      case 'vocabulary': {
         const suggestions = simulateVocabularySuggestion(userInput);
         response = `📚 **Vocabulary Suggestions for "${userInput}":**\n\n${suggestions.slice(0, 5).map((word, index) => 
           `${index + 1}. **${word}** - Related to your topic\n`
         ).join('')}\n💡 **Learning Tip:** Try using these words in sentences to remember them better.`;
         skillToUpdate = 'reading';
         break;
+      }
       
-      case 'conversation':
+      case 'conversation': {
         const starters = simulateConversationStarter(userInput, languageLevel);
         response = `💬 **Conversation Starters for "${userInput}":**\n\n${starters.slice(0, 3).map((starter, index) => 
           `${index + 1}. "${starter}"\n`
         ).join('')}\n🎯 **Level:** ${getLevelDisplayName(languageLevel)}\n💡 **Tip:** These questions are perfect for your current level.`;
         skillToUpdate = 'speaking';
         break;
+      }
       
       default:
         response = `Hello! I'm your ${getLanguageDisplayName(learningLanguage)} learning assistant. I can help you with:\n\n• Grammar checking\n• Translation\n• Pronunciation feedback\n• Vocabulary suggestions\n• Conversation starters\n\nWhat would you like to practice today?`;

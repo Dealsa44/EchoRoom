@@ -123,7 +123,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
                 canvas.toBlob((blob) => {
                   if (blob) {
                     const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-                    const files = { 0: file, length: 1 } as FileList;
+                    const files = { 0: file, length: 1 } as unknown as FileList;
                     handleFileUpload(files);
                   }
                 }, 'image/jpeg');
@@ -159,7 +159,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-          const files = { 0: file, length: 1 } as FileList;
+          const files = { 0: file, length: 1 } as unknown as FileList;
           handleFileUpload(files);
         }
       }, 'image/jpeg');
@@ -320,7 +320,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
         p.id === photo.id 
           ? { 
               ...p, 
-              verificationStatus: isApproved ? 'approved' : 'rejected',
+              verificationStatus: isApproved ? 'approved' as const : 'rejected' as const,
               isVerified: isApproved
             }
           : p

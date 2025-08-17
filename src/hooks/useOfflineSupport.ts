@@ -43,7 +43,7 @@ export const useOfflineSupport = () => {
     const savedQueue = localStorage.getItem(OFFLINE_QUEUE_KEY);
     if (savedQueue) {
       try {
-        const queue = JSON.parse(savedQueue).map((msg: any) => ({
+        const queue = JSON.parse(savedQueue).map((msg: { timestamp: string; [key: string]: unknown }) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }));

@@ -151,7 +151,7 @@ export const useFieldValidation = <T>(schema: z.ZodSchema<T>) => {
 // Common validation patterns
 export const patterns = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^\+?[\d\s\-\(\)]+$/,
+  phone: /^\+?[\d\s\-()]+$/,
   url: /^https?:\/\/.+/,
   username: /^[a-zA-Z0-9_-]+$/,
   strongPassword: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -146,6 +146,18 @@ const PronunciationChallenge = () => {
   const currentChallenge = selectedChallenge;
   const currentWord = currentChallenge?.words[currentWordIndex];
 
+  const handleChallengeComplete = useCallback(() => {
+    setChallengeStarted(false);
+    const averageScore = results.reduce((sum, result) => sum + result.accuracy, 0) / results.length || 0;
+    setOverallScore(averageScore);
+    
+    if (currentChallenge && averageScore >= currentChallenge.targetAccuracy) {
+      // Challenge completed - toast removed per user request
+    } else {
+      // Challenge complete - toast removed per user request
+    }
+  }, [results, currentChallenge]);
+
   useEffect(() => {
     if (challengeStarted && timeRemaining > 0) {
       timerRef.current = setTimeout(() => {
@@ -160,7 +172,7 @@ const PronunciationChallenge = () => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [challengeStarted, timeRemaining]);
+  }, [challengeStarted, timeRemaining, handleChallengeComplete]);
 
   const startChallenge = (challenge: Challenge) => {
     setSelectedChallenge(challenge);
@@ -169,18 +181,6 @@ const PronunciationChallenge = () => {
     setCurrentWordIndex(0);
     setResults([]);
     setOverallScore(0);
-  };
-
-  const handleChallengeComplete = () => {
-    setChallengeStarted(false);
-    const averageScore = results.reduce((sum, result) => sum + result.accuracy, 0) / results.length || 0;
-    setOverallScore(averageScore);
-    
-    if (currentChallenge && averageScore >= currentChallenge.targetAccuracy) {
-      // Challenge completed - toast removed per user request
-    } else {
-      // Challenge complete - toast removed per user request
-    }
   };
 
   const startRecording = async () => {

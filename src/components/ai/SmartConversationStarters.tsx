@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,7 @@ const SmartConversationStarters = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Generate personalized conversation starters
-  const generateStarters = (): ConversationStarter[] => {
+  const generateStarters = useCallback((): ConversationStarter[] => {
     const sharedInterests = targetProfile.interests.filter(interest => 
       currentUserInterests.some(userInterest => 
         userInterest.toLowerCase().includes(interest.toLowerCase()) ||
@@ -91,9 +91,9 @@ const SmartConversationStarters = ({
     // Interest-specific starters based on their profile
     targetProfile.interests.forEach((interest, index) => {
       const interestStarters = getInterestSpecificStarters(interest, targetProfile.name);
-      starters.push(...interestStarters.map(starter => ({
+      starters.push(...interestStarters.map((starter, starterIndex) => ({
         ...starter,
-        id: `interest${index}_${starter.id}`,
+        id: `interest${index}_${starterIndex}`,
       })));
     });
 
@@ -202,7 +202,7 @@ const SmartConversationStarters = ({
     }
 
     return starters.sort((a, b) => b.confidence - a.confidence);
-  };
+  }, [targetProfile, currentUserInterests]);
 
   const getInterestSpecificStarters = (interest: string, name: string): Omit<ConversationStarter, 'id'>[] => {
     const lowerInterest = interest.toLowerCase();
@@ -287,7 +287,7 @@ const SmartConversationStarters = ({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [targetProfile, currentUserInterests]);
+  }, [targetProfile, currentUserInterests, generateStarters]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

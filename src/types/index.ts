@@ -15,7 +15,9 @@ export interface Profile {
   location: string;
   distance: number;
   bio: string;
+  about: string;
   interests: string[];
+  languages: Array<{ language: string; level: string }>;
   languageLevel: string;
   chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   lastActive: string;
@@ -23,8 +25,17 @@ export interface Profile {
   sharedInterests: number;
   genderIdentity: string;
   orientation: string;
+  ethnicity: string;
   lookingForRelationship: boolean;
   lookingForFriendship: boolean;
+  relationshipType?: string;
+  smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
+  occupation: string;
+  religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
+  politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   photos: string[];
   isVerified: boolean;
   profileCompletion: number;
@@ -38,6 +49,17 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   type: 'text' | 'image' | 'voice' | 'file';
+  imageUrl?: string;
+  fileData?: {
+    name: string;
+    size: string;
+    url?: string;
+  };
+  voiceData?: {
+    duration: number;
+    waveform: number[];
+    url?: string;
+  };
   translated?: boolean;
   corrected?: boolean;
   originalContent?: string;
@@ -49,7 +71,10 @@ export interface ChatMessage {
     explanation: string;
     rule: string;
   }>;
-  reactions?: string[];
+  reactions?: Array<{
+    emoji: string;
+    userName: string;
+  }>;
   isEdited?: boolean;
   isDeleted?: boolean;
   replyTo?: number | null;

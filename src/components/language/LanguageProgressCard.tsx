@@ -70,7 +70,21 @@ const LanguageProgressCard = ({
   const handleGetConversationStarters = () => {
     const topics = ['hobbies', 'food', 'travel', 'work', 'family'];
     const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    const starters = simulateConversationStarter(randomTopic, level.toLowerCase() as any);
+    
+    // Map level to CEFR format
+    const getCEFRLevel = (level: string): 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' => {
+      const levelLower = level.toLowerCase();
+      if (levelLower === 'a1' || levelLower === 'a2') return levelLower as 'a1' | 'a2';
+      if (levelLower === 'b1' || levelLower === 'b2') return levelLower as 'b1' | 'b2';
+      if (levelLower === 'c1' || levelLower === 'c2') return levelLower as 'c1' | 'c2';
+      // Default mapping for non-CEFR levels
+      if (levelLower.includes('beginner')) return 'a1';
+      if (levelLower.includes('intermediate')) return 'b1';
+      if (levelLower.includes('advanced')) return 'c1';
+      return 'a1'; // fallback
+    };
+    
+    const starters = simulateConversationStarter(randomTopic, getCEFRLevel(level));
     
     // In a real app, this would show conversation starters in the UI
     console.log(`Conversation starters for ${randomTopic}:`, starters);

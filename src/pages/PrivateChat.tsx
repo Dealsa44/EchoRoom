@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { ChatMessage } from '@/types';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
@@ -77,7 +78,7 @@ const PrivateChat = () => {
     return messages[userName as keyof typeof messages] || messages['Luna'];
   };
 
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
       sender: 'them',
@@ -109,7 +110,7 @@ const PrivateChat = () => {
       hasErrors: false,
       corrections: [],
       type: 'text',
-      reactions: [{ emoji: '❤️', userId: 'them', userName: userInfo.name }],
+      reactions: [{ emoji: '❤️', userName: userInfo.name }],
       isEdited: false,
       isDeleted: false,
       replyTo: null,
@@ -128,7 +129,7 @@ const PrivateChat = () => {
       hasErrors: false,
       corrections: [],
       type: 'text',
-      reactions: [{ emoji: '👍', userId: 'me', userName: 'You' }],
+      reactions: [{ emoji: '👍', userName: 'You' }],
       isEdited: false,
       isDeleted: false,
       replyTo: null,
@@ -225,23 +226,23 @@ const PrivateChat = () => {
   const handleReaction = (messageId: number, emoji: string) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
-        const existingReaction = msg.reactions?.find(r => r.userId === 'me');
+        const existingReaction = msg.reactions?.find(r => r.userName === 'You');
         if (existingReaction) {
           if (existingReaction.emoji === emoji) {
             // Remove reaction
-            return { ...msg, reactions: msg.reactions?.filter(r => r.userId !== 'me') || [] };
+            return { ...msg, reactions: msg.reactions?.filter(r => r.userName !== 'You') || [] };
           } else {
             // Change reaction
             return { 
               ...msg, 
-              reactions: msg.reactions?.map(r => r.userId === 'me' ? { ...r, emoji } : r) || []
+              reactions: msg.reactions?.map(r => r.userName === 'You' ? { ...r, emoji } : r) || []
             };
           }
         } else {
           // Add reaction
           return { 
             ...msg, 
-            reactions: [...(msg.reactions || []), { emoji, userId: 'me', userName: 'You' }]
+            reactions: [...(msg.reactions || []), { emoji, userName: 'You' }]
           };
         }
       }
@@ -277,7 +278,7 @@ const PrivateChat = () => {
   const handleDeleteMessage = (messageId: number) => {
     setMessages(prev => prev.map(msg => 
       msg.id === messageId 
-        ? { ...msg, content: 'This message was deleted', isDeleted: true, type: 'deleted' }
+        ? { ...msg, content: 'This message was deleted', isDeleted: true, type: 'text' as const }
         : msg
     ));
     // Message deleted - toast removed per user request
@@ -529,13 +530,13 @@ const PrivateChat = () => {
     setShowAIModal(false);
   };
 
-  const renderMessageContent = (msg: any) => {
+  const renderMessageContent = (msg: { hasErrors?: boolean; corrections?: Array<{ original: string; corrected: string; explanation: string; rule: string; [key: string]: unknown }>; content: string; [key: string]: unknown }) => {
     if (msg.hasErrors && msg.corrections?.length > 0) {
-      let content = msg.content;
+      const content = msg.content;
       
       return (
         <div>
-          {msg.corrections.map((correction: any, index: number) => {
+          {msg.corrections.map((correction, index: number) => {
             const parts = content.split(correction.corrected);
             return (
               <span key={index}>
@@ -697,10 +698,10 @@ const PrivateChat = () => {
                         </div>
                       ) : (
                         <>
-                          {msg.type === 'image' && (msg as any).imageUrl && (
+                          {msg.type === 'image' && msg.imageUrl && (
                             <div className="mb-2">
                               <img
-                                src={(msg as any).imageUrl}
+                                src={msg.imageUrl}
                                 alt="Shared image"
                                 className="rounded-lg max-w-full h-auto"
                                 loading="lazy"
@@ -741,12 +742,12 @@ const PrivateChat = () => {
                             </div>
                           )}
 
-                          {msg.type === 'file' && (msg as any).fileData && (
+                          {msg.type === 'file' && msg.fileData && (
                             <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
                               <File size={16} />
                               <div className="flex-1">
-                                <div className="text-sm font-medium">{(msg as any).fileData.name}</div>
-                                <div className="text-xs opacity-70">{(msg as any).fileData.size}</div>
+                                <div className="text-sm font-medium">{msg.fileData.name}</div>
+                                <div className="text-xs opacity-70">{msg.fileData.size}</div>
                               </div>
                               <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                                 <Download size={12} />
@@ -756,7 +757,7 @@ const PrivateChat = () => {
 
                           {(msg.type === 'text' || !msg.type) && (
                             <>
-                              {renderMessageContent(msg)}
+                              {renderMessageContent(msg as any)}
                               {msg.isEdited && (
                                 <span className="text-xs opacity-50 ml-2">(edited)</span>
                               )}

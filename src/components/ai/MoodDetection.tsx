@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ interface PersonalizedRecommendation {
   type: 'activity' | 'conversation' | 'learning' | 'wellness' | 'social';
   title: string;
   description: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: string | number; className?: string }>;
   confidence: number;
   reason: string;
 }
@@ -123,7 +123,7 @@ const MoodDetection: React.FC<MoodDetectionProps> = ({ messages, isActive }) => 
     }
   }, [currentMood]);
 
-  const analyzeMood = async (messageList: string[]) => {
+  const analyzeMood = useCallback(async (messageList: string[]) => {
     setIsAnalyzing(true);
     
     // Simulate AI processing
@@ -148,7 +148,7 @@ const MoodDetection: React.FC<MoodDetectionProps> = ({ messages, isActive }) => 
     }
     
     setIsAnalyzing(false);
-  };
+  }, [currentMood]);
 
   const performSentimentAnalysis = async (text: string): Promise<MoodData> => {
     // Simulate advanced mood analysis
@@ -159,7 +159,8 @@ const MoodDetection: React.FC<MoodDetectionProps> = ({ messages, isActive }) => 
     const curiousWords = ['interesting', 'curious', 'wonder', 'question', 'explore', 'discover', 'learn'];
     const supportiveWords = ['help', 'support', 'care', 'understand', 'empathy', 'comfort', 'encourage'];
 
-    let joy = 0, sadness = 0, anger = 0, fear = 0, surprise = 0, trust = 0, anticipation = 0;
+    let joy = 0, sadness = 0, surprise = 0, trust = 0, anticipation = 0;
+    const anger = 0, fear = 0;
     let energy = 50, positivity = 50, stress = 20, engagement = 70;
     let primaryMood = 'neutral';
     let confidence = 0;

@@ -55,7 +55,7 @@ export default function LazyImage({
       alt={alt}
       loading="lazy"
       decoding="async"
-      fetchpriority={fetchPriority}
+      fetchPriority={fetchPriority}
       sizes={sizes}
       srcSet={computedSrcSet}
       className={className}

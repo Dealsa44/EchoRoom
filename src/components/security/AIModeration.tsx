@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { 
   Shield, 
   AlertTriangle, 
@@ -527,7 +528,7 @@ const AIModeration: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-base">Auto-approve low-risk actions</Label>
-                      <p className="text-sm text-muted-foreground">Actions with >95% confidence are auto-approved</p>
+                      <p className="text-sm text-muted-foreground">Actions with &gt;95% confidence are auto-approved</p>
                     </div>
                     <Button variant="outline" size="sm">
                       <Settings size={16} />

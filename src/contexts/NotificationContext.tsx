@@ -17,7 +17,7 @@ interface ChatNotification {
   chatId?: string;
   timestamp: Date;
   isRead: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 interface NotificationContextType {
@@ -46,7 +46,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export const useNotifications = () => {
+const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error('useNotifications must be used within a NotificationProvider');
@@ -202,7 +202,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (isOnline) {
       try {
         // In a real app, you'd play an actual sound file
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioContext = new (window.AudioContext || (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         

@@ -96,11 +96,7 @@ const ChatRoom = () => {
     };
   }, []);
 
-  if (!room) {
-    return <div>Loading...</div>;
-  }
-
-  const roomData = {
+  const roomData = room ? {
     id: room.id,
     title: room.title,
     description: room.description,
@@ -114,7 +110,7 @@ const ChatRoom = () => {
     channels: getChannelsForCategory(room.category),
     moderators: getModeratorsByCategory(room.category),
     rules: getRulesByCategory(room.category)
-  };
+  } : null;
 
   // Helper functions to get category-specific content
   function getChannelsForCategory(category: string) {
@@ -375,8 +371,16 @@ const ChatRoom = () => {
   };
 
   const [messages, setMessages] = useState(() => 
-    getInitialMessages(room.category, room.title, roomData.moderators)
+    roomData ? getInitialMessages(roomData.category, roomData.title, roomData.moderators) : []
   );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  if (!room || !roomData) {
+    return <div>Loading...</div>;
+  }
 
   // Generate AI suggestions based on room category
   const getAISuggestions = (category: string) => {
@@ -423,10 +427,6 @@ const ChatRoom = () => {
   };
 
   const aiSuggestions = getAISuggestions(room.category);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   const currentChannelMessages = messages.filter(msg => msg.channel === activeChannel);
   const pinnedChannelMessages = currentChannelMessages.filter(msg => msg.isPinned);
@@ -582,7 +582,7 @@ const ChatRoom = () => {
     }
   };
 
-  const renderMessageContent = (msg: any) => {
+  const renderMessageContent = (msg: { content: string; [key: string]: unknown }) => {
     // Simple message rendering - can be enhanced with grammar highlighting
     return <p className="text-sm break-words">{msg.content}</p>;
   };

@@ -13,7 +13,7 @@ const ForumThread = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [reply, setReply] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
   const [threadLiked, setThreadLiked] = useState(false);
   const [collapsedComments, setCollapsedComments] = useState<Set<number>>(new Set());
@@ -231,7 +231,7 @@ const ForumThread = () => {
   const threadData = getThreadData(id || '1');
   
   // Sort comments based on selected order
-  const sortComments = (commentsToSort: any[]) => {
+  const sortComments = (commentsToSort: Array<{ createdAt: string; upvotes: number; [key: string]: unknown }>) => {
     return [...commentsToSort].sort((a, b) => {
       switch (sortOrder) {
         case 'oldest':
@@ -271,7 +271,7 @@ const ForumThread = () => {
     setCollapsedComments(newCollapsed);
   };
 
-  const handleReply = (commentId?: string) => {
+  const handleReply = (commentId?: number) => {
     if (reply.trim()) {
       // Handle posting reply
       console.log('Posting reply:', reply, commentId ? `to comment ${commentId}` : 'to thread');
@@ -330,7 +330,7 @@ const ForumThread = () => {
     </div>
   );
 
-  const Comment = ({ comment, depth = 0 }: { comment: any; depth?: number }) => {
+  const Comment = ({ comment, depth = 0 }: { comment: { id: number; author: string; authorLevel: string; createdAt: string; content: string; upvotes: number; replies?: unknown[]; [key: string]: unknown }; depth?: number }) => {
     const isCollapsed = collapsedComments.has(comment.id);
     const hasReplies = comment.replies && comment.replies.length > 0;
     const totalReplies = countReplies(comment);
@@ -465,7 +465,7 @@ const ForumThread = () => {
 
             {/* Render Visible Replies */}
             <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-              {visibleReplies.map((reply: any) => (
+                              {visibleReplies.map((reply: { id: number; author: string; authorLevel: string; createdAt: string; content: string; upvotes: number; replies?: unknown[]; [key: string]: unknown }) => (
                 <Comment key={reply.id} comment={reply} depth={depth + 1} />
               ))}
             </div>
@@ -642,7 +642,7 @@ const ForumThread = () => {
           
           <div className="space-y-4">
             {(showAllComments ? comments : comments.slice(0, 3)).map((comment) => (
-              <Comment key={comment.id} comment={comment} depth={0} />
+              <Comment key={String(comment.id)} comment={comment as any} depth={0} />
             ))}
           </div>
 

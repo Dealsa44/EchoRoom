@@ -1,4 +1,48 @@
-import { User, GenderIdentity, Orientation } from '@/contexts/AppContext';
+import { GenderIdentity, Orientation } from '@/contexts/app-utils';
+
+// Define missing types locally
+type Ethnicity = 'white' | 'black' | 'hispanic' | 'asian' | 'middle-eastern' | 'pacific-islander' | 'mixed' | 'other' | 'prefer-not-to-say';
+type RelationshipType = 'casual' | 'serious' | 'marriage' | 'friendship';
+type UserLanguage = {
+  code: string;
+  name: string;
+  proficiency: 'beginner' | 'intermediate' | 'advanced' | 'native';
+};
+
+// Define User interface locally to match AppContext
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  avatar: string;
+  bio: string;
+  about: string;
+  interests: string[];
+  languages: UserLanguage[];
+  chatStyle: 'introvert' | 'ambievert' | 'extrovert';
+  safeMode: 'light' | 'deep' | 'learning';
+  anonymousMode: boolean;
+  aiAssistant: boolean;
+  dateOfBirth: string;
+  age: number;
+  genderIdentity: GenderIdentity;
+  orientation: Orientation;
+  lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
+  customGender?: string;
+  customOrientation?: string;
+  smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
+  occupation: string;
+  religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
+  politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
+  languageProficiency: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
+  photos?: string[];
+  profileQuestions: any[];
+}
 import { getRandomProfileQuestions } from '@/data/profileQuestions';
 
 const USERS_STORAGE_KEY = 'echoroom_users';
@@ -10,14 +54,16 @@ export interface RegisterData {
   password: string;
   dateOfBirth: string; // ISO date string (YYYY-MM-DD)
   location: string;
-  languageProficiency: string;
+  languages: UserLanguage[];
   chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   interests: string[];
   // Fields for gender and orientation
   genderIdentity: GenderIdentity;
   orientation: Orientation;
+  ethnicity: Ethnicity;
   lookingForRelationship: boolean;
   lookingForFriendship: boolean;
+  relationshipType?: RelationshipType;
   customGender?: string;
   customOrientation?: string;
   // Lifestyle fields
@@ -29,6 +75,7 @@ export interface RegisterData {
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   about: string;
+  languageProficiency?: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
   photos?: string[];
 }
 
@@ -172,7 +219,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       avatar: '🌱',
       bio: 'New to EchoRoom, excited to connect!',
       interests: data.interests,
-      languages: [data.languageProficiency],
+      languages: data.languages,
       chatStyle: data.chatStyle,
       safeMode: 'light',
       anonymousMode: false,
@@ -180,13 +227,15 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       // Date of birth and calculated age
       dateOfBirth: data.dateOfBirth,
       age: calculateAge(data.dateOfBirth),
-      location: data.location as any,
+      location: data.location,
       // New fields for gender and orientation
       genderIdentity: data.genderIdentity,
       orientation: data.orientation,
+      ethnicity: data.ethnicity,
 
       lookingForRelationship: data.lookingForRelationship,
       lookingForFriendship: data.lookingForFriendship,
+      relationshipType: data.relationshipType,
       customGender: data.customGender,
       customOrientation: data.customOrientation,
       // Lifestyle fields

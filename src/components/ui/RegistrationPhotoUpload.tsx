@@ -9,10 +9,7 @@ import {
   Edit, 
   Trash2, 
   GripVertical,
-  Star,
-  TrendingUp,
-  Heart,
-  Sparkles
+  Star
 } from 'lucide-react';
 import PhotoCropper from './PhotoCropper';
 import { Photo, photoStorage } from '@/lib/photoStorage';
@@ -159,8 +156,9 @@ const RegistrationPhotoUpload: React.FC<RegistrationPhotoUploadProps> = ({
                 canvas.toBlob((blob) => {
                   if (blob) {
                     const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-                    const files = { 0: file, length: 1 } as FileList;
-                    handleFileUpload(files);
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    handleFileUpload(dataTransfer.files);
                   }
                 }, 'image/jpeg');
               }
@@ -194,8 +192,9 @@ const RegistrationPhotoUpload: React.FC<RegistrationPhotoUploadProps> = ({
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-          const files = { 0: file, length: 1 } as FileList;
-          handleFileUpload(files);
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          handleFileUpload(dataTransfer.files);
         }
       }, 'image/jpeg');
     }
@@ -349,43 +348,28 @@ const RegistrationPhotoUpload: React.FC<RegistrationPhotoUploadProps> = ({
         </Card>
       )}
 
-      {/* Matching Percentage Display */}
+      {/* Simple Progress Bar */}
       {photos.length > 0 && (
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 overflow-hidden relative w-full">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-100/30 to-blue-100/30 animate-pulse" />
-          <CardContent className="p-3 sm:p-4 relative">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-green-700">
-                    {currentMatchingPercentage}% Match Potential
-                  </div>
-                  <div className="text-sm text-green-600">
-                    Great! Your profile is looking attractive
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Heart className="w-4 h-4 text-red-500" />
-                <Sparkles className="w-4 h-4 text-yellow-500" />
-              </div>
+        <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
+          <div 
+            className="bg-green-500 h-2 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${currentMatchingPercentage}%` }}
+          />
+        </div>
+      )}
+      
+      {/* Progress Text */}
+      {photos.length > 0 && (
+        <div className="text-center mb-4">
+          <div className="text-lg font-semibold text-green-600">
+            {currentMatchingPercentage}%
+          </div>
+          {photos.length < maxPhotos && (
+            <div className="text-sm text-gray-600">
+              Add more photos to increase your profile strength
             </div>
-            
-            {photos.length < maxPhotos && (
-              <div className="mt-3 p-3 bg-white/60 rounded-lg border border-green-200">
-                <div className="text-sm text-green-700 font-medium mb-1">
-                  Add another photo to reach {nextPhotoPercentage}%!
-                </div>
-                <div className="text-xs text-green-600">
-                  Each photo increases your chances of meaningful connections
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
 
       {/* Upload Section */}

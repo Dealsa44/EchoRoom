@@ -8,7 +8,47 @@ import { Edit, BarChart3, LogOut, Mail, User, Users, MessageCircle, Heart, Arrow
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
-import { useApp, getAttractionPreferences } from '@/contexts/AppContext';
+import { useApp } from '@/contexts/AppContext';
+import { GenderIdentity, Orientation } from '@/contexts/app-utils';
+
+// Define User interface locally to match AppContext
+interface UserType {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  avatar: string;
+  bio: string;
+  about: string;
+  interests: string[];
+  languages: Array<{ language: string; level: string }>;
+  chatStyle: 'introvert' | 'ambievert' | 'extrovert';
+  safeMode: 'light' | 'deep' | 'learning';
+  anonymousMode: boolean;
+  aiAssistant: boolean;
+  dateOfBirth: string;
+  age: number;
+  genderIdentity: GenderIdentity;
+  orientation: Orientation;
+  lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
+  customGender?: string;
+  customOrientation?: string;
+  ethnicity?: string;
+  smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
+  occupation: string;
+  religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
+  politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
+  languageProficiency: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
+  photos?: string[];
+  profileQuestions: any[];
+  location?: string;
+  relationshipType?: string;
+}
+import { getAttractionPreferences } from '@/contexts/app-utils';
 import { Profile as ProfileType } from '@/types';
 import { getProfileById } from '@/data/mockProfiles';
 import { LoadingState } from '@/components/ui/LoadingSpinner';
@@ -16,17 +56,41 @@ import { toast } from '@/hooks/use-toast';
 import { calculateAge } from '@/lib/auth';
 import { photoStorage } from '@/lib/photoStorage';
 
+// Type for display user that can be either User or Profile
+type DisplayUser = UserType | (ProfileType & {
+  username: string;
+  email: string;
+  password: string;
+  languages: Array<{ language: string; level: string }>;
+  safeMode: 'light' | 'medium' | 'strict';
+  anonymousMode: boolean;
+  aiAssistant: boolean;
+  customGender?: string;
+  customOrientation?: string;
+  ethnicity: string;
+  relationshipType?: string;
+  about?: string;
+  location?: string;
+  smoking?: string;
+  drinking?: string;
+  hasChildren?: string;
+  education?: string;
+  occupation?: string;
+  religion?: string;
+  politicalViews?: string;
+});
+
 const Profile = () => {
   const navigate = useNavigate();
   const { userId } = useParams();
   const { user, safeMode, setSafeMode, logout } = useApp();
   const [profileData, setProfileData] = useState<ProfileType | null>(null);
   const [loading, setLoading] = useState(false);
-  const [userPhotos, setUserPhotos] = useState<any[]>([]);
+  const [userPhotos, setUserPhotos] = useState<Array<{ id: string; url: string; uploadDate: Date; [key: string]: unknown }>>([]);
   
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
-  const displayUser = isOwnProfile ? user : profileData;
+  const displayUser: DisplayUser | null = isOwnProfile ? (user as unknown as DisplayUser) : (profileData as unknown as DisplayUser);
 
   // Load other user's profile if viewing someone else
   useEffect(() => {
@@ -42,13 +106,27 @@ const Profile = () => {
             username: profile.name,
             email: `${profile.name.toLowerCase()}@example.com`, // Mock email
             password: '', // Not needed for display
-            languages: ['English', 'Georgian'], // Mock languages
+            languages: profile.languages || [{ language: 'english', level: 'intermediate' }], // Use actual languages or default
             safeMode: 'light' as const,
             anonymousMode: false,
             aiAssistant: true,
             customGender: undefined,
-            customOrientation: undefined
-          } as any);
+            customOrientation: undefined,
+            ethnicity: profile.ethnicity || 'prefer-not-to-say', // Add ethnicity
+            relationshipType: profile.relationshipType || undefined // Add relationship type
+          } as ProfileType & {
+            username: string;
+            email: string;
+            password: string;
+            languages: Array<{ language: string; level: string }>;
+            safeMode: 'light' | 'medium' | 'strict';
+            anonymousMode: boolean;
+            aiAssistant: boolean;
+            customGender?: string;
+            customOrientation?: string;
+            ethnicity: string;
+            relationshipType?: string;
+          });
         } else {
           // Profile not found - toast removed per user request
           navigate('/match');
@@ -64,7 +142,7 @@ const Profile = () => {
   useEffect(() => {
     if (isOwnProfile && user?.id) {
       const photos = photoStorage.loadPhotos(user.id);
-      setUserPhotos(photos);
+      setUserPhotos(photos as any);
     }
   }, [isOwnProfile, user?.id]);
 
@@ -94,7 +172,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopBar 
-        title={isOwnProfile ? "Profile" : ((displayUser as any)?.username || (displayUser as any)?.name || "Profile")}
+        title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
         showBack={!isOwnProfile}
       />
       
@@ -112,7 +190,7 @@ const Profile = () => {
                 <Shield className="absolute -top-1 right-[calc(50%-28px)] h-5 w-5 text-blue-500" />
               )}
             </div>
-            <h2 className="mt-2 text-xl font-bold">{(displayUser as any)?.username || (displayUser as any)?.name || 'Guest'}</h2>
+            <h2 className="mt-2 text-xl font-bold">{displayUser?.username || 'Guest'}</h2>
             <div className="mt-2 h-1 w-24 mx-auto rounded-full bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
             <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{displayUser?.bio || 'Welcome to EchoRoom'}</p>
 
@@ -122,7 +200,7 @@ const Profile = () => {
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1">
                     <Mail size={14} />
-                    <span>{(displayUser as any)?.email}</span>
+                    <span>{displayUser?.email}</span>
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full border-2 border-border bg-card/60 px-3 py-1">
                     <User size={14} />
@@ -259,8 +337,6 @@ const Profile = () => {
                     {isOwnProfile
                       ? (user?.genderIdentity === 'other' && user?.customGender
                           ? user.customGender
-                          : user?.genderIdentity === 'prefer-not-to-say'
-                          ? 'Prefer not to say'
                           : user?.genderIdentity?.charAt(0).toUpperCase() + user?.genderIdentity?.slice(1) || 'Not set')
                       : (profileData?.genderIdentity?.charAt(0).toUpperCase() + profileData?.genderIdentity?.slice(1) || 'Not specified')}
                   </Badge>
@@ -279,20 +355,34 @@ const Profile = () => {
                 </div>
               </div>
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '300ms' }}>
+                <p className="text-muted-foreground">Ethnicity</p>
+                <div className="mt-1">
+                  <Badge variant="outline">
+                    {isOwnProfile
+                      ? ((user as any)?.ethnicity && (user as any).ethnicity !== 'prefer-not-to-say'
+                                                      ? (user as any).ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                          : 'Not specified')
+                      : (profileData?.ethnicity && profileData.ethnicity !== 'prefer-not-to-say'
+                          ? profileData.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                          : 'Not specified')}
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
                 <p className="text-muted-foreground">Age</p>
                 <p className="mt-1 font-medium">
                   {isOwnProfile ? (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : 'Not set') : profileData?.age} years old
                 </p>
               </div>
-              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
                 <p className="text-muted-foreground">Location</p>
-                <p className="mt-1 font-medium">
-                  {isOwnProfile ? ((user as any)?.location || 'Not set') : (profileData?.location || 'Not specified')}
-                </p>
+                                  <p className="mt-1 font-medium">
+                    {isOwnProfile ? ((user as any)?.location || 'Not set') : (profileData?.location || 'Not specified')}
+                  </p>
               </div>
             </div>
             {(isOwnProfile ? user?.about : (profileData as any)?.about) && (
-              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
+              <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
                 <p className="text-muted-foreground text-sm mb-1">About</p>
                 <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : (profileData as any)?.about}</p>
               </div>
@@ -300,35 +390,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Settings & Preferences - Only for own profile */}
-        {isOwnProfile && (
-          <Card className="relative overflow-hidden animate-breathe">
-            {/* Floating background accents */}
-            <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-secondary/12 blur-2xl animate-float-ambient" aria-hidden />
-            <div className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl animate-float-slow" aria-hidden />
-            <CardHeader className="pb-0">
-              <div className="flex items-center gap-3 animate-float-ambient">
-                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <Settings className="w-4 h-4" />
-                </div>
-                <CardTitle className="text-base">Settings & Preferences</CardTitle>
-              </div>
-              <div className="mt-3 h-1.5 w-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent shadow-[0_0_12px_hsl(var(--primary)_/_0.35)] dark:shadow-[0_0_12px_hsl(var(--primary)_/_0.45)]" />
-            </CardHeader>
-            <CardContent className="p-4 pt-4 space-y-3">
-              <div className="grid grid-cols-1 gap-3">
-                <div className="rounded-xl border-2 border-border bg-card/60 p-3 flex items-center justify-between animate-float-ambient" style={{ animationDelay: '0ms' }}>
-                  <span className="text-sm">Looking for relationship</span>
-                  <Switch checked={user?.lookingForRelationship || false} disabled />
-                </div>
-                <div className="rounded-xl border-2 border-border bg-card/60 p-3 flex items-center justify-between animate-float-ambient" style={{ animationDelay: '150ms' }}>
-                  <span className="text-sm">Looking for friendship</span>
-                  <Switch checked={user?.lookingForFriendship || false} disabled />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Interests & Preferences */}
         <Card className="relative overflow-hidden animate-breathe">
@@ -365,38 +427,116 @@ const Profile = () => {
                   <span className="text-sm text-muted-foreground">No interests selected yet</span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe">
-                  <p className="text-muted-foreground">Language Level</p>
-                  <p className="mt-1 font-medium">
-                    {isOwnProfile ? (user?.languageProficiency || 'Not set') : ((profileData as any)?.languageProficiency || 'Not specified')}
-                  </p>
+              <div className="space-y-3 text-sm">
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '0ms' }}>
+                  <p className="text-muted-foreground">Languages</p>
+                  <div className="mt-1 space-y-1">
+                    {isOwnProfile ? (
+                      user?.languages && user.languages.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {(user.languages as any).map((lang: any, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {lang.language.charAt(0).toUpperCase() + lang.language.slice(1)} ({lang.level})
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not set</span>
+                      )
+                    ) : (
+                      profileData?.languages && profileData.languages.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {profileData.languages.map((lang, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {lang.language.charAt(0).toUpperCase() + lang.language.slice(1)} ({lang.level})
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not specified</span>
+                      )
+                    )}
+                  </div>
                 </div>
-                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe" style={{ animationDelay: '150ms' }}>
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '150ms' }}>
                   <p className="text-muted-foreground">Personality</p>
                   <p className="mt-1 font-medium capitalize">
                     {isOwnProfile ? (user?.chatStyle || 'Not set') : (profileData?.chatStyle || 'Not specified')}
                   </p>
                 </div>
-                <div className="col-span-2 rounded-xl border-2 border-border bg-card/60 p-3 animate-breathe" style={{ animationDelay: '300ms' }}>
-                  <p className="text-muted-foreground">Looking for</p>
-                  <p className="mt-1 font-medium">
-                    {isOwnProfile
-                      ? (user?.lookingForRelationship && user?.lookingForFriendship
-                          ? 'Relationship, Friendship'
-                          : user?.lookingForRelationship
-                          ? 'Relationship'
-                          : user?.lookingForFriendship
-                          ? 'Friendship'
-                          : 'Not specified')
-                      : (profileData?.lookingForRelationship && profileData?.lookingForFriendship
-                          ? 'Relationship, Friendship'
-                          : profileData?.lookingForRelationship
-                          ? 'Relationship'
-                          : profileData?.lookingForFriendship
-                          ? 'Friendship'
-                          : 'Not specified')}
-                  </p>
+              </div>
+              
+              {/* Looking for section with improved styling */}
+              <div className="rounded-xl border-2 border-border bg-card/60 p-4 animate-float-ambient" style={{ animationDelay: '300ms' }}>
+                <p className="text-muted-foreground mb-3">Looking for</p>
+                <div className="space-y-3">
+                  {isOwnProfile ? (
+                    <>
+                      {user?.lookingForRelationship && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-4 h-4 text-primary" />
+                            <Badge variant="default" className="text-xs bg-primary text-primary-foreground">
+                              Relationship
+                            </Badge>
+                          </div>
+                          {(user as any)?.relationshipType && (user as any).relationshipType !== 'prefer-not-to-say' && (
+                            <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                              {(user as any).relationshipType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {user?.lookingForFriendship && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/5 border border-secondary/20">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-secondary" />
+                            <Badge variant="default" className="text-xs bg-secondary text-secondary-foreground">
+                              Friendship
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+                      {!user?.lookingForRelationship && !user?.lookingForFriendship && (
+                        <div className="text-center py-4">
+                          <span className="text-sm text-muted-foreground">Not specified</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {profileData?.lookingForRelationship && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-4 h-4 text-primary" />
+                            <Badge variant="default" className="text-xs bg-primary text-primary-foreground">
+                              Relationship
+                            </Badge>
+                          </div>
+                          {profileData?.relationshipType && profileData.relationshipType !== 'prefer-not-to-say' && (
+                            <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                              {profileData.relationshipType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {profileData?.lookingForFriendship && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/5 border border-secondary/20">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-secondary" />
+                            <Badge variant="default" className="text-xs bg-secondary text-secondary-foreground">
+                              Friendship
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+                      {!profileData?.lookingForRelationship && !profileData?.lookingForFriendship && (
+                        <div className="text-center py-4">
+                          <span className="text-sm text-muted-foreground">Not specified</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -610,7 +750,7 @@ function PhotoLightboxThumb({
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[92vw] p-2 border-border-soft">
+        <DialogContent className="max-w-sm w-[calc(100vw-3rem)] p-2 border-border-soft mx-auto">
           <DialogTitle className="sr-only">Photo {index + 1}</DialogTitle>
           <DialogDescription className="sr-only">Full-size photo preview</DialogDescription>
           <div className="relative w-full overflow-hidden rounded-lg bg-muted/30">

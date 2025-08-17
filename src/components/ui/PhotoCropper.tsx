@@ -169,7 +169,7 @@ const PhotoCropper: React.FC<PhotoCropperProps> = ({ imageUrl, onSave, onCancel 
       // Resize crop area
       const minSize = 50;
       setCropArea(prev => {
-        let newArea = { ...prev };
+        const newArea = { ...prev };
         
         switch (resizeHandle) {
           // Corner handles
@@ -249,7 +249,7 @@ const PhotoCropper: React.FC<PhotoCropperProps> = ({ imageUrl, onSave, onCancel 
                clientX: touch.clientX,
                clientY: touch.clientY
              });
-             handleMouseDown(mouseEvent as any);
+             handleMouseDown(mouseEvent as unknown as React.MouseEvent);
            }}
            onTouchMove={(e) => {
              e.preventDefault();
@@ -258,7 +258,7 @@ const PhotoCropper: React.FC<PhotoCropperProps> = ({ imageUrl, onSave, onCancel 
                clientX: touch.clientX,
                clientY: touch.clientY
              });
-             handleMouseMove(mouseEvent as any);
+             handleMouseMove(mouseEvent as unknown as React.MouseEvent);
            }}
            onTouchEnd={handleMouseUp}
          >

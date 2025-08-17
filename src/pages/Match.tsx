@@ -13,7 +13,8 @@ import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
-import { useApp, getAttractionPreferences } from '@/contexts/AppContext';
+import { useApp } from '@/contexts/AppContext';
+import { getAttractionPreferences } from '@/contexts/app-utils';
 import { toast } from '@/hooks/use-toast';
 import { Profile } from '@/types';
 import { mockProfiles } from '@/data/mockProfiles';
@@ -177,7 +178,7 @@ const Match = () => {
       
       if (userWantsRelationship && profileWantsRelationship && user?.genderIdentity && user?.orientation && profile.genderIdentity && profile.orientation) {
         const userAttractionPrefs = getAttractionPreferences(user.genderIdentity, user.orientation);
-        const profileAttractionPrefs = getAttractionPreferences(profile.genderIdentity, profile.orientation);
+        const profileAttractionPrefs = getAttractionPreferences(profile.genderIdentity as any, profile.orientation as any);
         
         // Check if user is attracted to this profile's gender
         const isUserAttractedToProfile = userAttractionPrefs.includes('all-genders') || 
@@ -252,7 +253,7 @@ const Match = () => {
 
       return true;
     });
-  }, [profiles, filters, user?.lookingForRelationship]);
+  }, [profiles, filters, user?.lookingForRelationship, user?.genderIdentity, user?.lookingForFriendship, user?.orientation]);
 
   const currentProfile = filteredProfiles[currentProfileIndex];
 
@@ -1316,9 +1317,6 @@ const ProfileCardContent = memo(({
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
-            <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
-              {profile.languageLevel}
-            </Badge>
             <Badge className="bg-white/30 backdrop-blur-md text-white text-sm border-white/40 h-7 px-3 font-semibold shadow-soft">
               {profile.sharedInterests} shared
             </Badge>

@@ -11,16 +11,18 @@ export const mockProfiles: Profile[] = [
     bio: 'Philosophy student who loves deep conversations and poetry. Looking for meaningful connections.',
     about: 'I\'m a philosophy student passionate about deep conversations, poetry, and exploring life\'s big questions. I enjoy reading in cozy cafes and discussing ideas that challenge my perspective.',
     interests: ['Philosophy', 'Poetry', 'Mindfulness', 'Reading'],
-    languageProficiency: 'B2',
-    languageLevel: 'B2',
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'georgian', level: 'native' }],
+    languageLevel: 'advanced',
     chatStyle: 'introvert',
     lastActive: '2 hours ago',
     isOnline: false,
     sharedInterests: 2,
     genderIdentity: 'female',
     orientation: 'bisexual',
+    ethnicity: 'white',
     lookingForRelationship: true,
     lookingForFriendship: true,
+    relationshipType: 'serious-relationship',
     smoking: 'never',
     drinking: 'socially',
     hasChildren: 'no',
@@ -83,14 +85,15 @@ export const mockProfiles: Profile[] = [
     bio: 'Book enthusiast and language learner. Seeking someone to explore ideas and practice languages with.',
     about: 'I\'m a passionate book lover and language enthusiast. I work in publishing and love exploring different cultures through literature and language learning. Always up for deep discussions about books and ideas.',
     interests: ['Books', 'Languages', 'Culture', 'Travel'],
-    languageProficiency: 'C1',
-    languageLevel: 'C1',
+    languages: [{ language: 'english', level: 'native' }, { language: 'spanish', level: 'intermediate' }],
+    languageLevel: 'native',
     chatStyle: 'ambievert',
     lastActive: '1 hour ago',
     isOnline: true,
     sharedInterests: 3,
     genderIdentity: 'non-binary',
     orientation: 'pansexual',
+    ethnicity: 'mixed-race',
     lookingForRelationship: false,
     lookingForFriendship: true,
     smoking: 'never',
@@ -156,16 +159,18 @@ export const mockProfiles: Profile[] = [
     bio: 'Mindfulness practitioner and nature lover. Looking for gentle souls to share wisdom with.',
     about: 'I\'m a mindfulness practitioner and yoga instructor who finds peace in nature. I believe in the power of presence and helping others find their inner calm. I love hiking, meditation, and sharing wisdom with kind souls.',
     interests: ['Mindfulness', 'Nature', 'Art', 'Meditation'],
-    languageProficiency: 'A2',
-    languageLevel: 'A2',
+    languages: [{ language: 'english', level: 'intermediate' }],
+    languageLevel: 'intermediate',
     chatStyle: 'introvert',
     lastActive: '30 min ago',
     isOnline: true,
     sharedInterests: 1,
     genderIdentity: 'male',
     orientation: 'heterosexual',
+    ethnicity: 'asian',
     lookingForRelationship: true,
     lookingForFriendship: false,
+    relationshipType: 'marriage',
     smoking: 'never',
     drinking: 'never',
     hasChildren: 'no',
@@ -229,16 +234,18 @@ export const mockProfiles: Profile[] = [
     bio: 'Artist and coffee enthusiast. Love discussing art, culture, and life over a good cup of coffee.',
     about: 'I\'m a passionate artist who finds inspiration in everyday moments. I love creating art that tells stories and connects people. When I\'m not painting, you\'ll find me in cozy cafes discussing life and culture.',
     interests: ['Art', 'Coffee', 'Travel', 'Photography'],
-    languageProficiency: 'B1',
-    languageLevel: 'B1',
+    languages: [{ language: 'english', level: 'advanced' }, { language: 'french', level: 'beginner' }],
+    languageLevel: 'advanced',
     chatStyle: 'extrovert',
     lastActive: '15 min ago',
     isOnline: true,
     sharedInterests: 2,
     genderIdentity: 'female',
     orientation: 'lesbian',
+    ethnicity: 'hispanic-latino',
     lookingForRelationship: true,
     lookingForFriendship: false,
+    relationshipType: 'casual-dating',
     smoking: 'never',
     drinking: 'socially',
     hasChildren: 'no',
@@ -301,14 +308,15 @@ export const mockProfiles: Profile[] = [
     bio: 'Fitness trainer and language exchange partner. Looking for friends to practice English and share workout tips.',
     about: 'I\'m a fitness trainer passionate about helping people achieve their health goals. I love martial arts, cooking healthy meals, and learning new languages. Always looking for workout buddies and language exchange partners.',
     interests: ['Fitness', 'Languages', 'Travel', 'Cooking'],
-    languageProficiency: 'A2',
-    languageLevel: 'A2',
+    languages: [{ language: 'english', level: 'beginner' }, { language: 'japanese', level: 'learning' }],
+    languageLevel: 'beginner',
     chatStyle: 'extrovert',
     lastActive: '45 min ago',
     isOnline: false,
     sharedInterests: 1,
     genderIdentity: 'male',
     orientation: 'heterosexual',
+    ethnicity: 'asian',
     lookingForRelationship: false,
     lookingForFriendship: true,
     smoking: 'never',
@@ -360,6 +368,743 @@ export const mockProfiles: Profile[] = [
         question: "What's your most embarrassing childhood memory?",
         category: 'funny',
         answer: "I once tried to show off my karate moves and accidentally kicked my own face!"
+      }
+    ]
+  },
+  {
+    id: 6,
+    name: 'Zara',
+    avatar: '🌟',
+    age: 25,
+    location: 'Dubai, UAE',
+    distance: 3.2,
+    bio: 'Tech entrepreneur and coffee addict. Love discussing startups, innovation, and exploring new cultures.',
+    about: 'I\'m a tech entrepreneur who loves building things that make people\'s lives better. When I\'m not coding or pitching ideas, you\'ll find me exploring new coffee shops and discussing the future of technology.',
+    interests: ['Technology', 'Entrepreneurship', 'Coffee', 'Travel'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'arabic', level: 'fluent' }],
+    languageLevel: 'native',
+    chatStyle: 'extrovert',
+    lastActive: '5 min ago',
+    isOnline: true,
+    sharedInterests: 2,
+    genderIdentity: 'female',
+    orientation: 'bisexual',
+    ethnicity: 'middle-eastern',
+    lookingForRelationship: true,
+    lookingForFriendship: true,
+    relationshipType: 'serious-relationship',
+    smoking: 'never',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'master',
+    occupation: 'Tech Entrepreneur',
+    religion: 'islam',
+    politicalViews: 'moderate',
+    photos: [
+      'https://picsum.photos/400/400?random=16',
+      'https://picsum.photos/400/400?random=17',
+      'https://picsum.photos/400/400?random=18'
+    ],
+    isVerified: true,
+    profileCompletion: 94,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Working on my startup and exploring new coffee shops",
+      "If you could travel anywhere right now, where would you go?": "Silicon Valley to network with other entrepreneurs",
+      "What's something you're passionate about?": "Building technology that solves real problems"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-6',
+        question: "What's your biggest professional achievement?",
+        category: 'deep',
+        answer: "Launching my first startup and seeing it help thousands of people solve their problems."
+      },
+      {
+        id: 'flirty-6',
+        question: "What's your idea of a perfect date?",
+        category: 'flirty',
+        answer: "A coffee shop date where we can discuss ideas and dreams, followed by a walk in the city."
+      },
+      {
+        id: 'casual-6',
+        question: "What's your favorite coffee order?",
+        category: 'casual',
+        answer: "A flat white with oat milk - the perfect balance of strong and smooth."
+      },
+      {
+        id: 'creative-6',
+        question: "What's the most innovative idea you've had recently?",
+        category: 'creative',
+        answer: "An app that connects local coffee shops with remote workers for community building."
+      },
+      {
+        id: 'funny-6',
+        question: "What's the most embarrassing thing that happened at work?",
+        category: 'funny',
+        answer: "I once accidentally sent a love letter to my entire team instead of a project update!"
+      }
+    ]
+  },
+  {
+    id: 7,
+    name: 'River',
+    avatar: '🌊',
+    age: 27,
+    location: 'Vancouver, Canada',
+    distance: 7.4,
+    bio: 'Environmental scientist and outdoor enthusiast. Passionate about sustainability and adventure.',
+    about: 'I\'m an environmental scientist who spends my days studying climate change and my free time exploring the great outdoors. I believe in living sustainably and connecting with nature. Always up for hiking, camping, or discussing environmental solutions.',
+    interests: ['Environment', 'Hiking', 'Sustainability', 'Photography'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'french', level: 'intermediate' }],
+    languageLevel: 'native',
+    chatStyle: 'ambievert',
+    lastActive: '1 hour ago',
+    isOnline: false,
+    sharedInterests: 1,
+    genderIdentity: 'non-binary',
+    orientation: 'queer',
+    ethnicity: 'white',
+    lookingForRelationship: true,
+    lookingForFriendship: false,
+    relationshipType: 'serious-relationship',
+    smoking: 'never',
+    drinking: 'casually',
+    hasChildren: 'no',
+    education: 'phd',
+    occupation: 'Environmental Scientist',
+    religion: 'atheist',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=19',
+      'https://picsum.photos/400/400?random=20',
+      'https://picsum.photos/400/400?random=21'
+    ],
+    isVerified: true,
+    profileCompletion: 89,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Hiking in the mountains and taking nature photography",
+      "If you could travel anywhere right now, where would you go?": "Iceland to see the glaciers before they disappear",
+      "What's something you're passionate about?": "Protecting our planet and finding sustainable solutions"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-7',
+        question: "What's the most important issue facing our world today?",
+        category: 'deep',
+        answer: "Climate change - we need to act now to protect our planet for future generations."
+      },
+      {
+        id: 'flirty-7',
+        question: "What's your love language?",
+        category: 'flirty',
+        answer: "Quality time and acts of service. I love sharing adventures and doing thoughtful things for others."
+      },
+      {
+        id: 'casual-7',
+        question: "What's your favorite outdoor activity?",
+        category: 'casual',
+        answer: "Hiking in the mountains - there's nothing like reaching a summit and taking in the view."
+      },
+      {
+        id: 'creative-7',
+        question: "What's your creative outlet?",
+        category: 'creative',
+        answer: "Nature photography - I love capturing the beauty of our planet and sharing it with others."
+      },
+      {
+        id: 'funny-7',
+        question: "What's the most adventurous thing you've ever done?",
+        category: 'funny',
+        answer: "I once got lost in the woods for 6 hours but found the most beautiful hidden lake!"
+      }
+    ]
+  },
+  {
+    id: 8,
+    name: 'Leo',
+    avatar: '🎭',
+    age: 29,
+    location: 'New York, USA',
+    distance: 4.8,
+    bio: 'Actor and theater enthusiast. Love discussing films, performing arts, and creative expression.',
+    about: 'I\'m a passionate actor who believes in the power of storytelling to connect people. When I\'m not on stage or in front of the camera, I love discussing films, theater, and the human experience through art.',
+    interests: ['Acting', 'Theater', 'Film', 'Music'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'italian', level: 'beginner' }],
+    languageLevel: 'native',
+    chatStyle: 'extrovert',
+    lastActive: '20 min ago',
+    isOnline: true,
+    sharedInterests: 3,
+    genderIdentity: 'male',
+    orientation: 'gay',
+    ethnicity: 'hispanic-latino',
+    lookingForRelationship: true,
+    lookingForFriendship: true,
+    relationshipType: 'casual-dating',
+    smoking: 'socially',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Actor',
+    religion: 'agnostic',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=22',
+      'https://picsum.photos/400/400?random=23',
+      'https://picsum.photos/400/400?random=24'
+    ],
+    isVerified: true,
+    profileCompletion: 87,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Watching films and discussing them with friends",
+      "If you could travel anywhere right now, where would you go?": "Italy to study classical theater and opera",
+      "What's something you're passionate about?": "Using storytelling to create empathy and understanding"
+    },
+    profileQuestions: [
+      {
+        id: 'creative-8',
+        question: "What's your favorite role you've ever played?",
+        category: 'creative',
+        answer: "Hamlet - it was challenging but taught me so much about human nature and grief."
+      },
+      {
+        id: 'flirty-8',
+        question: "What's the most romantic thing you've ever done?",
+        category: 'flirty',
+        answer: "I once performed a Shakespeare sonnet for someone on a rooftop at sunset."
+      },
+      {
+        id: 'casual-8',
+        question: "What's your favorite film genre?",
+        category: 'casual',
+        answer: "Psychological thrillers - I love films that make you think and question reality."
+      },
+      {
+        id: 'deep-8',
+        question: "What's the most meaningful performance you've given?",
+        category: 'deep',
+        answer: "Playing a character with mental illness - it helped me understand and empathize with real struggles."
+      },
+      {
+        id: 'funny-8',
+        question: "What's the most embarrassing thing that happened on stage?",
+        category: 'funny',
+        answer: "I once forgot my lines and improvised for 5 minutes - the audience thought it was intentional!"
+      }
+    ]
+  },
+  {
+    id: 9,
+    name: 'Aisha',
+    avatar: '🌺',
+    age: 23,
+    location: 'Cairo, Egypt',
+    distance: 9.1,
+    bio: 'Medical student and poetry lover. Seeking meaningful conversations about life, health, and literature.',
+    about: 'I\'m a medical student passionate about helping others and understanding the human body. I also love poetry and find beauty in the intersection of science and art. Always eager to learn and share knowledge.',
+    interests: ['Medicine', 'Poetry', 'Literature', 'Science'],
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'arabic', level: 'native' }],
+    languageLevel: 'fluent',
+    chatStyle: 'introvert',
+    lastActive: '3 hours ago',
+    isOnline: false,
+    sharedInterests: 2,
+    genderIdentity: 'female',
+    orientation: 'heterosexual',
+    ethnicity: 'middle-eastern',
+    lookingForRelationship: false,
+    lookingForFriendship: true,
+    smoking: 'never',
+    drinking: 'never',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Medical Student',
+    religion: 'islam',
+    politicalViews: 'moderate',
+    photos: [
+      'https://picsum.photos/400/400?random=25',
+      'https://picsum.photos/400/400?random=26',
+      'https://picsum.photos/400/400?random=27'
+    ],
+    isVerified: false,
+    profileCompletion: 76,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Reading medical journals and writing poetry",
+      "If you could travel anywhere right now, where would you go?": "Oxford to study medical history and literature",
+      "What's something you're passionate about?": "Understanding the human body and helping people heal"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-9',
+        question: "What's the most important lesson you've learned in medical school?",
+        category: 'deep',
+        answer: "That every patient has a story, and understanding their humanity is as important as treating their symptoms."
+      },
+      {
+        id: 'flirty-9',
+        question: "What's your idea of intellectual attraction?",
+        category: 'flirty',
+        answer: "Someone who can discuss both science and art with equal passion and curiosity."
+      },
+      {
+        id: 'casual-9',
+        question: "What's your favorite book genre?",
+        category: 'casual',
+        answer: "Medical memoirs and classic literature - I love stories that teach me about human nature."
+      },
+      {
+        id: 'creative-9',
+        question: "What's your creative outlet?",
+        category: 'creative',
+        answer: "Writing poetry about the human body and the emotions we carry within us."
+      },
+      {
+        id: 'funny-9',
+        question: "What's the funniest thing that happened during your studies?",
+        category: 'funny',
+        answer: "I once accidentally memorized the wrong bone names and confidently recited them to my professor!"
+      }
+    ]
+  },
+  {
+    id: 10,
+    name: 'Finn',
+    avatar: '🎸',
+    age: 31,
+    location: 'Melbourne, Australia',
+    distance: 11.2,
+    bio: 'Musician and coffee roaster. Love creating music, brewing coffee, and sharing stories.',
+    about: 'I\'m a musician who runs a small coffee roastery. I believe in the power of music and coffee to bring people together. When I\'m not playing guitar or roasting beans, I love exploring new sounds and flavors.',
+    interests: ['Music', 'Coffee', 'Cooking', 'Travel'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'spanish', level: 'intermediate' }],
+    languageLevel: 'native',
+    chatStyle: 'ambievert',
+    lastActive: '10 min ago',
+    isOnline: true,
+    sharedInterests: 1,
+    genderIdentity: 'male',
+    orientation: 'bisexual',
+    ethnicity: 'white',
+    lookingForRelationship: true,
+    lookingForFriendship: false,
+    relationshipType: 'serious-relationship',
+    smoking: 'never',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Musician & Coffee Roaster',
+    religion: 'atheist',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=28',
+      'https://picsum.photos/400/400?random=29',
+      'https://picsum.photos/400/400?random=30'
+    ],
+    isVerified: true,
+    profileCompletion: 92,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Playing music with friends and experimenting with new coffee blends",
+      "If you could travel anywhere right now, where would you go?": "Colombia to learn about coffee farming and music",
+      "What's something you're passionate about?": "Creating experiences that bring people together through music and coffee"
+    },
+    profileQuestions: [
+      {
+        id: 'creative-10',
+        question: "What's your favorite instrument to play?",
+        category: 'creative',
+        answer: "Acoustic guitar - there's something intimate about the sound that connects directly to the soul."
+      },
+      {
+        id: 'flirty-10',
+        question: "What's your idea of a perfect evening?",
+        category: 'flirty',
+        answer: "Cooking together, sharing good coffee, and playing music by candlelight."
+      },
+      {
+        id: 'casual-10',
+        question: "What's your favorite coffee origin?",
+        category: 'casual',
+        answer: "Ethiopian Yirgacheffe - the floral notes and bright acidity are perfect for morning inspiration."
+      },
+      {
+        id: 'deep-10',
+        question: "What's the most meaningful song you've ever written?",
+        category: 'deep',
+        answer: "A song about my grandmother's coffee ritual - it taught me about love, tradition, and connection."
+      },
+      {
+        id: 'funny-10',
+        question: "What's the most embarrassing thing that happened during a performance?",
+        category: 'funny',
+        answer: "I once forgot the lyrics to my own song and had to make up words on the spot!"
+      }
+    ]
+  },
+  {
+    id: 11,
+    name: 'Nova',
+    avatar: '🚀',
+    age: 24,
+    location: 'Berlin, Germany',
+    distance: 6.7,
+    bio: 'Space enthusiast and software engineer. Love discussing technology, astronomy, and the future of humanity.',
+    about: 'I\'m a software engineer with a passion for space exploration and technology. I spend my free time stargazing, coding side projects, and discussing the future of humanity in space. Always excited to meet fellow space enthusiasts.',
+    interests: ['Space', 'Technology', 'Astronomy', 'Coding'],
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'german', level: 'intermediate' }],
+    languageLevel: 'fluent',
+    chatStyle: 'introvert',
+    lastActive: '2 hours ago',
+    isOnline: false,
+    sharedInterests: 1,
+    genderIdentity: 'non-binary',
+    orientation: 'asexual',
+    ethnicity: 'white',
+    lookingForRelationship: false,
+    lookingForFriendship: true,
+    smoking: 'never',
+    drinking: 'casually',
+    hasChildren: 'no',
+    education: 'master',
+    occupation: 'Software Engineer',
+    religion: 'atheist',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=31',
+      'https://picsum.photos/400/400?random=32',
+      'https://picsum.photos/400/400?random=33'
+    ],
+    isVerified: true,
+    profileCompletion: 88,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Coding side projects and watching space documentaries",
+      "If you could travel anywhere right now, where would you go?": "The International Space Station, obviously!",
+      "What's something you're passionate about?": "Advancing space technology and making space accessible to everyone"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-11',
+        question: "What's your biggest dream for humanity?",
+        category: 'deep',
+        answer: "To see humans become a multi-planetary species and explore the cosmos together."
+      },
+      {
+        id: 'flirty-11',
+        question: "What's the most attractive quality in a person?",
+        category: 'flirty',
+        answer: "Intellectual curiosity and the ability to geek out about space and technology."
+      },
+      {
+        id: 'casual-11',
+        question: "What's your favorite programming language?",
+        category: 'casual',
+        answer: "Python - it's versatile and perfect for both work projects and space simulations."
+      },
+      {
+        id: 'creative-11',
+        question: "What's the most creative project you've worked on?",
+        category: 'creative',
+        answer: "A virtual reality simulation of walking on Mars - it was incredibly immersive!"
+      },
+      {
+        id: 'funny-11',
+        question: "What's the most embarrassing thing that happened while stargazing?",
+        category: 'funny',
+        answer: "I once got so excited about seeing a shooting star that I fell off my telescope!"
+      }
+    ]
+  },
+  {
+    id: 12,
+    name: 'Sakura',
+    avatar: '🌸',
+    age: 22,
+    location: 'Kyoto, Japan',
+    distance: 8.9,
+    bio: 'Traditional artist and tea ceremony practitioner. Seeking connections through art and cultural exchange.',
+    about: 'I\'m a traditional Japanese artist who practices calligraphy and tea ceremony. I love sharing Japanese culture and finding beauty in everyday moments. Always eager to learn about other cultures while sharing my own.',
+    interests: ['Calligraphy', 'Tea Ceremony', 'Traditional Arts', 'Culture'],
+    languages: [{ language: 'english', level: 'beginner' }, { language: 'japanese', level: 'native' }],
+    languageLevel: 'beginner',
+    chatStyle: 'introvert',
+    lastActive: '1 hour ago',
+    isOnline: true,
+    sharedInterests: 0,
+    genderIdentity: 'female',
+    orientation: 'heterosexual',
+    ethnicity: 'asian',
+    lookingForRelationship: true,
+    lookingForFriendship: true,
+    relationshipType: 'serious-relationship',
+    smoking: 'never',
+    drinking: 'never',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Traditional Artist',
+    religion: 'buddhism',
+    politicalViews: 'moderate',
+    photos: [
+      'https://picsum.photos/400/400?random=34',
+      'https://picsum.photos/400/400?random=35',
+      'https://picsum.photos/400/400?random=36'
+    ],
+    isVerified: false,
+    profileCompletion: 78,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Practicing calligraphy and hosting tea ceremonies",
+      "If you could travel anywhere right now, where would you go?": "Paris to see how other cultures approach art",
+      "What's something you're passionate about?": "Preserving traditional Japanese arts and sharing them with the world"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-12',
+        question: "What's the most important lesson your culture has taught you?",
+        category: 'deep',
+        answer: "The beauty of impermanence and finding peace in the present moment."
+      },
+      {
+        id: 'flirty-12',
+        question: "What's your idea of a perfect date?",
+        category: 'flirty',
+        answer: "A quiet tea ceremony followed by a walk through a traditional garden."
+      },
+      {
+        id: 'casual-12',
+        question: "What's your favorite season in Japan?",
+        category: 'casual',
+        answer: "Spring - the cherry blossoms create such a magical atmosphere for art and reflection."
+      },
+      {
+        id: 'creative-12',
+        question: "What's your favorite traditional art form?",
+        category: 'creative',
+        answer: "Calligraphy - each stroke carries meaning and emotion, like a dance of ink on paper."
+      },
+      {
+        id: 'funny-12',
+        question: "What's the most embarrassing thing that happened during a tea ceremony?",
+        category: 'funny',
+        answer: "I once spilled tea on my kimono and had to improvise the rest of the ceremony!"
+      }
+    ]
+  },
+  {
+    id: 13,
+    name: 'Atlas',
+    avatar: '🗺️',
+    age: 26,
+    location: 'Cape Town, South Africa',
+    distance: 13.5,
+    bio: 'Adventure guide and wildlife photographer. Passionate about conservation and sharing the beauty of nature.',
+    about: 'I\'m an adventure guide who leads safaris and wildlife photography tours. I believe in the power of nature to transform lives and am passionate about conservation. Love sharing stories from the wild and inspiring others to protect our planet.',
+    interests: ['Wildlife', 'Photography', 'Conservation', 'Adventure'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'afrikaans', level: 'fluent' }],
+    languageLevel: 'native',
+    chatStyle: 'extrovert',
+    lastActive: '30 min ago',
+    isOnline: true,
+    sharedInterests: 1,
+    genderIdentity: 'male',
+    orientation: 'heterosexual',
+    ethnicity: 'white',
+    lookingForRelationship: true,
+    lookingForFriendship: false,
+    relationshipType: 'casual-dating',
+    smoking: 'never',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Adventure Guide',
+    religion: 'agnostic',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=37',
+      'https://picsum.photos/400/400?random=38',
+      'https://picsum.photos/400/400?random=39'
+    ],
+    isVerified: true,
+    profileCompletion: 91,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Leading wildlife photography tours in the bush",
+      "If you could travel anywhere right now, where would you go?": "The Serengeti to witness the great migration",
+      "What's something you're passionate about?": "Conservation and protecting wildlife for future generations"
+    },
+    profileQuestions: [
+      {
+        id: 'deep-13',
+        question: "What's the most profound experience you've had in nature?",
+        category: 'deep',
+        answer: "Witnessing a lioness teaching her cubs to hunt - it showed me the circle of life in its purest form."
+      },
+      {
+        id: 'flirty-13',
+        question: "What's your idea of adventure?",
+        category: 'flirty',
+        answer: "Exploring unknown territories together and discovering hidden gems in nature."
+      },
+      {
+        id: 'casual-13',
+        question: "What's your favorite animal to photograph?",
+        category: 'casual',
+        answer: "Elephants - they're so intelligent and have such strong family bonds."
+      },
+      {
+        id: 'creative-13',
+        question: "What's the most creative way you've captured wildlife?",
+        category: 'creative',
+        answer: "Using a drone to capture aerial shots of migrating herds - the perspective was incredible."
+      },
+      {
+        id: 'funny-13',
+        question: "What's the most embarrassing thing that happened on a safari?",
+        category: 'funny',
+        answer: "I once got so excited about seeing a rare bird that I fell out of the jeep!"
+      }
+    ]
+  },
+  {
+    id: 14,
+    name: 'Phoenix',
+    avatar: '🔥',
+    age: 29,
+    location: 'Barcelona, Spain',
+    distance: 4.2,
+    bio: 'Chef and food blogger. Love creating culinary experiences and sharing the joy of cooking.',
+    about: 'I\'m a passionate chef who believes food is the universal language of love. I run a popular food blog and love creating memorable dining experiences. When I\'m not in the kitchen, I\'m exploring local markets and discovering new flavors.',
+    interests: ['Cooking', 'Food', 'Travel', 'Photography'],
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'spanish', level: 'native' }, { language: 'catalan', level: 'fluent' }],
+    languageLevel: 'fluent',
+    chatStyle: 'extrovert',
+    lastActive: '15 min ago',
+    isOnline: true,
+    sharedInterests: 2,
+    genderIdentity: 'female',
+    orientation: 'lesbian',
+    ethnicity: 'hispanic-latino',
+    lookingForRelationship: true,
+    lookingForFriendship: true,
+    relationshipType: 'serious-relationship',
+    smoking: 'never',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Chef & Food Blogger',
+    religion: 'agnostic',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=40',
+      'https://picsum.photos/400/400?random=41',
+      'https://picsum.photos/400/400?random=42'
+    ],
+    isVerified: true,
+    profileCompletion: 93,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Cooking elaborate meals and hosting dinner parties",
+      "If you could travel anywhere right now, where would you go?": "Italy to learn authentic pasta-making techniques",
+      "What's something you're passionate about?": "Creating dishes that tell stories and bring people together"
+    },
+    profileQuestions: [
+      {
+        id: 'creative-14',
+        question: "What's your signature dish?",
+        category: 'creative',
+        answer: "Paella with a modern twist - I add saffron and seafood but with contemporary plating techniques."
+      },
+      {
+        id: 'flirty-14',
+        question: "What's your idea of a romantic dinner?",
+        category: 'flirty',
+        answer: "Cooking together in the kitchen, sharing wine, and creating something beautiful from scratch."
+      },
+      {
+        id: 'casual-14',
+        question: "What's your favorite cuisine to cook?",
+        category: 'casual',
+        answer: "Mediterranean - the fresh ingredients and bold flavors are always inspiring."
+      },
+      {
+        id: 'deep-14',
+        question: "What's the most meaningful meal you've ever prepared?",
+        category: 'deep',
+        answer: "A traditional family recipe for my grandmother's 90th birthday - it connected generations through food."
+      },
+      {
+        id: 'funny-14',
+        question: "What's the biggest kitchen disaster you've ever had?",
+        category: 'funny',
+        answer: "I once set off the fire alarm while trying to flambé a dessert - the whole restaurant had to evacuate!"
+      }
+    ]
+  },
+  {
+    id: 15,
+    name: 'Echo',
+    avatar: '🎵',
+    age: 25,
+    location: 'Seoul, South Korea',
+    distance: 9.8,
+    bio: 'Music producer and sound engineer. Love creating beats, mixing tracks, and discovering new sounds.',
+    about: 'I\'m a music producer who loves creating unique soundscapes and helping artists bring their vision to life. I spend my days in the studio crafting beats and my nights exploring Seoul\'s vibrant music scene. Always on the lookout for new sounds and collaborations.',
+    interests: ['Music Production', 'Sound Engineering', 'Hip Hop', 'Technology'],
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'korean', level: 'native' }],
+    languageLevel: 'fluent',
+    chatStyle: 'ambievert',
+    lastActive: '45 min ago',
+    isOnline: false,
+    sharedInterests: 1,
+    genderIdentity: 'male',
+    orientation: 'gay',
+    ethnicity: 'asian',
+    lookingForRelationship: false,
+    lookingForFriendship: true,
+    smoking: 'never',
+    drinking: 'socially',
+    hasChildren: 'no',
+    education: 'bachelor',
+    occupation: 'Music Producer',
+    religion: 'atheist',
+    politicalViews: 'liberal',
+    photos: [
+      'https://picsum.photos/400/400?random=43',
+      'https://picsum.photos/400/400?random=44',
+      'https://picsum.photos/400/400?random=45'
+    ],
+    isVerified: true,
+    profileCompletion: 86,
+    iceBreakerAnswers: {
+      "What's your favorite way to spend a weekend?": "Producing music and exploring Seoul's underground music scene",
+      "If you could travel anywhere right now, where would you go?": "Los Angeles to collaborate with other producers",
+      "What's something you're passionate about?": "Creating music that moves people and tells stories"
+    },
+    profileQuestions: [
+      {
+        id: 'creative-15',
+        question: "What's your favorite genre to produce?",
+        category: 'creative',
+        answer: "Hip hop with electronic elements - I love blending traditional beats with modern sound design."
+      },
+      {
+        id: 'flirty-15',
+        question: "What's your idea of a perfect collaboration?",
+        category: 'flirty',
+        answer: "Working with someone who brings different musical influences and we create something completely unique."
+      },
+      {
+        id: 'casual-15',
+        question: "What's your favorite piece of studio equipment?",
+        category: 'casual',
+        answer: "My vintage synthesizer - it has a warmth that digital plugins just can't replicate."
+      },
+      {
+        id: 'deep-15',
+        question: "What's the most meaningful project you've worked on?",
+        category: 'deep',
+        answer: "A track that helped someone through depression - knowing my music made a difference was incredible."
+      },
+      {
+        id: 'funny-15',
+        question: "What's the most embarrassing thing that happened in the studio?",
+        category: 'funny',
+        answer: "I once accidentally played a demo track at full volume during a client meeting - it was supposed to be background music!"
       }
     ]
   }

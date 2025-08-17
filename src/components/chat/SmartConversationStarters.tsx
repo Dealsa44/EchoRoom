@@ -33,7 +33,7 @@ interface ConversationStarter {
   category: string;
   starter: string;
   explanation: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: string | number; className?: string }>;
   confidence: number; // 0-100
 }
 

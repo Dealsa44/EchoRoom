@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import {
 interface SmartReply {
   id: string;
   text: string;
-  tone: 'friendly' | 'professional' | 'casual' | 'enthusiastic' | 'supportive' | 'curious';
+  tone: 'friendly' | 'professional' | 'casual' | 'enthusiastic' | 'supportive' | 'curious' | 'caring';
   category: 'agreement' | 'question' | 'compliment' | 'continuation' | 'empathy' | 'encouragement';
   confidence: number;
   emoji?: string;
@@ -51,24 +51,49 @@ const SmartReplies: React.FC<SmartRepliesProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTone, setSelectedTone] = useState<string>('auto');
 
-  useEffect(() => {
-    if (isVisible && context.lastMessage) {
-      generateReplies();
+  const simplifyText = useCallback((text: string): string => {
+    return text
+      .replace(/That's really interesting!/g, "That's cool!")
+      .replace(/I completely agree with you on that/g, 'I agree!')
+      .replace('Could you tell me more about what you mean by that?', 'Can you explain more?')
+      .replace(/I understand how that can feel challenging/g, 'That sounds hard')
+      .replace(/Language learning is such a journey!/g, 'Learning languages is fun!');
+  }, []);
+
+  const formalizeText = useCallback((text: string): string => {
+    return text
+      .replace(/That's cool!/g, 'That is quite interesting.')
+      .replace(/I agree!/g, 'I concur with your perspective.')
+      .replace(/😊/g, '')
+      .replace(/🤗/g, '')
+      .replace(/💪/g, '');
+  }, []);
+
+  // Adjust for language level
+  const adjustForLanguageLevel = useCallback((replies: SmartReply[], languageLevel: string): SmartReply[] => {
+    if (languageLevel === 'A1' || languageLevel === 'A2') {
+      return replies.map(reply => ({
+        ...reply,
+        text: simplifyText(reply.text),
+        confidence: reply.confidence - 5
+      }));
     }
-  }, [isVisible, context.lastMessage, selectedTone]);
+    return replies;
+  }, [simplifyText]);
 
-  const generateReplies = async () => {
-    setIsGenerating(true);
-    
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const generatedReplies = await generateContextualReplies(context);
-    setReplies(generatedReplies.slice(0, maxReplies));
-    setIsGenerating(false);
-  };
+  // Adjust for cultural context
+  const adjustForCulturalContext = useCallback((replies: SmartReply[], culturalContext: string): SmartReply[] => {
+    if (culturalContext === 'formal') {
+      return replies.map(reply => ({
+        ...reply,
+        text: formalizeText(reply.text),
+        tone: reply.tone === 'casual' ? 'professional' : reply.tone
+      }));
+    }
+    return replies;
+  }, [formalizeText]);
 
-  const generateContextualReplies = async (ctx: ConversationContext): Promise<SmartReply[]> => {
+  const generateContextualReplies = useCallback(async (ctx: ConversationContext): Promise<SmartReply[]> => {
     const lastMessageLower = ctx.lastMessage.toLowerCase();
     const replies: SmartReply[] = [];
 
@@ -144,19 +169,19 @@ const SmartReplies: React.FC<SmartRepliesProps> = ({
     if (isNegative) {
       replies.push({
         id: '5',
-        text: "I understand how that can feel challenging. You're not alone in this.",
+        text: "I understand how you feel. That sounds really challenging.",
         tone: 'supportive',
         category: 'empathy',
-        confidence: 89,
+        confidence: 95,
         emoji: '🤗'
       });
 
       replies.push({
         id: '6',
-        text: "That sounds tough. Is there anything I can do to help?",
-        tone: 'supportive',
+        text: "Would you like to talk about it? I'm here to listen.",
+        tone: 'caring',
         category: 'encouragement',
-        confidence: 87,
+        confidence: 90,
         emoji: '💙'
       });
     }
@@ -164,89 +189,58 @@ const SmartReplies: React.FC<SmartRepliesProps> = ({
     if (isLearningRelated) {
       replies.push({
         id: '7',
-        text: "Language learning is such a journey! What's been your biggest breakthrough so far?",
-        tone: 'curious',
-        category: 'question',
-        confidence: 91,
-        emoji: '🌟'
-      });
-
-      replies.push({
-        id: '8',
-        text: "Practice makes perfect! Keep up the great work.",
+        text: "That's a great approach to learning! Keep it up! 💪",
         tone: 'enthusiastic',
         category: 'encouragement',
-        confidence: 86,
-        emoji: '🎯'
+        confidence: 87,
+        emoji: '💪'
       });
     }
 
-    // Add some general conversational replies
-    replies.push(
-      {
-        id: '9',
-        text: "I completely agree with you on that.",
-        tone: 'friendly',
-        category: 'agreement',
-        confidence: 82,
-        emoji: '👍'
-      },
-      {
-        id: '10',
-        text: "That's really interesting! I never thought about it that way.",
-        tone: 'curious',
-        category: 'compliment',
-        confidence: 84,
-        emoji: '💭'
-      },
-      {
-        id: '11',
-        text: "Could you tell me more about what you mean by that?",
-        tone: 'curious',
-        category: 'question',
-        confidence: 80,
-        emoji: '❓'
-      }
-    );
+    // Add some general friendly replies
+    replies.push({
+      id: '8',
+      text: "That's really interesting! Tell me more.",
+      tone: 'curious',
+      category: 'continuation',
+      confidence: 75,
+      emoji: '🤔'
+    });
 
-    // Adjust for language level
-    if (ctx.languageLevel === 'A1' || ctx.languageLevel === 'A2') {
-      return replies.map(reply => ({
-        ...reply,
-        text: simplifyText(reply.text),
-        confidence: reply.confidence - 5
-      }));
+    replies.push({
+      id: '9',
+      text: "I completely agree with you on that!",
+      tone: 'friendly',
+      category: 'agreement',
+      confidence: 80,
+      emoji: '👍'
+    });
+
+    // Adjust replies based on language level and cultural context
+    let adjustedReplies = adjustForLanguageLevel(replies, ctx.languageLevel);
+    adjustedReplies = adjustForCulturalContext(adjustedReplies, ctx.culturalContext);
+
+    return adjustedReplies;
+  }, [adjustForLanguageLevel, adjustForCulturalContext]);
+
+  const generateReplies = useCallback(async () => {
+    setIsGenerating(true);
+    
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const generatedReplies = await generateContextualReplies(context);
+    setReplies(generatedReplies.slice(0, maxReplies));
+    setIsGenerating(false);
+  }, [context, maxReplies, generateContextualReplies]);
+
+  useEffect(() => {
+    if (isVisible && context.lastMessage) {
+      generateReplies();
     }
+  }, [isVisible, context.lastMessage, selectedTone, generateReplies]);
 
-    // Adjust for cultural context
-    if (ctx.culturalContext === 'formal') {
-      return replies.map(reply => ({
-        ...reply,
-        text: formalizeText(reply.text),
-        tone: reply.tone === 'casual' ? 'professional' : reply.tone
-      }));
-    }
 
-    return replies;
-  };
-
-  const simplifyText = (text: string): string => {
-    return text
-      .replace(/That's really interesting!/g, 'That's cool!')
-      .replace(/I completely agree with you on that/g, 'I agree!')
-      .replace(/Could you tell me more about what you mean by that\?/g, 'Can you explain more?')
-      .replace(/I understand how that can feel challenging/g, 'That sounds hard')
-      .replace(/Language learning is such a journey!/g, 'Learning languages is fun!');
-  };
-
-  const formalizeText = (text: string): string => {
-    return text
-      .replace(/That's cool!/g, 'That is quite interesting.')
-      .replace(/I agree!/g, 'I concur with your perspective.')
-      .replace(/😊/g, '')
-      .replace(/🤗/g, '')
-      .replace(/💪/g, '');
-  };
 
   const getToneColor = (tone: string) => {
     switch (tone) {

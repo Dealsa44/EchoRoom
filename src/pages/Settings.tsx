@@ -163,7 +163,7 @@ const Settings = () => {
       <div className="px-4 py-6 max-w-md mx-auto space-y-6">
         
         {/* App Language & Theme */}
-        <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />} defaultOpen={true}>
+        <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />}>
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Globe className="h-4 w-4" />

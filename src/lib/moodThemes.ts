@@ -331,7 +331,7 @@ export const getThemeSuggestions = (
     if (theme.id === currentTheme) return; // Skip current theme
     
     let confidence = 0;
-    let reasons: string[] = [];
+    const reasons: string[] = [];
     
     // Check trigger words
     const triggerMatches = theme.triggers.filter(trigger => 

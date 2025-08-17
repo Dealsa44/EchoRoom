@@ -181,7 +181,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         />
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInUp {
           from {
             opacity: 0;
