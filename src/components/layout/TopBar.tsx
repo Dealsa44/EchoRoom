@@ -110,7 +110,7 @@ const TopBar = ({
       </div>
       
       {/* Spacer to push content below fixed top bar */}
-      <div className="h-[calc(env(safe-area-inset-top)+0.5rem)]" />
+      <div className="h-[0.5rem]" />
 
       <NotificationModal 
         isOpen={showNotificationModal}

@@ -1063,65 +1063,65 @@
 /* Safe Area Support for Mobile Devices */
 @supports (padding: max(0px)) {
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-top: 0px;
   }
   
   .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+    padding-bottom: 0px;
   }
   
   .safe-left {
-    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-left: 0px;
   }
   
   .safe-right {
-    padding-right: max(env(safe-area-inset-right), 0px);
+    padding-right: 0px;
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.0625rem);
+    padding-top: 0px;
   }
   
   .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.0625rem);
+    padding-bottom: 0px;
   }
   
   .pl-safe {
-    padding-left: max(env(safe-area-inset-left), 0.0625rem);
+    padding-left: 0px;
   }
   
   .pr-safe {
-    padding-right: max(env(safe-area-inset-right), 0.0625rem);
+    padding-right: 0px;
   }
 }
 
 /* Fallback for devices without safe area support */
 @supports not (padding: max(0px)) {
   .safe-top {
-    padding-top: 0.0625rem;
+    padding-top: 0px;
   }
   
   .safe-bottom {
-    padding-bottom: 0.0625rem;
+    padding-bottom: 0px;
   }
   
   .pt-safe {
-    padding-top: 0.0625rem;
+    padding-top: 0px;
   }
   
   .pb-safe {
-    padding-bottom: 0.0625rem;
+    padding-bottom: 0px;
   }
 }
 
 /* iOS-specific adjustments */
 @supports (-webkit-touch-callout: none) {
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 0.0625rem);
+    padding-top: 0px;
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.0625rem);
+    padding-top: 0px;
   }
 }
 
@@ -1143,10 +1143,10 @@
 /* Mobile-specific adjustments */
 @media (max-width: 768px) {
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 0.0625rem);
+    padding-top: 0px;
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.0625rem);
+    padding-top: 0px;
   }
 }
