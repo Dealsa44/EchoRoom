@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -60,6 +61,23 @@ const CallScreen = ({
       startCall(participantId, participantName, participantAvatar, callType);
     }
   }, [isOpen, participantId, participantName, participantAvatar, callType, startCall, callState.isInCall]);
+
+  // Manage body classes when callscreen is active
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('callscreen-active');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('callscreen-active');
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('callscreen-active');
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   // Simulate video streams
   useEffect(() => {
@@ -146,8 +164,8 @@ const CallScreen = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black">
+  const callScreenContent = (
+    <div className="fixed inset-0 z-[9999] bg-black">
       {/* Video Background */}
       {callType === 'video' && (
         <div className="absolute inset-0">
@@ -162,7 +180,7 @@ const CallScreen = ({
           
           {/* Local Video (Picture-in-Picture) */}
           {callState.isVideoEnabled && (
-            <div className="absolute top-4 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg">
+            <div className="absolute top-20 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg z-10">
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -177,17 +195,17 @@ const CallScreen = ({
 
       {/* Call Overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80"
+        className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90"
         onClick={handleOverlayClick}
       >
         {/* Top Bar */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
               <div className="text-2xl">{participantAvatar}</div>
             </div>
-            <div>
-              <h2 className="text-white font-semibold text-lg">{participantName}</h2>
+            <div className="flex flex-col">
+              <h2 className="text-white font-semibold text-lg leading-tight">{participantName}</h2>
               <div className="flex items-center gap-2">
                 {getConnectionQualityIcon()}
                 <span className="text-white/80 text-sm">
@@ -201,7 +219,7 @@ const CallScreen = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+              className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
               onClick={() => setIsMinimized(!isMinimized)}
             >
               {isMinimized ? <Maximize2 size={20} /> : <Minimize2 size={20} />}
@@ -210,7 +228,7 @@ const CallScreen = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white"
+              className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
               onClick={() => setShowSettings(!showSettings)}
             >
               <Settings size={20} />
@@ -220,9 +238,9 @@ const CallScreen = ({
 
         {/* Center Content (for voice calls or when video is off) */}
         {callType === 'voice' || !callState.isVideoEnabled ? (
-          <div className="absolute top-20 bottom-32 left-0 right-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center pointer-events-none">
-              <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6">
+          <div className="absolute top-20 bottom-32 left-0 right-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-white/20">
                 <div className="text-6xl">{participantAvatar}</div>
               </div>
               <h2 className="text-white font-semibold text-2xl mb-2">{participantName}</h2>
@@ -234,13 +252,13 @@ const CallScreen = ({
         ) : null}
 
         {/* Call Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10">
           <div className="flex items-center justify-center gap-4">
             {/* Mute Button */}
             <Button
               variant="ghost"
               size="icon"
-              className={`h-14 w-14 rounded-full ${
+              className={`h-14 w-14 rounded-full border border-white/20 ${
                 callState.isMuted 
                   ? 'bg-red-500 hover:bg-red-600 text-white' 
                   : 'bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white'
@@ -255,7 +273,7 @@ const CallScreen = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-14 w-14 rounded-full ${
+                className={`h-14 w-14 rounded-full border border-white/20 ${
                   !callState.isVideoEnabled 
                     ? 'bg-red-500 hover:bg-red-600 text-white' 
                     : 'bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white'
@@ -270,7 +288,7 @@ const CallScreen = ({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-14 w-14 rounded-full ${
+              className={`h-14 w-14 rounded-full border border-white/20 ${
                 callState.isSpeakerOn 
                   ? 'bg-blue-500 hover:bg-blue-600 text-white' 
                   : 'bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white'
@@ -284,7 +302,7 @@ const CallScreen = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600 text-white"
+              className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600 text-white border border-red-400"
               onClick={handleEndCall}
             >
               <PhoneOff size={28} />
@@ -295,7 +313,7 @@ const CallScreen = ({
         {/* Settings Panel */}
         {showSettings && (
           <div 
-            className="absolute top-20 right-4 w-64 bg-black/80 backdrop-blur-sm rounded-lg p-4 border border-white/20 z-50"
+            className="absolute top-20 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-white font-semibold mb-3">Call Settings</h3>
@@ -320,11 +338,11 @@ const CallScreen = ({
             </div>
           </div>
         )}
-
-
       </div>
     </div>
   );
+
+  return createPortal(callScreenContent, document.body);
 };
 
 export default CallScreen;

@@ -1141,3 +1141,19 @@
     min-width: 44px;
   }
 }
+
+/* CallScreen Layout Fixes */
+/* Ensure callscreen properly overlays all content */
+.callscreen-active {
+  overflow: hidden !important;
+}
+
+/* Prevent any content from appearing above callscreen */
+.callscreen-active * {
+  z-index: auto !important;
+}
+
+/* Ensure proper stacking context for callscreen elements */
+.callscreen-active .fixed.inset-0 {
+  z-index: 9999 !important;
+}
