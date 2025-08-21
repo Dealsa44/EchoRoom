@@ -1079,49 +1079,49 @@
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.125rem);
+    padding-top: max(env(safe-area-inset-top), 0.0625rem);
   }
   
   .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.125rem);
+    padding-bottom: max(env(safe-area-inset-bottom), 0.0625rem);
   }
   
   .pl-safe {
-    padding-left: max(env(safe-area-inset-left), 0.125rem);
+    padding-left: max(env(safe-area-inset-left), 0.0625rem);
   }
   
   .pr-safe {
-    padding-right: max(env(safe-area-inset-right), 0.125rem);
+    padding-right: max(env(safe-area-inset-right), 0.0625rem);
   }
 }
 
 /* Fallback for devices without safe area support */
 @supports not (padding: max(0px)) {
   .safe-top {
-    padding-top: 0.125rem;
+    padding-top: 0.0625rem;
   }
   
   .safe-bottom {
-    padding-bottom: 0.125rem;
+    padding-bottom: 0.0625rem;
   }
   
   .pt-safe {
-    padding-top: 0.125rem;
+    padding-top: 0.0625rem;
   }
   
   .pb-safe {
-    padding-bottom: 0.125rem;
+    padding-bottom: 0.0625rem;
   }
 }
 
 /* iOS-specific adjustments */
 @supports (-webkit-touch-callout: none) {
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 0.125rem);
+    padding-top: max(env(safe-area-inset-top), 0.0625rem);
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.125rem);
+    padding-top: max(env(safe-area-inset-top), 0.0625rem);
   }
 }
 
@@ -1143,10 +1143,10 @@
 /* Mobile-specific adjustments */
 @media (max-width: 768px) {
   .safe-top {
-    padding-top: max(env(safe-area-inset-top), 0.125rem);
+    padding-top: max(env(safe-area-inset-top), 0.0625rem);
   }
   
   .pt-safe {
-    padding-top: max(env(safe-area-inset-top), 0.125rem);
+    padding-top: max(env(safe-area-inset-top), 0.0625rem);
   }
 }
