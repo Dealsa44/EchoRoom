@@ -485,7 +485,7 @@ const Match = () => {
   // see bottom of file for implementation
 
   return (
-    <div className="h-screen bg-background pb-20 relative overflow-hidden">
+    <div className="h-screen bg-background pb-20 relative overflow-hidden safe-top">
       {/* Simplified background for performance (mobile-first) */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[480px] h-[240px] rounded-full bg-gradient-hero opacity-[0.08] blur-3xl" />
@@ -515,7 +515,7 @@ const Match = () => {
       {/* Empty States - Full screen with fixed header */}
       {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
         <>
-          <div className="flex flex-col items-center justify-center px-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+          <div className="flex flex-col items-center justify-center px-4 pt-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
               <CardContent className="p-8 text-center">
                 <div className="text-5xl mb-6 animate-pulse">🔍</div>
@@ -538,7 +538,7 @@ const Match = () => {
 
       {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
         <>
-          <div className="flex flex-col items-center justify-center px-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+          <div className="flex flex-col items-center justify-center px-4 pt-4" style={{ height: 'calc(100vh - 160px - 80px)' }}>
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
               <CardContent className="p-8 text-center">
                 <div className="text-6xl mb-6 animate-bounce">🎉</div>
@@ -560,7 +560,7 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto pt-4">
 
           <div className="space-y-4 pb-40">
 
