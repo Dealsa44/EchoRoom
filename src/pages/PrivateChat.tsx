@@ -582,7 +582,7 @@ const PrivateChat = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-card border-b border-border shadow-soft">
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border shadow-soft">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button

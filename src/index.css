@@ -285,6 +285,10 @@
     /* Enhanced typography */
     line-height: var(--line-height-normal);
     letter-spacing: -0.01em;
+    
+    /* Prevent content from showing through fixed headers */
+    overflow-x: hidden;
+    position: relative;
   }
 
   /* Enhanced Typography Classes */
@@ -546,7 +550,7 @@
 /* Chat room specific styles */
 .chat-room-header {
   backdrop-filter: blur(16px) saturate(180%);
-  background: var(--glass-bg);
+  background: hsl(var(--background) / 0.95);
   border-bottom: 1px solid var(--glass-border);
 }
 
@@ -900,6 +904,8 @@
   will-change: transform;
 }
 
+
+
 .match-card-optimized {
   contain: layout style;
   transform: translateZ(0); /* Enable hardware acceleration */
@@ -1032,6 +1038,18 @@
 .match-card-optimized * {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Ensure proper overflow handling for the main app */
+#root {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ensure page containers don't overflow */
+.min-h-screen {
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Enhanced touch targets for mobile */

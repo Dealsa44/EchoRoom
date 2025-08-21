@@ -21,6 +21,12 @@ const BottomNavigation = () => {
              location.pathname === '/forum' ||
              location.pathname.startsWith('/forum/thread/');
     }
+    if (path === '/profile') {
+      // Profile is active for profile and its sub-pages
+      return location.pathname === '/profile' || 
+             location.pathname.startsWith('/profile/') ||
+             location.pathname === '/settings';
+    }
     return location.pathname === path;
   };
 
