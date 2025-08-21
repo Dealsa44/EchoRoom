@@ -29,6 +29,22 @@ export default defineConfig(({ mode }) => ({
     },
     chunkSizeWarningLimit: 1000,
     assetsDir: 'assets',
-    sourcemap: false
-  }
+    sourcemap: false,
+    // iOS Safari compatibility
+    target: 'es2015',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        drop_debugger: true,
+      },
+    },
+  },
+  // iOS Safari compatibility settings
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+  },
 }));

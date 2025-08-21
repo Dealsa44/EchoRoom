@@ -2,9 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0" />
     <title>EchoRoom - Thoughtful Conversations & Meaningful Connections</title>
     <link rel="icon" type="image/png" href="/EchoRoom.png" />
+    
+    <!-- iOS Safari Specific Fixes -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EchoRoom" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- iOS Safari Module Loading Fix -->
+    <script>
+      // Fix for iOS Safari module loading issues
+      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+        // Ensure proper module loading on iOS
+        window.addEventListener('load', function() {
+          // Force a repaint to ensure content is visible
+          document.body.style.display = 'none';
+          document.body.offsetHeight; // Trigger reflow
+          document.body.style.display = '';
+        });
+      }
+    </script>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -17,11 +39,6 @@
     <!-- Apple Touch Icons for iOS -->
     <link rel="apple-touch-icon" href="/EchoRoom.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/EchoRoom.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="EchoRoom" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="mobile-web-app-capable" content="yes" />
     
     <!-- Primary Meta Tags -->
     <meta name="title" content="EchoRoom - Thoughtful Conversations & Meaningful Connections" />
@@ -49,7 +66,6 @@
     <!-- Additional SEO Meta Tags -->
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
-    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Speed up external image fetches -->
     <meta http-equiv="x-dns-prefetch-control" content="on" />
@@ -61,17 +77,23 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration with iOS Safari Fix -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.error('SW registration failed: ', registrationError);
-            });
+          // Delay service worker registration on iOS to prevent interference
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const delay = isIOS ? 2000 : 0;
+          
+          setTimeout(() => {
+            navigator.serviceWorker.register('/sw.js')
+              .then((registration) => {
+                console.log('SW registered: ', registration);
+              })
+              .catch((registrationError) => {
+                console.error('SW registration failed: ', registrationError);
+              });
+          }, delay);
         });
       }
     </script>

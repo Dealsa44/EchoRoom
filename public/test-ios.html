@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0">
+    <title>iOS Test Page - EchoRoom</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>iOS Safari Test Page</h1>
+        
+        <div id="status" class="status info">
+            Testing iOS Safari compatibility...
+        </div>
+        
+        <div id="userAgent" class="status info">
+            <strong>User Agent:</strong> <span id="ua-text"></span>
+        </div>
+        
+        <div id="features" class="status info">
+            <strong>Features:</strong>
+            <ul id="features-list"></ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="testMainApp()">Test Main App</button>
+            <button onclick="location.reload()">Refresh Page</button>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addFeature(feature, supported) {
+            const list = document.getElementById('features-list');
+            const li = document.createElement('li');
+            li.textContent = `${feature}: ${supported ? '✅' : '❌'}`;
+            li.style.color = supported ? '#155724' : '#721c24';
+            list.appendChild(li);
+        }
+
+        // Display user agent
+        document.getElementById('ua-text').textContent = navigator.userAgent;
+
+        // Test iOS detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        updateStatus(`iOS detected: ${isIOS ? 'Yes' : 'No'}`, isIOS ? 'success' : 'info');
+
+        // Test various features
+        addFeature('Service Worker', 'serviceWorker' in navigator);
+        addFeature('Local Storage', typeof(Storage) !== "undefined");
+        addFeature('Session Storage', typeof(sessionStorage) !== "undefined");
+        addFeature('IndexedDB', 'indexedDB' in window);
+        addFeature('Touch Events', 'ontouchstart' in window);
+        addFeature('WebGL', 'WebGLRenderingContext' in window);
+        addFeature('Fetch API', 'fetch' in window);
+        addFeature('Promise', 'Promise' in window);
+        addFeature('Async/Await', (() => {
+            try {
+                new Function('async () => {}');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        })());
+
+        function testMainApp() {
+            updateStatus('Redirecting to main app...', 'info');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
+
+        // Test if page loads properly
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                updateStatus('Page loaded successfully! iOS Safari compatibility test complete.', 'success');
+            }, 500);
+        });
+
+        // Test error handling
+        window.addEventListener('error', (e) => {
+            updateStatus(`Error detected: ${e.message}`, 'error');
+        });
+    </script>
+</body>
+</html>

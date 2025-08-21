@@ -1,17 +1,24 @@
-const CACHE_NAME = 'echoroom-v4';
+const CACHE_NAME = 'echoroom-v5';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
   '/manifest.json'
 ];
 
+// Check if running on iOS
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 // Install service worker and cache resources
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error('Cache installation failed:', error);
       })
   );
 });
@@ -20,21 +27,31 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
+  // Skip service worker for iOS Safari to prevent interference
+  if (isIOS && request.mode === 'navigate') {
+    return;
+  }
+
   // Images: Cache-first with stale-while-revalidate
   if (request.destination === 'image') {
     event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(request);
-      const networkFetch = fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        })
-        .catch(() => cached);
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(request);
+        const networkFetch = fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          })
+          .catch(() => cached);
 
-      return cached || networkFetch;
+        return cached || networkFetch;
+      } catch (error) {
+        console.error('Image fetch error:', error);
+        return fetch(request);
+      }
     })());
     return;
   }
@@ -54,11 +71,16 @@ self.addEventListener('fetch', (event) => {
           return new Response('Network error', { status: 408 });
         });
       })
+      .catch((error) => {
+        console.error('Fetch error:', error);
+        return fetch(request);
+      })
   );
 });
 
 // Activate service worker and clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
