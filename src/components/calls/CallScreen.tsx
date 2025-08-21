@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/utils';
 import { 
   Phone, 
   PhoneOff, 
@@ -66,16 +67,16 @@ const CallScreen = ({
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('callscreen-active');
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
     } else {
       document.body.classList.remove('callscreen-active');
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     }
 
     // Cleanup on unmount
     return () => {
       document.body.classList.remove('callscreen-active');
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     };
   }, [isOpen]);
 

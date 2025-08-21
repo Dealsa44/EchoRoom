@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Bot, MessageCircle, BookOpen, Target, Zap, Lightbulb, Mic, Headphones, PenTool, Eye, Brain, Star, TrendingUp, Award } from 'lucide-react';
 import { useLanguageAI } from '@/contexts/LanguageAIContext';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
 interface AIAssistantModalProps {
@@ -74,13 +75,13 @@ const AIAssistantModal = ({ isOpen, onClose }: AIAssistantModalProps) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
     } else {
-      document.body.style.overflow = 'unset';
+      unlockBodyScroll();
     }
     
     return () => {
-      document.body.style.overflow = 'unset';
+      unlockBodyScroll();
     };
   }, [isOpen]);
 

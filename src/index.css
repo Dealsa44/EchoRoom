@@ -18,23 +18,17 @@
     flex-direction: column;
   }
   
-  /* Ensure proper viewport handling on iOS */
+  /* Enhanced mobile scrolling with proper touch handling */
   @media screen and (max-width: 768px) {
-    body {
-      position: fixed;
-      width: 100%;
+    html, body {
       height: 100%;
-      overflow: hidden;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
     }
     
     #root {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
   }
 }
@@ -1149,6 +1143,33 @@
   }
 }
 
+/* Enhanced mobile scrolling fixes */
+@media (max-width: 768px) {
+  /* Ensure proper touch scrolling on mobile */
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Prevent horizontal scrolling issues */
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  /* Ensure proper scrolling containers */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Fix for iOS Safari momentum scrolling */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 /* Ensure smooth scroll behavior */
 .matches-container {
   scroll-behavior: smooth;
@@ -1163,6 +1184,16 @@
 
 /* Ensure proper overflow handling for the main app */
 #root {
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure proper scrolling for the main app container */
+.app-container {
+  flex: 1;
   overflow-x: hidden;
   position: relative;
 }

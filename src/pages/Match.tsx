@@ -15,6 +15,7 @@ import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
 import { useApp } from '@/contexts/AppContext';
 import { getAttractionPreferences } from '@/contexts/app-utils';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { Profile } from '@/types';
 import { mockProfiles } from '@/data/mockProfiles';
@@ -101,13 +102,13 @@ const Match = () => {
   // Prevent body scroll when modals are open
   useEffect(() => {
     if (showIceBreakers || showConversationStarters || filtersExpanded) {
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
     } else {
-      document.body.style.overflow = 'unset';
+      unlockBodyScroll();
     }
     
     return () => {
-      document.body.style.overflow = 'unset';
+      unlockBodyScroll();
     };
   }, [showIceBreakers, showConversationStarters, filtersExpanded]);
 
