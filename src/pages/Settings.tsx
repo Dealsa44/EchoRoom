@@ -163,7 +163,7 @@ const Settings = () => {
     <div className="min-h-screen bg-background pb-20">
       <TopBar title="Settings" showBack />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-20">
         
         {/* App Language & Theme */}
         <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />}>

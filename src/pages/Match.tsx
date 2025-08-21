@@ -560,7 +560,7 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto pt-20">
 
           <div className="space-y-4 pb-40">
 
