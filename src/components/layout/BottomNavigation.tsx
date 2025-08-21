@@ -10,6 +10,7 @@ const BottomNavigation = () => {
     { icon: Mail, label: 'Messages', path: '/chat-inbox' },
     { icon: Heart, label: 'Match', path: '/match' },
     { icon: Users, label: 'Community', path: '/community' },
+    { icon: User, label: 'Profile', path: '/profile' },
   ];
 
   const isActive = (path: string) => {

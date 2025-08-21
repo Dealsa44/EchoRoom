@@ -26,6 +26,9 @@ interface User {
   aiAssistant: boolean;
   dateOfBirth: string;
   age: number;
+  location: string;
+  hometown?: string;
+  relationshipStatus?: string;
   genderIdentity: GenderIdentity;
   orientation: Orientation;
   lookingForRelationship: boolean;
@@ -34,7 +37,7 @@ interface User {
   customOrientation?: string;
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
-  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';
   education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
@@ -54,6 +57,8 @@ export interface RegisterData {
   password: string;
   dateOfBirth: string; // ISO date string (YYYY-MM-DD)
   location: string;
+  hometown?: string;
+  relationshipStatus?: string;
   languages: UserLanguage[];
   chatStyle: 'introvert' | 'ambievert' | 'extrovert';
   interests: string[];
@@ -69,7 +74,7 @@ export interface RegisterData {
   // Lifestyle fields
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
-  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';
   education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
@@ -228,6 +233,8 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       dateOfBirth: data.dateOfBirth,
       age: calculateAge(data.dateOfBirth),
       location: data.location,
+      hometown: data.hometown,
+      relationshipStatus: data.relationshipStatus,
       // New fields for gender and orientation
       genderIdentity: data.genderIdentity,
       orientation: data.orientation,

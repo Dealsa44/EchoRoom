@@ -34,6 +34,9 @@ interface User {
   // Date of birth and calculated age
   dateOfBirth: string; // ISO date string (YYYY-MM-DD)
   age: number; // Calculated from dateOfBirth
+  location: string;
+  hometown?: string;
+  relationshipStatus?: string;
   // Fields for gender and orientation
   genderIdentity: GenderIdentity;
   orientation: Orientation;
@@ -44,7 +47,7 @@ interface User {
   // New lifestyle fields
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
-  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';
   education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';

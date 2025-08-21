@@ -13,6 +13,8 @@ export interface Profile {
   avatar: string;
   age: number;
   location: string;
+  hometown?: string;
+  relationshipStatus?: string;
   distance: number;
   bio: string;
   about: string;
@@ -31,7 +33,7 @@ export interface Profile {
   relationshipType?: string;
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
-  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';
   education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';

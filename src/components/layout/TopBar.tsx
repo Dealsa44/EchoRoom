@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal, User } from 'lucide-react';
+import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { useState } from 'react';
@@ -13,7 +13,6 @@ interface TopBarProps {
   showDarkModeToggle?: boolean;
   showAIAssistant?: boolean;
   showBack?: boolean;
-  showProfile?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
 }
@@ -25,7 +24,6 @@ const TopBar = ({
   showDarkModeToggle = true,
   showAIAssistant = true,
   showBack = false,
-  showProfile = true,
   onBack,
   rightAction
 }: TopBarProps) => {
@@ -70,17 +68,6 @@ const TopBar = ({
           
           <div className="flex items-center gap-1 flex-shrink-0">
             {rightAction && rightAction}
-            
-            {showProfile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/profile')}
-                className="group hover:scale-110 transition-spring hover:bg-primary/10 relative"
-              >
-                <User size={20} className="group-hover:text-primary transition-smooth" />
-              </Button>
-            )}
             
             {showAIAssistant && (
               <Button

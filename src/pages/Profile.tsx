@@ -11,6 +11,50 @@ import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/contexts/AppContext';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 
+// Helper function to format children display
+const formatChildrenDisplay = (hasChildren: string): string => {
+  switch (hasChildren) {
+    case 'no':
+      return 'No';
+    case 'yes':
+      return 'Yes';
+    case 'want-someday':
+      return 'Want someday';
+    case 'have-and-want-more':
+      return 'Have and want more';
+    case 'have-and-dont-want-more':
+      return 'Have and don\'t want more';
+    case 'not-sure-yet':
+      return 'Not sure yet';
+    default:
+      return hasChildren.replace('-', ' ');
+  }
+};
+
+// Helper function to format relationship status display
+const formatRelationshipStatus = (status: string): string => {
+  switch (status) {
+    case 'single':
+      return 'Single';
+    case 'in-a-relationship':
+      return 'In a relationship';
+    case 'engaged':
+      return 'Engaged';
+    case 'married':
+      return 'Married';
+    case 'divorced':
+      return 'Divorced';
+    case 'widowed':
+      return 'Widowed';
+    case 'separated':
+      return 'Separated';
+    case 'complicated':
+      return 'It\'s complicated';
+    default:
+      return status.replace('-', ' ');
+  }
+};
+
 // Define User interface locally to match AppContext
 interface UserType {
   id: string;
@@ -37,7 +81,8 @@ interface UserType {
   ethnicity?: string;
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
-  hasChildren: 'no' | 'yes' | 'planning' | 'prefer-not-to-say';
+  hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';
+  relationshipStatus?: string;
   education: 'high-school' | 'bachelor' | 'master' | 'phd' | 'other' | 'prefer-not-to-say';
   occupation: string;
   religion: 'christianity' | 'islam' | 'judaism' | 'hinduism' | 'buddhism' | 'atheist' | 'agnostic' | 'other' | 'prefer-not-to-say';
@@ -368,6 +413,7 @@ const Profile = () => {
                   </Badge>
                 </div>
               </div>
+
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
                 <p className="text-muted-foreground">Age</p>
                 <p className="mt-1 font-medium">
@@ -380,6 +426,14 @@ const Profile = () => {
                     {isOwnProfile ? ((user as any)?.location || 'Not set') : (profileData?.location || 'Not specified')}
                   </p>
               </div>
+              {(isOwnProfile ? (user as any)?.hometown : profileData?.hometown) && (
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
+                  <p className="text-muted-foreground">Hometown</p>
+                  <p className="mt-1 font-medium">
+                    {isOwnProfile ? (user as any)?.hometown : profileData?.hometown}
+                  </p>
+                </div>
+              )}
             </div>
             {(isOwnProfile ? user?.about : (profileData as any)?.about) && (
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
@@ -462,6 +516,14 @@ const Profile = () => {
                   <p className="text-muted-foreground">Personality</p>
                   <p className="mt-1 font-medium capitalize">
                     {isOwnProfile ? (user?.chatStyle || 'Not set') : (profileData?.chatStyle || 'Not specified')}
+                  </p>
+                </div>
+                <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '225ms' }}>
+                  <p className="text-muted-foreground">Relationship Status</p>
+                  <p className="mt-1 font-medium">
+                    {isOwnProfile
+                      ? (user?.relationshipStatus && user.relationshipStatus !== 'prefer-not-to-say' ? formatRelationshipStatus(user.relationshipStatus) : 'Not specified')
+                      : ((profileData as any)?.relationshipStatus && (profileData as any).relationshipStatus !== 'prefer-not-to-say' ? formatRelationshipStatus((profileData as any).relationshipStatus) : 'Not specified')}
                   </p>
                 </div>
               </div>
@@ -579,10 +641,11 @@ const Profile = () => {
                 <p className="text-muted-foreground">Children</p>
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
-                    ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' ? user.hasChildren.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' ? (profileData as any).hasChildren.replace('-', ' ') : 'Not specified')}
+                    ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' ? formatChildrenDisplay(user.hasChildren) : 'Not specified')
+                    : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' ? formatChildrenDisplay((profileData as any).hasChildren) : 'Not specified')}
                 </p>
               </div>
+
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '450ms' }}>
                 <p className="text-muted-foreground">Education</p>
                 <p className="mt-1 font-medium capitalize">

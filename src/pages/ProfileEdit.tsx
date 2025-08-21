@@ -31,6 +31,107 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import PhotoUpload from '@/components/ui/PhotoUpload';
 import { Photo, photoStorage } from '@/lib/photoStorage';
 
+// Helper function to get language display name (short name only)
+const getLanguageDisplayName = (languageCode: string): string => {
+  const languageMap: Record<string, string> = {
+    'english': 'English',
+    'spanish': 'Spanish',
+    'french': 'French',
+    'german': 'German',
+    'italian': 'Italian',
+    'portuguese': 'Portuguese',
+    'russian': 'Russian',
+    'chinese': 'Chinese',
+    'japanese': 'Japanese',
+    'korean': 'Korean',
+    'arabic': 'Arabic',
+    'hindi': 'Hindi',
+    'bengali': 'Bengali',
+    'urdu': 'Urdu',
+    'indonesian': 'Indonesian',
+    'malay': 'Malay',
+    'thai': 'Thai',
+    'vietnamese': 'Vietnamese',
+    'turkish': 'Turkish',
+    'persian': 'Persian',
+    'hebrew': 'Hebrew',
+    'greek': 'Greek',
+    'polish': 'Polish',
+    'czech': 'Czech',
+    'slovak': 'Slovak',
+    'hungarian': 'Hungarian',
+    'romanian': 'Romanian',
+    'bulgarian': 'Bulgarian',
+    'croatian': 'Croatian',
+    'serbian': 'Serbian',
+    'slovenian': 'Slovenian',
+    'dutch': 'Dutch',
+    'swedish': 'Swedish',
+    'norwegian': 'Norwegian',
+    'danish': 'Danish',
+    'finnish': 'Finnish',
+    'icelandic': 'Icelandic',
+    'latvian': 'Latvian',
+    'lithuanian': 'Lithuanian',
+    'estonian': 'Estonian',
+    'ukrainian': 'Ukrainian',
+    'belarusian': 'Belarusian',
+    'kazakh': 'Kazakh',
+    'uzbek': 'Uzbek',
+    'kyrgyz': 'Kyrgyz',
+    'tajik': 'Tajik',
+    'turkmen': 'Turkmen',
+    'azerbaijani': 'Azerbaijani',
+    'armenian': 'Armenian',
+    'georgian': 'Georgian',
+    'mongolian': 'Mongolian',
+    'nepali': 'Nepali',
+    'sinhala': 'Sinhala',
+    'tamil': 'Tamil',
+    'telugu': 'Telugu',
+    'marathi': 'Marathi',
+    'gujarati': 'Gujarati',
+    'punjabi': 'Punjabi',
+    'kannada': 'Kannada',
+    'malayalam': 'Malayalam',
+    'odia': 'Odia',
+    'assamese': 'Assamese',
+    'maithili': 'Maithili',
+    'santali': 'Santali',
+    'kashmiri': 'Kashmiri',
+    'dogri': 'Dogri',
+    'konkani': 'Konkani',
+    'manipuri': 'Manipuri',
+    'bodo': 'Bodo',
+    'sanskrit': 'Sanskrit',
+    'khmer': 'Khmer',
+    'lao': 'Lao',
+    'myanmar': 'Myanmar',
+    'filipino': 'Filipino',
+    'swahili': 'Swahili',
+    'amharic': 'Amharic',
+    'yoruba': 'Yoruba',
+    'igbo': 'Igbo',
+    'hausa': 'Hausa',
+    'zulu': 'Zulu',
+    'xhosa': 'Xhosa',
+    'afrikaans': 'Afrikaans',
+    'somali': 'Somali',
+    'oromo': 'Oromo',
+    'tigrinya': 'Tigrinya',
+    'albanian': 'Albanian',
+    'macedonian': 'Macedonian',
+    'bosnian': 'Bosnian',
+    'montenegrin': 'Montenegrin',
+    'maltese': 'Maltese',
+    'catalan': 'Catalan',
+    'basque': 'Basque',
+    'galician': 'Galician',
+    'welsh': 'Welsh'
+  };
+  return languageMap[languageCode] || languageCode;
+};
+
 // CollapsibleSection Component
 interface CollapsibleSectionProps {
   title: string;
@@ -132,6 +233,8 @@ const ProfileEdit = () => {
     }),
     chatStyle: user?.chatStyle || '',
     location: (user as any)?.location || '',
+    hometown: (user as any)?.hometown || '',
+    relationshipStatus: (user as any)?.relationshipStatus || 'prefer-not-to-say',
     smoking: user?.smoking || 'prefer-not-to-say',
     drinking: user?.drinking || 'prefer-not-to-say',
     hasChildren: user?.hasChildren || 'prefer-not-to-say',
@@ -234,6 +337,8 @@ const ProfileEdit = () => {
         languages: formData.languages.filter(lang => lang.language && lang.level),
         chatStyle: formData.chatStyle,
         location: formData.location,
+        hometown: formData.hometown,
+        relationshipStatus: formData.relationshipStatus,
         smoking: formData.smoking,
         drinking: formData.drinking,
         hasChildren: formData.hasChildren,
@@ -373,120 +478,7 @@ const ProfileEdit = () => {
                       >
                                               <SelectTrigger id={`language-${index}`} className={`h-9 ${languageErrors[index] ? 'border-red-500' : ''}`}>
                         <SelectValue placeholder={lang.language ? undefined : "Select"}>
-                          {lang.language === 'english' ? '🇺🇸 English' : 
-                           lang.language === 'spanish' ? '🇪🇸 Spanish' :
-                           lang.language === 'french' ? '🇫🇷 French' :
-                           lang.language === 'german' ? '🇩🇪 German' :
-                           lang.language === 'italian' ? '🇮🇹 Italian' :
-                           lang.language === 'portuguese' ? '🇵🇹 Portuguese' :
-                           lang.language === 'russian' ? '🇷🇺 Russian' :
-                           lang.language === 'chinese' ? '🇨🇳 Chinese' :
-                           lang.language === 'japanese' ? '🇯🇵 Japanese' :
-                           lang.language === 'korean' ? '🇰🇷 Korean' :
-                           lang.language === 'arabic' ? '🇸🇦 Arabic' :
-                           lang.language === 'hindi' ? '🇮🇳 Hindi' :
-                           lang.language === 'bengali' ? '🇧🇩 Bengali' :
-                           lang.language === 'urdu' ? '🇵🇰 Urdu' :
-                           lang.language === 'indonesian' ? '🇮🇩 Indonesian' :
-                           lang.language === 'malay' ? '🇲🇾 Malay' :
-                           lang.language === 'thai' ? '🇹🇭 Thai' :
-                           lang.language === 'vietnamese' ? '🇻🇳 Vietnamese' :
-                           lang.language === 'turkish' ? '🇹🇷 Turkish' :
-                           lang.language === 'persian' ? '🇮🇷 Persian' :
-                           lang.language === 'hebrew' ? '🇮🇱 Hebrew' :
-                           lang.language === 'greek' ? '🇬🇷 Greek' :
-                           lang.language === 'polish' ? '🇵🇱 Polish' :
-                           lang.language === 'czech' ? '🇨🇿 Czech' :
-                           lang.language === 'slovak' ? '🇸🇰 Slovak' :
-                           lang.language === 'hungarian' ? '🇭🇺 Hungarian' :
-                           lang.language === 'romanian' ? '🇷🇴 Romanian' :
-                           lang.language === 'bulgarian' ? '🇧🇬 Bulgarian' :
-                           lang.language === 'croatian' ? '🇭🇷 Croatian' :
-                           lang.language === 'serbian' ? '🇷🇸 Serbian' :
-                           lang.language === 'slovenian' ? '🇸🇮 Slovenian' :
-                           lang.language === 'dutch' ? '🇳🇱 Dutch' :
-                           lang.language === 'swedish' ? '🇸🇪 Swedish' :
-                           lang.language === 'norwegian' ? '🇳🇴 Norwegian' :
-                           lang.language === 'danish' ? '🇩🇰 Danish' :
-                           lang.language === 'finnish' ? '🇫🇮 Finnish' :
-                           lang.language === 'icelandic' ? '🇮🇸 Icelandic' :
-                           lang.language === 'latvian' ? '🇱🇻 Latvian' :
-                           lang.language === 'lithuanian' ? '🇱🇹 Lithuanian' :
-                           lang.language === 'estonian' ? '🇪🇪 Estonian' :
-                           lang.language === 'ukrainian' ? '🇺🇦 Ukrainian' :
-                           lang.language === 'belarusian' ? '🇧🇾 Belarusian' :
-                           lang.language === 'kazakh' ? '🇰🇿 Kazakh' :
-                           lang.language === 'uzbek' ? '🇺🇿 Uzbek' :
-                           lang.language === 'kyrgyz' ? '🇰🇬 Kyrgyz' :
-                           lang.language === 'tajik' ? '🇹🇯 Tajik' :
-                           lang.language === 'turkmen' ? '🇹🇲 Turkmen' :
-                           lang.language === 'azerbaijani' ? '🇦🇿 Azerbaijani' :
-                           lang.language === 'armenian' ? '🇦🇲 Armenian' :
-                           lang.language === 'georgian' ? '🇬🇪 Georgian' :
-                           lang.language === 'mongolian' ? '🇲🇳 Mongolian' :
-                           lang.language === 'nepali' ? '🇳🇵 Nepali' :
-                           lang.language === 'sinhala' ? '🇱🇰 Sinhala' :
-                           lang.language === 'tamil' ? '🇮🇳 Tamil' :
-                           lang.language === 'telugu' ? '🇮🇳 Telugu' :
-                           lang.language === 'marathi' ? '🇮🇳 Marathi' :
-                           lang.language === 'gujarati' ? '🇮🇳 Gujarati' :
-                           lang.language === 'punjabi' ? '🇮🇳 Punjabi' :
-                           lang.language === 'kannada' ? '🇮🇳 Kannada' :
-                           lang.language === 'malayalam' ? '🇮🇳 Malayalam' :
-                           lang.language === 'odia' ? '🇮🇳 Odia' :
-                           lang.language === 'assamese' ? '🇮🇳 Assamese' :
-                           lang.language === 'maithili' ? '🇮🇳 Maithili' :
-                           lang.language === 'santali' ? '🇮🇳 Santali' :
-                           lang.language === 'kashmiri' ? '🇮🇳 Kashmiri' :
-                           lang.language === 'dogri' ? '🇮🇳 Dogri' :
-                           lang.language === 'konkani' ? '🇮🇳 Konkani' :
-                           lang.language === 'manipuri' ? '🇮🇳 Manipuri' :
-                           lang.language === 'bodo' ? '🇮🇳 Bodo' :
-                           lang.language === 'sanskrit' ? '🇮🇳 Sanskrit' :
-                           lang.language === 'khmer' ? '🇰🇭 Khmer' :
-                           lang.language === 'lao' ? '🇱🇦 Lao' :
-                           lang.language === 'myanmar' ? '🇲🇲 Myanmar' :
-                           lang.language === 'filipino' ? '🇵🇭 Filipino' :
-                           lang.language === 'swahili' ? '🇹🇿 Swahili' :
-                           lang.language === 'amharic' ? '🇪🇹 Amharic' :
-                           lang.language === 'yoruba' ? '🇳🇬 Yoruba' :
-                           lang.language === 'igbo' ? '🇳🇬 Igbo' :
-                           lang.language === 'hausa' ? '🇳🇬 Hausa' :
-                           lang.language === 'zulu' ? '🇿🇦 Zulu' :
-                           lang.language === 'xhosa' ? '🇿🇦 Xhosa' :
-                           lang.language === 'afrikaans' ? '🇿🇦 Afrikaans' :
-                           lang.language === 'somali' ? '🇸🇴 Somali' :
-                           lang.language === 'oromo' ? '🇪🇹 Oromo' :
-                           lang.language === 'tigrinya' ? '🇪🇷 Tigrinya' :
-                           lang.language === 'albanian' ? '🇦🇱 Albanian' :
-                           lang.language === 'macedonian' ? '🇲🇰 Macedonian' :
-                           lang.language === 'bosnian' ? '🇧🇦 Bosnian' :
-                           lang.language === 'montenegrin' ? '🇲🇪 Montenegrin' :
-                           lang.language === 'maltese' ? '🇲🇹 Maltese' :
-                           lang.language === 'catalan' ? '🇪🇸 Catalan' :
-                           lang.language === 'basque' ? '🇪🇸 Basque' :
-                           lang.language === 'galician' ? '🇪🇸 Galician' :
-                           lang.language === 'welsh' ? '🇬🇧 Welsh' :
-                           lang.language === 'scottish' ? '🇬🇧 Scottish Gaelic' :
-                           lang.language === 'irish' ? '🇮🇪 Irish' :
-                           lang.language === 'breton' ? '🇫🇷 Breton' :
-                           lang.language === 'corsican' ? '🇫🇷 Corsican' :
-                           lang.language === 'occitan' ? '🇫🇷 Occitan' :
-                           lang.language === 'luxembourgish' ? '🇱🇺 Luxembourgish' :
-                           lang.language === 'frisian' ? '🇳🇱 Frisian' :
-                           lang.language === 'faroese' ? '🇫🇴 Faroese' :
-                           lang.language === 'greenlandic' ? '🇬🇱 Greenlandic' :
-                           lang.language === 'sami' ? '🇳🇴 Sami' :
-                           lang.language === 'karelian' ? '🇫🇮 Karelian' :
-                           lang.language === 'votic' ? '🇪🇪 Votic' :
-                           lang.language === 'livonian' ? '🇱🇻 Livonian' :
-                           lang.language === 'ingrian' ? '🇷🇺 Ingrian' :
-                           lang.language === 'veps' ? '🇷🇺 Veps' :
-                           lang.language === 'ludic' ? '🇷🇺 Ludic' :
-                           lang.language === 'kven' ? '🇳🇴 Kven' :
-                           lang.language === 'meankieli' ? '🇫🇮 Meänkieli' :
-                           lang.language === 'tornedalen' ? '🇸🇪 Tornedalen Finnish' :
-                           lang.language || ''}
+                          {lang.language ? getLanguageDisplayName(lang.language) : undefined}
                         </SelectValue>
                       </SelectTrigger>
                                                 <SelectContent className="max-h-[300px]">
@@ -735,6 +727,18 @@ const ProfileEdit = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="hometown">Hometown (Optional)</Label>
+              <Input
+                id="hometown"
+                name="hometown"
+                value={formData.hometown}
+                onChange={(e) => setFormData(prev => ({ ...prev, hometown: e.target.value }))}
+                placeholder="Where are you from?"
+                autoComplete="address-level1"
+              />
+            </div>
+
 
 
             {/* Interests Section */}
@@ -878,6 +882,30 @@ const ProfileEdit = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="relationshipStatus">Relationship Status</Label>
+              <Select 
+                name="relationshipStatus"
+                value={formData.relationshipStatus} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, relationshipStatus: value }))}
+              >
+                <SelectTrigger id="relationshipStatus">
+                  <SelectValue placeholder="Select your relationship status" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="in-a-relationship">In a relationship</SelectItem>
+                  <SelectItem value="engaged">Engaged</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                  <SelectItem value="separated">Separated</SelectItem>
+                  <SelectItem value="complicated">It's complicated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="chatStyle">Personality</Label>
               <Select 
                 name="chatStyle"
@@ -1012,7 +1040,7 @@ const ProfileEdit = () => {
                       <Select 
                         name="hasChildren"
                         value={formData.hasChildren} 
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, hasChildren: value as 'no' | 'yes' | 'planning' | 'prefer-not-to-say' }))}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, hasChildren: value as 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say' }))}
                       >
                         <SelectTrigger id="hasChildren">
                           <SelectValue placeholder="Not specified" />
@@ -1021,10 +1049,15 @@ const ProfileEdit = () => {
                           <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
                           <SelectItem value="no">No</SelectItem>
                           <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="planning">Planning</SelectItem>
+                          <SelectItem value="want-someday">Want someday</SelectItem>
+                          <SelectItem value="have-and-want-more">Have and want more</SelectItem>
+                          <SelectItem value="have-and-dont-want-more">Have and don't want more</SelectItem>
+                          <SelectItem value="not-sure-yet">Not sure yet</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+
 
                     <div className="space-y-2">
                       <Label htmlFor="education">Education</Label>
