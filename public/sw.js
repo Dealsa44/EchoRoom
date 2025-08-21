@@ -2,7 +2,6 @@ const CACHE_NAME = 'echoroom-v4';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
-  '/favicon.ico',
   '/manifest.json'
 ];
 

@@ -170,8 +170,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       try {
         const browserNotification = new Notification(notification.title, {
           body: notification.body,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
+          icon: '/EchoRoom.png',
+          badge: '/EchoRoom.png',
           tag: notification.chatId || 'echoroom-chat',
           requireInteraction: false,
           silent: false
