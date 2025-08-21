@@ -31,6 +31,7 @@ import {
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { useApp } from '@/contexts/AppContext';
+import { useCall } from '@/contexts/CallContext';
 import { toast } from '@/hooks/use-toast';
 
 // CollapsibleSection Component
@@ -69,6 +70,7 @@ const CollapsibleSection = ({ title, icon, children, defaultOpen = false }: Coll
 const Settings = () => {
   const navigate = useNavigate();
   const { user, setUser, language, setLanguage, toggleDarkMode, isDarkMode, safeMode, setSafeMode } = useApp();
+  const { callSettings, updateCallSettings } = useCall();
   
   // Password change state
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -485,6 +487,96 @@ const Settings = () => {
                 />
               </div>
             </div>
+        </CollapsibleSection>
+
+        {/* Call Settings */}
+        <CollapsibleSection title="Call Settings" icon={<Phone className="h-4 w-4" />}>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium">Video Quality</Label>
+              <Select 
+                value={callSettings.videoQuality} 
+                onValueChange={(value: 'low' | 'medium' | 'high') => updateCallSettings({ videoQuality: value })}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Save Data)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Best Quality)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium">Audio Quality</Label>
+              <Select 
+                value={callSettings.audioQuality} 
+                onValueChange={(value: 'low' | 'medium' | 'high') => updateCallSettings({ audioQuality: value })}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Save Data)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Best Quality)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Auto-Answer Calls</Label>
+                <p className="text-xs text-muted-foreground">Automatically answer incoming calls</p>
+              </div>
+              <Switch 
+                checked={callSettings.autoAnswer} 
+                onCheckedChange={(checked) => updateCallSettings({ autoAnswer: checked })} 
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Auto-Mute</Label>
+                <p className="text-xs text-muted-foreground">Start calls with microphone muted</p>
+              </div>
+              <Switch 
+                checked={callSettings.autoMute} 
+                onCheckedChange={(checked) => updateCallSettings({ autoMute: checked })} 
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Speaker Default</Label>
+                <p className="text-xs text-muted-foreground">Use speaker by default for calls</p>
+              </div>
+              <Switch 
+                checked={callSettings.speakerDefault} 
+                onCheckedChange={(checked) => updateCallSettings({ speakerDefault: checked })} 
+              />
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium">Bandwidth Limit</Label>
+              <Select 
+                value={callSettings.bandwidthLimit} 
+                onValueChange={(value: 'low' | 'medium' | 'high' | 'unlimited') => updateCallSettings({ bandwidthLimit: value })}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Save Data)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Good Quality)</SelectItem>
+                  <SelectItem value="unlimited">Unlimited (Best Quality)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CollapsibleSection>
 
         {/* Sound & Vibration */}

@@ -111,3 +111,46 @@ export interface SmartReply {
   tone: 'formal' | 'casual' | 'warm' | 'professional';
   emoji?: string;
 }
+
+// Call System Types
+export type CallType = 'voice' | 'video';
+export type CallStatus = 'incoming' | 'outgoing' | 'ongoing' | 'completed' | 'missed' | 'declined' | 'ended';
+export type CallDirection = 'incoming' | 'outgoing';
+
+export interface CallRecord {
+  id: string;
+  participantId: string;
+  participantName: string;
+  participantAvatar: string;
+  type: CallType;
+  status: CallStatus;
+  direction: CallDirection;
+  startTime: Date;
+  endTime?: Date;
+  duration: number; // in seconds
+  isMuted: boolean;
+  isVideoEnabled: boolean;
+  isSpeakerOn: boolean;
+  callQuality: 'excellent' | 'good' | 'fair' | 'poor';
+  notes?: string;
+}
+
+export interface CallSettings {
+  videoQuality: 'low' | 'medium' | 'high';
+  audioQuality: 'low' | 'medium' | 'high';
+  autoAnswer: boolean;
+  autoMute: boolean;
+  speakerDefault: boolean;
+  bandwidthLimit: 'low' | 'medium' | 'high' | 'unlimited';
+}
+
+export interface CallState {
+  isInCall: boolean;
+  currentCall?: CallRecord;
+  isMuted: boolean;
+  isVideoEnabled: boolean;
+  isSpeakerOn: boolean;
+  callDuration: number;
+  isConnecting: boolean;
+  connectionQuality: 'excellent' | 'good' | 'fair' | 'poor';
+}

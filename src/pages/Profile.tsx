@@ -10,6 +10,7 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/contexts/AppContext';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
+import CallButtons from '@/components/calls/CallButtons';
 
 // Helper function to format children display
 const formatChildrenDisplay = (hasChildren: string): string => {
@@ -274,7 +275,7 @@ const Profile = () => {
 
             {/* Action Buttons */}
             <div className="mt-4 space-y-2">
-              {isOwnProfile && (
+              {isOwnProfile ? (
                 <>
                   <div className="flex justify-center gap-2">
                     <Button variant="outline" onClick={() => navigate('/profile/edit')}>
@@ -293,6 +294,19 @@ const Profile = () => {
                     </Button>
                   </div>
                 </>
+              ) : (
+                <div className="flex justify-center gap-2">
+                  <CallButtons
+                    participantId={profileData?.id?.toString() || '1'}
+                    participantName={profileData?.name || 'User'}
+                    participantAvatar={profileData?.avatar || '🌟'}
+                    variant="full"
+                  />
+                  <Button variant="outline" onClick={handleSendMessage}>
+                    <MessageCircle size={16} />
+                    <span className="ml-2">Message</span>
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

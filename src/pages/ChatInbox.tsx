@@ -23,7 +23,9 @@ import {
   Users,
   User,
   VolumeX,
-  UserX
+  UserX,
+  History,
+  Calendar
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -358,7 +360,7 @@ const ChatInbox = () => {
       <TopBar title="Messages" />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
-        {/* Search */}
+        {/* Search with Menu */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
           <Input
@@ -368,27 +370,60 @@ const ChatInbox = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoComplete="off"
-            className="pl-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
+            className="pl-12 pr-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
           />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/call-history')}>
+                <History size={16} className="mr-2" />
+                Call History
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/archived-chats')}>
+                <Archive size={16} className="mr-2" />
+                Archived Chats
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all" className="text-xs">
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant={activeTab === 'all' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('all')}
+            >
               All ({allConversations.filter(c => !c.isArchived).length})
-            </TabsTrigger>
-            <TabsTrigger value="private" className="text-xs">
+            </Button>
+            <Button
+              variant={activeTab === 'private' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('private')}
+            >
               Private ({allConversations.filter(c => c.type === 'private' && !c.isArchived).length})
-            </TabsTrigger>
-            <TabsTrigger value="groups" className="text-xs">
+            </Button>
+            <Button
+              variant={activeTab === 'groups' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('groups')}
+            >
               Groups ({allConversations.filter(c => c.type === 'group' && !c.isArchived).length})
-            </TabsTrigger>
-            <TabsTrigger value="archived" className="text-xs">
-              Archived ({allConversations.filter(c => c.isArchived).length})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+            </Button>
+          </div>
+        </div>
 
         {/* Discover Rooms Button (revert to dashed outline style) */}
         <Button

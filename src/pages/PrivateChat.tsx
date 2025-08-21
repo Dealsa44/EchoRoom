@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreHorizontal, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette, Square, X } from 'lucide-react';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreVertical, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette, Square, X } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -17,6 +23,7 @@ import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
+import CallButtons from '@/components/calls/CallButtons';
 
 const PrivateChat = () => {
   const { userId } = useParams();
@@ -598,35 +605,43 @@ const PrivateChat = () => {
             </div>
           </div>
           
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <CallButtons
+              participantId={chatPartner.id || '1'}
+              participantName={chatPartner.name}
+              participantAvatar={chatPartner.avatar}
+              variant="full"
+            />
+          </div>
+          
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => {
-                setShowCompatibilityDashboard(false); // Close other modal first
-                setShowMoodThemeSelector(true);
-              }}
-              className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-            >
-              <Palette size={16} />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => {
-                setShowMoodThemeSelector(false); // Close other modal first
-                setShowCompatibilityDashboard(true);
-              }}
-              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-            >
-              <BarChart3 size={16} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleReport}>
-              <Flag size={16} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleBlock}>
-              <UserX size={16} />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => {
+                  setShowCompatibilityDashboard(false);
+                  setShowMoodThemeSelector(true);
+                }}>
+                  <Palette size={16} className="mr-2" />
+                  Mood Themes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setShowMoodThemeSelector(false);
+                  setShowCompatibilityDashboard(true);
+                }}>
+                  <BarChart3 size={16} className="mr-2" />
+                  Compatibility
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReport}>
+                  <Flag size={16} className="mr-2" />
+                  Report User
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

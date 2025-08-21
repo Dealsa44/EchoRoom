@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { LanguageAIProvider } from "@/contexts/LanguageAIContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { CallProvider } from "@/contexts/CallContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 import PublicGuard from "@/components/auth/PublicGuard";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -27,6 +28,8 @@ import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import ProfileStats from "./pages/ProfileStats";
 import Settings from "./pages/Settings";
+import CallHistory from "./pages/CallHistory";
+import ArchivedChats from "./pages/ArchivedChats";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +40,8 @@ const App = () => (
       <AppProvider>
         <NotificationProvider>
           <LanguageAIProvider>
-            <TooltipProvider>
+            <CallProvider>
+              <TooltipProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter
@@ -127,16 +131,27 @@ const App = () => (
                 <Settings />
               </AuthGuard>
             } />
+            <Route path="/call-history" element={
+              <AuthGuard>
+                <CallHistory />
+              </AuthGuard>
+            } />
+            <Route path="/archived-chats" element={
+              <AuthGuard>
+                <ArchivedChats />
+              </AuthGuard>
+            } />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </BrowserRouter>
-          </TooltipProvider>
-        </LanguageAIProvider>
-      </NotificationProvider>
-    </AppProvider>
-  </QueryClientProvider>
+                        </BrowserRouter>
+              </TooltipProvider>
+            </CallProvider>
+          </LanguageAIProvider>
+        </NotificationProvider>
+      </AppProvider>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 
