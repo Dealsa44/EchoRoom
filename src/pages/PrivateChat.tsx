@@ -647,7 +647,7 @@ const PrivateChat = () => {
       </div>
       
       {/* Spacer to push content below fixed top bar */}
-      <div className="h-[calc(env(safe-area-inset-top)+4rem)]" />
+      <div className="h-[calc(env(safe-area-inset-top)+3rem)]" />
 
       {/* Language Practice Panel */}
       <LanguagePracticePanel
