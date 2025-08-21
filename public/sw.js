@@ -1,8 +1,9 @@
-const CACHE_NAME = 'echoroom-v3';
+const CACHE_NAME = 'echoroom-v4';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/manifest.json'
 ];
 
 // Install service worker and cache resources
@@ -41,7 +42,19 @@ self.addEventListener('fetch', (event) => {
 
   // Default: Cache falling back to network
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    caches.match(request)
+      .then((cached) => {
+        if (cached) {
+          return cached;
+        }
+        return fetch(request).catch(() => {
+          // Return a fallback response for navigation requests
+          if (request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return new Response('Network error', { status: 408 });
+        });
+      })
   );
 });
 

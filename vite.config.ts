@@ -30,6 +30,8 @@ export default defineConfig(({ mode }) => ({
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    assetsDir: 'assets',
+    sourcemap: false
   }
 }));
