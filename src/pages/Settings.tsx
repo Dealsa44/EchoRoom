@@ -23,6 +23,7 @@ import {
   Upload,
   HelpCircle,
   Smartphone,
+  Phone,
   Wifi,
   Database,
   ChevronDown,
