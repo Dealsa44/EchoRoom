@@ -929,10 +929,10 @@ const ChatRoom = () => {
   const insights = getLearningInsights();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col safe-top">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
-        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0 pt-safe">
+      <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft">
+        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
@@ -966,12 +966,9 @@ const ChatRoom = () => {
           </DropdownMenu>
         </div>
       </div>
-      
-      {/* Spacer to push content below fixed top bar */}
-      <div className="h-[1rem]" />
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-20 ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
         <div className="space-y-4">
           {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -1204,7 +1201,7 @@ const ChatRoom = () => {
 
       {/* AI Suggestions Panel */}
       {showAIPanel && (
-        <div className="border-t border-border bg-card p-4 max-w-md mx-auto w-full">
+        <div className="fixed bottom-16 left-0 right-0 border-t border-border bg-card p-4 max-w-md mx-auto w-full z-20">
           <h4 className="font-medium mb-3 flex items-center gap-2">
             <Bot size={16} className="text-primary" />
             AI Conversation Help
@@ -1238,7 +1235,7 @@ const ChatRoom = () => {
       )}
 
       {/* Message Input */}
-      <div className="sticky bottom-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
+              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
         {anonymousMode && (
           <div className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
             <EyeOff size={12} />

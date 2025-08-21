@@ -349,7 +349,7 @@ const ChatInbox = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg pb-20 relative safe-top">
+    <div className="min-h-screen app-gradient-bg pb-20 relative">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />

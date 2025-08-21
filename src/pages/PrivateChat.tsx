@@ -580,10 +580,10 @@ const PrivateChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col safe-top">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border shadow-soft safe-top">
-        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0 pt-safe">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border shadow-soft">
+        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
@@ -645,9 +645,8 @@ const PrivateChat = () => {
           </div>
         </div>
       </div>
-      
-      {/* Spacer to push content below fixed top bar */}
-      <div className="h-[1rem]" />
+
+
 
       {/* Language Practice Panel */}
       <LanguagePracticePanel
@@ -656,7 +655,7 @@ const PrivateChat = () => {
       />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-20 pb-32">
         <div className="space-y-4">
           {messages.map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -893,7 +892,7 @@ const PrivateChat = () => {
 
 
       {/* Message Input */}
-      <div className="sticky bottom-0 bg-card p-4 max-w-md mx-auto w-full">
+              <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border">
         {/* Reply indicator */}
         {replyingTo && (
           <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">

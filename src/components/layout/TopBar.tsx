@@ -42,8 +42,8 @@ const TopBar = ({
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border-soft/50 shadow-medium safe-top">
-        <div className="flex items-center justify-between px-4 py-4 max-w-md mx-auto pt-safe">
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border-soft/50 shadow-medium">
+        <div className="flex items-center justify-between px-4 py-4 max-w-md mx-auto">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {showBack && (
               <Button
@@ -108,9 +108,6 @@ const TopBar = ({
           </div>
         </div>
       </div>
-      
-      {/* Spacer to push content below fixed top bar */}
-      <div className="h-[0.5rem]" />
 
       <NotificationModal 
         isOpen={showNotificationModal}
