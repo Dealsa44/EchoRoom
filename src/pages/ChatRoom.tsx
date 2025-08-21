@@ -968,7 +968,7 @@ const ChatRoom = () => {
       </div>
       
       {/* Spacer to push content below fixed top bar */}
-      <div className="h-[calc(env(safe-area-inset-top)+2.5rem)]" />
+      <div className="h-[calc(env(safe-area-inset-top)+1rem)]" />
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full">
