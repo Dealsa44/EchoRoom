@@ -1,8 +1,6 @@
-const CACHE_NAME = 'echoroom-v2';
+const CACHE_NAME = 'echoroom-v3';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/EchoRoom.png',
   '/favicon.ico'
 ];
