@@ -975,7 +975,7 @@ const ChatRoom = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top content-safe-bottom`}>
         <div className="space-y-4">
           {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;

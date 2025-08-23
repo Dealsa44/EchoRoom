@@ -1152,6 +1152,11 @@
     padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
   
+  /* Content area that accounts for fixed bottom elements */
+  .content-safe-bottom {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 5rem);
+  }
+  
   /* Fixed header height that includes safe area */
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
@@ -1179,6 +1184,10 @@
   
   .content-safe-top {
     padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
+  }
+  
+  .content-safe-bottom {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 5rem);
   }
   
   .header-height {

@@ -379,7 +379,7 @@ const ProfileEdit = () => {
     <div className="min-h-screen bg-background">
       <TopBar title="Edit Profile" showBack onBack={() => handleNavigation('/profile')} />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-safe-bottom">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photos Section */}
           <CollapsibleSection title="Profile Photos" icon={<Camera className="w-4 h-4" />} defaultOpen={false}>
