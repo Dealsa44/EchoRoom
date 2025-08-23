@@ -359,6 +359,11 @@ const ChatInbox = () => {
 
       <TopBar title="Messages" />
       
+      {/* 🚀 TEST UPDATE BANNER - This will change when you update! */}
+      <div className="mx-4 mt-4 p-3 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-xl text-white text-center font-bold shadow-lg animate-pulse">
+        🎉 PWA Update Test - Version 1.0! 🎉
+      </div>
+      
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
         {/* Search with Menu */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
