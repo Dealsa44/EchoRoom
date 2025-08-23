@@ -54,22 +54,15 @@ const CallScreen = ({
   const [remoteVideoStream, setRemoteVideoStream] = useState<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   // Start call when component mounts
   useEffect(() => {
     if (isOpen && !callState.isInCall) {
       startCall(participantId, participantName, participantAvatar, callType);
-      // Reset settings modal state when starting a new call
-      setShowSettings(false);
     }
   }, [isOpen, participantId, participantName, participantAvatar, callType, startCall, callState.isInCall]);
-
-  // Reset settings modal when call ends
-  useEffect(() => {
-    if (!isOpen) {
-      setShowSettings(false);
-    }
-  }, [isOpen]);
 
   // Manage body classes when callscreen is active
   useEffect(() => {
@@ -175,18 +168,46 @@ const CallScreen = ({
     setShowSettings(!showSettings);
   };
 
-  const handleSettingsPanelClick = (e: React.MouseEvent) => {
-    // Prevent the click from bubbling up to the overlay
-    e.stopPropagation();
+  const handleCloseSettings = () => {
+    setShowSettings(false);
   };
+
+  // Handle clicks outside settings panel
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showSettings) {
+        const target = event.target as Element;
+        // Check if click is outside the settings panel and not on the settings button
+        if (settingsPanelRef.current && !settingsPanelRef.current.contains(target) && 
+            settingsButtonRef.current && !settingsButtonRef.current.contains(target)) {
+          setShowSettings(false);
+        }
+      }
+    };
+
+    if (showSettings) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettings]);
 
   if (!isOpen) return null;
 
   const callScreenContent = (
-    <div className="fixed inset-0 z-[9999] bg-black" onClick={handleOverlayClick}>
+    <div 
+      className="fixed inset-0 z-[9999] bg-black"
+      onClick={() => {
+        if (showSettings) {
+          setShowSettings(false);
+        }
+      }}
+    >
       {/* Video Background */}
       {callType === 'video' && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           {/* Remote Video (Full Screen) */}
           <video
             ref={remoteVideoRef}
@@ -213,13 +234,14 @@ const CallScreen = ({
 
       {/* Call Overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90"
+        className="absolute inset-0"
         onClick={handleOverlayClick}
       >
-        {/* Top Bar - Positioned above local camera for video calls */}
-        <div className={`absolute left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top ${
-          callType === 'video' ? 'top-4' : 'top-0'
-        }`}>
+        {/* Background gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 pointer-events-none" />
+        
+        {/* Top Bar */}
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top z-10">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
               <div className="text-2xl">{participantAvatar}</div>
@@ -250,6 +272,7 @@ const CallScreen = ({
               size="icon"
               className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
               onClick={handleSettingsToggle}
+              ref={settingsButtonRef}
             >
               <Settings size={20} />
             </Button>
@@ -258,7 +281,7 @@ const CallScreen = ({
 
         {/* Center Content (for voice calls or when video is off) */}
         {callType === 'voice' || !callState.isVideoEnabled ? (
-          <div className="absolute top-20 bottom-32 left-0 right-0 flex items-center justify-center">
+          <div className="absolute top-20 bottom-32 left-0 right-0 flex items-center justify-center z-10">
             <div className="text-center">
               <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-white/20">
                 <div className="text-6xl">{participantAvatar}</div>
@@ -272,7 +295,7 @@ const CallScreen = ({
         ) : null}
 
         {/* Call Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10 z-10">
           <div className="flex items-center justify-center gap-4">
             {/* Mute Button */}
             <Button
@@ -329,38 +352,37 @@ const CallScreen = ({
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Settings Panel */}
-        {showSettings && (
-          <div 
-            className={`absolute right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-[99999] ${
-              callType === 'video' ? 'top-28' : 'top-20'
-            }`}
-            onClick={handleSettingsPanelClick}
-          >
-            <h3 className="text-white font-semibold mb-3">Call Settings</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-white/80 text-sm">Video Quality</span>
-                <Badge variant="secondary" className="text-xs">High</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/80 text-sm">Audio Quality</span>
-                <Badge variant="secondary" className="text-xs">High</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/80 text-sm">Connection</span>
-                <div className="flex items-center gap-1">
-                  {getConnectionQualityIcon()}
-                  <span className="text-white/80 text-xs capitalize">
-                    {callState.connectionQuality}
-                  </span>
-                </div>
+      {/* Settings Panel - Moved outside overlay for better click handling */}
+      {showSettings && (
+        <div 
+          className="absolute top-20 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
+          onClick={(e) => e.stopPropagation()}
+          ref={settingsPanelRef}
+        >
+          <h3 className="text-white font-semibold mb-3">Call Settings</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-white/80 text-sm">Video Quality</span>
+              <Badge variant="secondary" className="text-xs">High</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-white/80 text-sm">Audio Quality</span>
+              <Badge variant="secondary" className="text-xs">High</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-white/80 text-sm">Connection</span>
+              <div className="flex items-center gap-1">
+                {getConnectionQualityIcon()}
+                <span className="text-white/80 text-xs capitalize">
+                  {callState.connectionQuality}
+                </span>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 
