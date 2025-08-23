@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echoroom-v9';
+const CACHE_NAME = 'echoroom-v10';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
