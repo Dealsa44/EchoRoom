@@ -40,3 +40,73 @@
 .read-the-docs {
   color: #888;
 }
+
+/* SwipeableCard vertical position fixes */
+.fixed-vertical {
+  position: relative !important;
+  top: 0 !important;
+  transform: translateZ(0) !important;
+}
+
+.fixed-vertical.swipe-card {
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+}
+
+/* Ensure card container doesn't allow vertical movement */
+.match-card-stack {
+  overscroll-behavior: none !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+}
+
+/* Prevent any vertical scrolling on the card itself */
+.swipe-card {
+  overscroll-behavior: none !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+}
+
+/* Ensure card stack items also respect vertical positioning */
+.card-stack-item {
+  overscroll-behavior: none !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+}
+
+/* Prevent any vertical movement in the card stack container */
+.match-card-stack .card-stack-item {
+  transform-origin: center center !important;
+}
+
+/* Ensure the card content doesn't allow vertical scrolling */
+.match-card-stack .swipe-card {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+/* Additional fixes for the card stack container */
+.match-card-stack {
+  position: relative !important;
+  overflow: hidden !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Ensure individual cards in the stack don't move vertically during swipes */
+.match-card-stack .swipe-card {
+  transform-origin: center center !important;
+  will-change: transform !important;
+}
+
+/* Prevent any vertical movement on touch events */
+.match-card-stack * {
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+}
