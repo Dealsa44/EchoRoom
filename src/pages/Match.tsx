@@ -560,9 +560,9 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto mt-24 pb-28">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto mt-20 pb-32">
 
-          <div className="space-y-4 pb-40">
+          <div className="space-y-4 pb-20">
 
         {/* Card Stack - optimized to render only top + preview */}
         <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6 will-change-transform match-card-stack">
@@ -633,7 +633,7 @@ const Match = () => {
 
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 pt-4 pb-20">
+          <div className="fixed bottom-0 left-0 right-0 z-20 pt-6 pb-28">
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
             <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}
