@@ -376,7 +376,7 @@ const ProfileEdit = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       <TopBar title="Edit Profile" showBack onBack={() => handleNavigation('/profile')} />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-20">

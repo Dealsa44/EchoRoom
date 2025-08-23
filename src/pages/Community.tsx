@@ -35,7 +35,7 @@ const Community = () => {
   const joinedRoomsCount = joinedRooms.length;
 
   return (
-    <div className="min-h-screen app-gradient-bg pb-20 relative">
+    <div className="min-h-screen app-gradient-bg relative">
       {/* Subtle background elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-32 right-8 w-20 h-20 bg-gradient-primary rounded-full blur-2xl animate-float" />

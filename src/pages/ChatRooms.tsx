@@ -82,7 +82,7 @@ const ChatRooms = () => {
 
 
   return (
-    <div className="min-h-screen app-gradient-bg pb-20 relative">
+    <div className="min-h-screen app-gradient-bg relative">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />

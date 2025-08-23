@@ -486,7 +486,7 @@ const Match = () => {
   // see bottom of file for implementation
 
   return (
-    <div className="h-screen bg-background pb-20 relative overflow-hidden">
+    <div className="h-screen bg-background relative overflow-hidden">
       {/* Simplified background for performance (mobile-first) */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[480px] h-[240px] rounded-full bg-gradient-hero opacity-[0.08] blur-3xl" />
@@ -563,7 +563,7 @@ const Match = () => {
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
         <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto pt-20">
 
-          <div className="space-y-4 pb-40">
+          <div className="space-y-4 pb-20">
 
         {/* Card Stack - optimized to render only top + preview */}
         <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6 will-change-transform match-card-stack">

@@ -10,7 +10,7 @@ const ProfileStats = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       <TopBar title="Your Journey" showBack onBack={() => navigate('/profile')} />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-20">

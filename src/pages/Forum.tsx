@@ -132,7 +132,7 @@ const Forum = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg pb-20 relative">
+    <div className="min-h-screen app-gradient-bg relative">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />
