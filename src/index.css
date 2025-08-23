@@ -2,16 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile Safe Area Support */
-@supports (padding: max(0px)) {
-  :root {
-    --sat: env(safe-area-inset-top, 0px);
-    --sab: env(safe-area-inset-bottom, 0px);
-    --sal: env(safe-area-inset-left, 0px);
-    --sar: env(safe-area-inset-right, 0px);
-  }
-}
-
 /* iOS Safari Fixes */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific fixes */
@@ -1094,28 +1084,6 @@
   .scroll-container {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-  }
-  
-  /* Enhanced safe area handling for mobile */
-  .safe-area-top {
-    padding-top: max(env(safe-area-inset-top, 0px), 1rem);
-  }
-  
-  .safe-area-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
-  }
-  
-  /* Ensure proper viewport height on mobile */
-  .min-h-screen {
-    min-height: 100vh;
-    min-height: 100dvh; /* Dynamic viewport height for mobile */
-  }
-  
-  /* Fix for iOS Safari 100vh issue */
-  @supports (-webkit-touch-callout: none) {
-    .min-h-screen {
-      min-height: -webkit-fill-available;
-    }
   }
 }
 

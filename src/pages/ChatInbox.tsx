@@ -349,220 +349,217 @@ const ChatInbox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Background Elements */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none">
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
-        <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.4s' }} />
+        <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-xl animate-float" style={{ animationDelay: '1.4s' }} />
         <div className="absolute top-1/2 right-4 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '2.8s' }} />
       </div>
 
       <TopBar title="Messages" />
       
-      {/* Main content area with proper safe area padding */}
-      <div className="pt-[calc(env(safe-area-inset-top,0px)+4rem)] pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] min-h-screen">
-        <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10">
-          {/* Search with Menu */}
-          <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
-            <Input
-              id="conversationSearch"
-              name="conversationSearch"
-              placeholder="Search conversations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoComplete="off"
-              className="pl-12 pr-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
-                >
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate('/call-history')}>
-                  <History size={16} className="mr-2" />
-                  Call History
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/archived-chats')}>
-                  <Archive size={16} className="mr-2" />
-                  Archived Chats
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <div className="h-[calc(100vh-72px-80px)] overflow-y-auto px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16">
+        {/* Search with Menu */}
+        <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
+          <Input
+            id="conversationSearch"
+            name="conversationSearch"
+            placeholder="Search conversations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            autoComplete="off"
+            className="pl-12 pr-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/call-history')}>
+                <History size={16} className="mr-2" />
+                Call History
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/archived-chats')}>
+                <Archive size={16} className="mr-2" />
+                Archived Chats
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Tabs */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant={activeTab === 'all' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('all')}
+            >
+              All ({allConversations.filter(c => !c.isArchived).length})
+            </Button>
+            <Button
+              variant={activeTab === 'private' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('private')}
+            >
+              Private ({allConversations.filter(c => c.type === 'private' && !c.isArchived).length})
+            </Button>
+            <Button
+              variant={activeTab === 'groups' ? 'default' : 'outline'}
+              size="sm"
+              className="h-10 text-xs font-medium"
+              onClick={() => setActiveTab('groups')}
+            >
+              Groups ({allConversations.filter(c => c.type === 'group' && !c.isArchived).length})
+            </Button>
           </div>
+        </div>
 
-          {/* Tabs */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant={activeTab === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className="h-10 text-xs font-medium"
-                onClick={() => setActiveTab('all')}
-              >
-                All ({allConversations.filter(c => !c.isArchived).length})
-              </Button>
-              <Button
-                variant={activeTab === 'private' ? 'default' : 'outline'}
-                size="sm"
-                className="h-10 text-xs font-medium"
-                onClick={() => setActiveTab('private')}
-              >
-                Private ({allConversations.filter(c => c.type === 'private' && !c.isArchived).length})
-              </Button>
-              <Button
-                variant={activeTab === 'groups' ? 'default' : 'outline'}
-                size="sm"
-                className="h-10 text-xs font-medium"
-                onClick={() => setActiveTab('groups')}
-              >
-                Groups ({allConversations.filter(c => c.type === 'group' && !c.isArchived).length})
-              </Button>
-            </div>
-          </div>
+        {/* Discover Rooms Button (revert to dashed outline style) */}
+        <Button
+          variant="outline"
+          className="w-full border-dashed border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
+          onClick={() => navigate('/chat-rooms')}
+        >
+          <Users size={16} className="mr-2" />
+          Discover New Chat Rooms
+        </Button>
 
-          {/* Discover Rooms Button (revert to dashed outline style) */}
-          <Button
-            variant="outline"
-            className="w-full border-dashed border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
-            onClick={() => navigate('/chat-rooms')}
-          >
-            <Users size={16} className="mr-2" />
-            Discover New Chat Rooms
-          </Button>
-
-          {/* Conversations List */}
-          <div className="space-y-3">
-            {filteredConversations.map((conversation, index) => (
-              <Card 
-                key={conversation.id}
-                className={`cursor-pointer transform-gpu will-change-transform transition-all active:scale-[0.98] hover:shadow-large animate-fade-in animate-slide-up ${conversation.unreadCount > 0 ? 'border-primary/20 shadow-glow-primary/40' : ''}`}
-                style={{ animationDelay: `${0.05 + index * 0.05}s` }}
-                onClick={() => handleOpenChat(conversation)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative w-12 h-12 rounded-2xl bg-gradient-primary/10 grid place-items-center shadow-inner-soft animate-float-ambient">
-                      <div className="text-2xl select-none" aria-hidden>{conversation.participant.avatar}</div>
-                      {conversation.participant.isOnline && (
-                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse-soft" />
-                      )}
+        {/* Conversations List */}
+        <div className="space-y-3">
+          {filteredConversations.map((conversation, index) => (
+            <Card 
+              key={conversation.id}
+              className={`cursor-pointer transform-gpu will-change-transform transition-all active:scale-[0.98] hover:shadow-large animate-fade-in animate-slide-up ${conversation.unreadCount > 0 ? 'border-primary/20 shadow-glow-primary/40' : ''}`}
+              style={{ animationDelay: `${0.05 + index * 0.05}s` }}
+              onClick={() => handleOpenChat(conversation)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="relative w-12 h-12 rounded-2xl bg-gradient-primary/10 grid place-items-center shadow-inner-soft animate-float-ambient">
+                    <div className="text-2xl select-none" aria-hidden>{conversation.participant.avatar}</div>
+                    {conversation.participant.isOnline && (
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse-soft" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className="font-medium truncate">{conversation.participant.name}</h3>
+                        {conversation.isPinned && <Pin size={12} className="text-primary" />}
+                        {conversation.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {formatTimestamp(conversation.lastMessage.timestamp)}
+                      </span>
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <h3 className="font-medium truncate">{conversation.participant.name}</h3>
-                          {conversation.isPinned && <Pin size={12} className="text-primary" />}
-                          {conversation.isMuted && <VolumeX size={12} className="text-muted-foreground" />}
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {formatTimestamp(conversation.lastMessage.timestamp)}
-                        </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {getMessageTypeIcon(conversation.lastMessage.type)}
+                        {conversation.isTyping ? (
+                          <p className="text-sm text-primary/80 truncate animate-pulse-soft">typing…</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
+                            {conversation.lastMessage.content}
+                          </p>
+                        )}
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          {getMessageTypeIcon(conversation.lastMessage.type)}
-                          {conversation.isTyping ? (
-                            <p className="text-sm text-primary/80 truncate animate-pulse-soft">typing…</p>
-                          ) : (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
-                              {conversation.lastMessage.content}
-                            </p>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2 ml-2">
+                        {conversation.unreadCount > 0 && (
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0.5 shadow-glow-destructive/30">
+                            {conversation.unreadCount}
+                          </Badge>
+                        )}
                         
-                        <div className="flex items-center gap-2 ml-2">
-                          {conversation.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs px-1.5 py-0.5 shadow-glow-destructive/30">
-                              {conversation.unreadCount}
-                            </Badge>
-                          )}
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <MoreVertical size={12} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {conversation.type === 'private' && (
-                                <DropdownMenuItem onClick={(e) => {
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                              <MoreVertical size={12} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {conversation.type === 'private' && (
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/profile/${conversation.participant.id}`);
+                              }}>
+                                <User size={14} className="mr-2" />
+                                View Profile
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handlePinConversation(conversation.id);
+                            }}>
+                              <Pin size={14} className="mr-2" />
+                              {conversation.isPinned ? 'Unpin' : 'Pin'}
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchiveConversation(conversation.id);
+                            }}>
+                              <Archive size={14} className="mr-2" />
+                              {conversation.isArchived ? 'Unarchive' : 'Archive'}
+                            </DropdownMenuItem>
+                            
+                            {conversation.type === 'group' ? (
+                              <DropdownMenuItem 
+                                onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/profile/${conversation.participant.id}`);
-                                }}>
-                                  <User size={14} className="mr-2" />
-                                  View Profile
-                                </DropdownMenuItem>
-                              )}
-                              
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                handlePinConversation(conversation.id);
-                              }}>
-                                <Pin size={14} className="mr-2" />
-                                {conversation.isPinned ? 'Unpin' : 'Pin'}
+                                  handleLeaveConversation(conversation.id);
+                                }}
+                                className="text-destructive"
+                              >
+                                <LogOut size={14} className="mr-2" />
+                                Leave
                               </DropdownMenuItem>
-                              
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                handleArchiveConversation(conversation.id);
-                              }}>
-                                <Archive size={14} className="mr-2" />
-                                {conversation.isArchived ? 'Unarchive' : 'Archive'}
+                            ) : (
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLeaveConversation(conversation.id);
+                                }}
+                                className="text-destructive"
+                              >
+                                <UserX size={14} className="mr-2" />
+                                Unmatch
                               </DropdownMenuItem>
-                              
-                              {conversation.type === 'group' ? (
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLeaveConversation(conversation.id);
-                                  }}
-                                  className="text-destructive"
-                                >
-                                  <LogOut size={14} className="mr-2" />
-                                  Leave
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLeaveConversation(conversation.id);
-                                  }}
-                                  className="text-destructive"
-                                >
-                                  <UserX size={14} className="mr-2" />
-                                  Unmatch
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredConversations.length === 0 && (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">💬</div>
-              <p className="text-muted-foreground">
-                {activeTab === 'all' ? 'No conversations yet' : `No ${activeTab} conversations`}
-              </p>
-            </div>
-          )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
+
+        {filteredConversations.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2">💬</div>
+            <p className="text-muted-foreground">
+              {activeTab === 'all' ? 'No conversations yet' : `No ${activeTab} conversations`}
+            </p>
+          </div>
+        )}
       </div>
 
       <BottomNavigation />
