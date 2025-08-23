@@ -297,7 +297,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           WebkitUserSelect: 'none',
           WebkitTouchCallout: 'none',
           willChange: isDragging ? 'transform' : 'auto',
-          touchAction: 'pan-x', // Only allow horizontal panning, prevent vertical scrolling
+          touchAction: 'manipulation', // Allow manipulation while preventing vertical scrolling
           transform: 'translateZ(0)', // Force hardware acceleration
         }}
       >

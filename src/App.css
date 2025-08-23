@@ -49,30 +49,30 @@
 }
 
 .fixed-vertical.swipe-card {
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
 }
 
 /* Ensure card container doesn't allow vertical movement */
 .match-card-stack {
   overscroll-behavior: none !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
 }
 
 /* Prevent any vertical scrolling on the card itself */
 .swipe-card {
   overscroll-behavior: none !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
 }
 
 /* Ensure card stack items also respect vertical positioning */
 .card-stack-item {
   overscroll-behavior: none !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
 }
 
 /* Prevent any vertical movement in the card stack container */
@@ -93,8 +93,8 @@
 .match-card-stack {
   position: relative !important;
   overflow: hidden !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
   -webkit-overflow-scrolling: touch !important;
 }
@@ -105,12 +105,6 @@
   will-change: transform !important;
 }
 
-/* Prevent any vertical movement on touch events */
-.match-card-stack * {
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
-}
-
 /* Final fix: Ensure the swipeable card itself is completely fixed vertically */
 .swipe-card.fixed-vertical {
   position: relative !important;
@@ -119,16 +113,16 @@
   right: 0 !important;
   bottom: 0 !important;
   transform: translateZ(0) !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
 /* Ensure the card content area doesn't allow vertical scrolling */
 .swipe-card.fixed-vertical > div {
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
 }
 
@@ -140,8 +134,8 @@
   right: 0 !important;
   bottom: 0 !important;
   transform: translateZ(0) !important;
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
   -webkit-overflow-scrolling: touch !important;
   will-change: transform !important;
@@ -149,8 +143,8 @@
 
 /* Ensure no vertical movement can occur in the entire card stack */
 .match-card-stack {
-  touch-action: pan-x !important;
-  -webkit-touch-action: pan-x !important;
+  touch-action: manipulation !important;
+  -webkit-touch-action: manipulation !important;
   overscroll-behavior: none !important;
   -webkit-overflow-scrolling: touch !important;
   overflow: hidden !important;
