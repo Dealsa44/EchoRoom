@@ -483,7 +483,7 @@ const ForumThread = () => {
         onBack={() => navigate('/forum')}
       />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-20">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
         {/* Thread Post */}
         <Card>
           <CardContent className="p-6">
@@ -663,7 +663,7 @@ const ForumThread = () => {
         </div>
 
                 {/* Floating Comment Button - for mobile/when scrolled */}
-        <div className="fixed fixed-bottom right-4 z-50" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+        <div className="fixed bottom-24 right-4 z-50">
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
