@@ -210,7 +210,7 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-background">
         <TopBar title="Profile" />
-        <LoadingState message="Loading profile..." />
+        <LoadingState message="Loading profile..." fullScreen />
       </div>
     );
   }

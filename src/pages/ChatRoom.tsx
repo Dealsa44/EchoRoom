@@ -379,7 +379,14 @@ const ChatRoom = () => {
   }, [messages]);
 
   if (!room || !roomData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full border-2 border-gray-300 border-t-primary h-8 w-8 mx-auto mb-3"></div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Generate AI suggestions based on room category

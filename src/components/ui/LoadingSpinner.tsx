@@ -21,9 +21,19 @@ interface LoadingStateProps {
   message?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  fullScreen?: boolean;
 }
 
-export const LoadingState = ({ message = "Loading...", size = 'md', className }: LoadingStateProps) => {
+export const LoadingState = ({ message = "Loading...", size = 'md', className, fullScreen = false }: LoadingStateProps) => {
+  if (fullScreen) {
+    return (
+      <div className={cn("flex flex-col items-center justify-center min-h-[calc(100vh-80px)]", className)}>
+        <LoadingSpinner size={size} />
+        <p className="text-sm text-muted-foreground mt-3">{message}</p>
+      </div>
+    );
+  }
+  
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3 py-8", className)}>
       <LoadingSpinner size={size} />
