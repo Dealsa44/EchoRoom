@@ -219,7 +219,7 @@ const CallScreen = ({
           
           {/* Local Video (Picture-in-Picture) */}
           {callState.isVideoEnabled && (
-            <div className="absolute top-28 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg z-10">
+            <div className="absolute top-36 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg z-10">
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -357,7 +357,7 @@ const CallScreen = ({
       {/* Settings Panel - Moved outside overlay for better click handling */}
       {showSettings && (
         <div 
-          className="absolute top-28 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
+          className="absolute top-36 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
           onClick={(e) => e.stopPropagation()}
           ref={settingsPanelRef}
         >
