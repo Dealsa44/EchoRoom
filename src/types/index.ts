@@ -61,6 +61,7 @@ export interface ChatMessage {
     duration: number;
     waveform: number[];
     url?: string;
+    audioBlob?: Blob;
   };
   translated?: boolean;
   corrected?: boolean;
