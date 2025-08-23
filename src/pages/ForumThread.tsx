@@ -476,7 +476,7 @@ const ForumThread = () => {
   };
 
   return (
-    <div className="h-screen bg-background relative overflow-hidden">
+    <div className="h-screen bg-background overflow-hidden">
       <TopBar 
         title="Deep Discussions" 
         showBack={true}

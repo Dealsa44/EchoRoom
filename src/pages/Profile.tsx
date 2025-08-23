@@ -208,7 +208,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="h-screen bg-background relative overflow-hidden">
+      <div className="h-screen bg-background overflow-hidden">
         <TopBar title="Profile" />
         <LoadingState message="Loading profile..." />
       </div>
@@ -216,7 +216,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="h-screen bg-background relative overflow-hidden">
+    <div className="h-screen bg-background overflow-hidden">
       <TopBar 
         title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
         showBack={!isOwnProfile}
