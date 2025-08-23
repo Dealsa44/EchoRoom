@@ -1566,7 +1566,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden safe-area-padding-top">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute top-24 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />

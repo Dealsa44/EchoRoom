@@ -77,25 +77,6 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration with iOS Safari Fix -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // Delay service worker registration on iOS to prevent interference
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          const delay = isIOS ? 2000 : 0;
-          
-          setTimeout(() => {
-            navigator.serviceWorker.register('/sw.js')
-              .then((registration) => {
-                console.log('SW registered: ', registration);
-              })
-              .catch((registrationError) => {
-                console.error('SW registration failed: ', registrationError);
-              });
-          }, delay);
-        });
-      }
-    </script>
+    <!-- Service Worker Registration is now handled by the ServiceWorkerManager -->
   </body>
 </html>

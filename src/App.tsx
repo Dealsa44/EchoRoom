@@ -12,6 +12,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import PublicGuard from "@/components/auth/PublicGuard";
 import ScrollToTop from "@/components/ScrollToTop";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { UpdateNotification } from "@/components/UpdateNotification";
 
 // Pages
 import Welcome from "./pages/Welcome";
@@ -75,6 +76,7 @@ const App = () => {
                   }}
                 >
                   <ScrollToTop />
+                  <UpdateNotification />
             <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={

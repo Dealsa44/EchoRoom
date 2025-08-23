@@ -6,11 +6,17 @@
   "display": "standalone",
   "orientation": "portrait",
   "scope": "/",
+  "update_via_cache": "none",
   "lang": "en",
   "dir": "ltr",
   "theme_color": "#0f0f23",
   "background_color": "#0f0f23",
-  "categories": ["social", "dating", "education", "lifestyle"],
+  "categories": [
+    "social",
+    "dating",
+    "education",
+    "lifestyle"
+  ],
   "screenshots": [
     {
       "src": "/EchoRoom.png",
@@ -89,5 +95,6 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "version": "v8"
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echoroom-v5';
+const CACHE_NAME = 'echoroom-v8';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
@@ -11,6 +11,10 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 // Install service worker and cache resources
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
+  
+  // Skip waiting to activate immediately
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -81,16 +85,39 @@ self.addEventListener('fetch', (event) => {
 // Activate service worker and clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
+  
+  // Take control of all clients immediately
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients
+      self.clients.claim()
+    ])
   );
 });
+
+// Listen for messages from the main app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CHECK_FOR_UPDATE') {
+    self.registration.update();
+  }
+});
+
+// Check for updates every 5 minutes during active development
+// You can adjust this frequency based on your needs
+setInterval(() => {
+  self.registration.update();
+}, 5 * 60 * 1000); // 5 minutes

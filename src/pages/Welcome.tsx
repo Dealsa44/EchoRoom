@@ -30,7 +30,7 @@ const Welcome = () => {
   }, [slogans.length]);
 
   return (
-    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden safe-area-padding">
+    <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-primary rounded-full blur-3xl animate-float" />
