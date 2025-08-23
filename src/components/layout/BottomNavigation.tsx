@@ -68,7 +68,6 @@ const BottomNavigation = () => {
           </button>
         ))}
       </div>
-      <div className="h-safe-area-inset-bottom" />
     </div>
   );
 };
