@@ -15,7 +15,6 @@ import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
 import { useApp } from '@/contexts/AppContext';
 import { getAttractionPreferences } from '@/contexts/app-utils';
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { Profile } from '@/types';
 import { mockProfiles } from '@/data/mockProfiles';
@@ -102,13 +101,13 @@ const Match = () => {
   // Prevent body scroll when modals are open
   useEffect(() => {
     if (showIceBreakers || showConversationStarters || filtersExpanded) {
-      lockBodyScroll();
+      document.body.style.overflow = 'hidden';
     } else {
-      unlockBodyScroll();
+      document.body.style.overflow = 'unset';
     }
     
     return () => {
-      unlockBodyScroll();
+      document.body.style.overflow = 'unset';
     };
   }, [showIceBreakers, showConversationStarters, filtersExpanded]);
 
@@ -486,7 +485,7 @@ const Match = () => {
   // see bottom of file for implementation
 
   return (
-    <div className="h-screen bg-background relative overflow-hidden">
+    <div className="h-screen bg-background pb-20 relative overflow-hidden">
       {/* Simplified background for performance (mobile-first) */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[480px] h-[240px] rounded-full bg-gradient-hero opacity-[0.08] blur-3xl" />
@@ -561,9 +560,9 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto pt-16">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto pt-20">
 
-          <div className="space-y-4 pb-20">
+          <div className="space-y-4 pb-40">
 
         {/* Card Stack - optimized to render only top + preview */}
         <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6 will-change-transform match-card-stack">
@@ -634,7 +633,7 @@ const Match = () => {
 
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
-          <div className="fixed bottom-28 left-0 right-0 z-20 pt-2 pb-0">
+          <div className="fixed fixed-bottom left-0 right-0 z-20 pt-2 pb-0" style={{ bottom: 'calc(7rem + env(safe-area-inset-bottom))' }}>
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
             <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}

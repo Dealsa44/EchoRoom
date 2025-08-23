@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { lockBodyScroll, unlockBodyScroll } from '@/lib/utils';
 import { 
   Lightbulb, 
   Heart, 
@@ -65,9 +64,9 @@ const SmartConversationStarters = ({ profile, onSelectStarter, onClose }: SmartC
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    lockBodyScroll();
+    document.body.style.overflow = 'hidden';
     return () => {
-      unlockBodyScroll();
+      document.body.style.overflow = 'unset';
     };
   }, []);
 

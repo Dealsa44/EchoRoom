@@ -476,14 +476,14 @@ const ForumThread = () => {
   };
 
   return (
-    <div className="h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background pb-20">
       <TopBar 
         title="Deep Discussions" 
         showBack={true}
         onBack={() => navigate('/forum')}
       />
       
-      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 pt-20">
         {/* Thread Post */}
         <Card>
           <CardContent className="p-6">
@@ -663,7 +663,7 @@ const ForumThread = () => {
         </div>
 
                 {/* Floating Comment Button - for mobile/when scrolled */}
-        <div className="fixed bottom-24 right-4 z-50">
+        <div className="fixed fixed-bottom right-4 z-50" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
