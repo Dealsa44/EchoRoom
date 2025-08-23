@@ -515,7 +515,7 @@ const Match = () => {
       {/* Empty States - Full screen with fixed header */}
       {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
         <>
-          <div className="flex flex-col items-center justify-center px-4 mt-20 pb-24" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+          <div className="flex flex-col items-center justify-center px-4 h-screen">
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
               <CardContent className="p-8 text-center">
                 <div className="text-5xl mb-6 animate-pulse">🔍</div>
@@ -538,7 +538,7 @@ const Match = () => {
 
       {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
         <>
-          <div className="flex flex-col items-center justify-center px-4 mt-20 pb-24" style={{ height: 'calc(100vh - 160px - 80px)' }}>
+          <div className="flex flex-col items-center justify-center px-4 h-screen">
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
               <CardContent className="p-8 text-center">
                 <div className="text-6xl mb-6 animate-bounce">🎉</div>
@@ -560,7 +560,7 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto mt-20 pb-24">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container h-[calc(100vh-80px)] overflow-y-auto mt-24 pb-28">
 
           <div className="space-y-4 pb-40">
 
@@ -633,7 +633,7 @@ const Match = () => {
 
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 pt-2 pb-24">
+          <div className="fixed bottom-0 left-0 right-0 z-20 pt-4 pb-20">
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
             <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}
