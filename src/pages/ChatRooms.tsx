@@ -82,7 +82,7 @@ const ChatRooms = () => {
 
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
@@ -104,7 +104,7 @@ const ChatRooms = () => {
         }}
       />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
         {/* Header */}
         <div className="text-center animate-fade-in">
           <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Discover Conversations</h1>

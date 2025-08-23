@@ -35,7 +35,7 @@ const Community = () => {
   const joinedRoomsCount = joinedRooms.length;
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Subtle background elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-32 right-8 w-20 h-20 bg-gradient-primary rounded-full blur-2xl animate-float" />
@@ -44,7 +44,7 @@ const Community = () => {
       
       <TopBar title="Community" />
       
-      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16">
+      <div className="h-full overflow-y-auto px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16">
         {/* Welcome Section */}
         <Card className={`shadow-medium animate-breathe-slow transition-smooth ${
           isLoaded ? 'opacity-100 translate-y-0 animate-scale-in' : 'opacity-0 translate-y-4'

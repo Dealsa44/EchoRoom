@@ -349,7 +349,7 @@ const ChatInbox = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
@@ -359,7 +359,7 @@ const ChatInbox = () => {
 
       <TopBar title="Messages" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
         {/* Search with Menu */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />

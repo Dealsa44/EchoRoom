@@ -132,7 +132,7 @@ const Forum = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 right-10 w-28 h-28 bg-gradient-tertiary rounded-full blur-3xl animate-float" />
@@ -146,7 +146,7 @@ const Forum = () => {
         onBack={() => navigate('/community')}
       />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
         {/* Header */}
         <div className="text-center animate-fade-in">
           <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Community Forum</h1>

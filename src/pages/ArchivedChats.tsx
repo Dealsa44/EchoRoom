@@ -283,23 +283,23 @@ const ArchivedChats = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+        <div className="h-screen app-gradient-bg relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
         <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.4s' }} />
       </div>
 
-             <TopBar 
-         title="Archived Chats" 
-         showBack 
-         onBack={() => navigate('/chat-inbox')}
-         showNotifications={false}
-         showDarkModeToggle={false}
-         showAIAssistant={false}
-       />
-      
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
+              <TopBar 
+          title="Archived Chats" 
+          showBack 
+          onBack={() => navigate('/chat-inbox')}
+          showNotifications={false}
+          showDarkModeToggle={false}
+          showAIAssistant={false}
+        />
+       
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
         {/* Archived Conversations List */}
         <div className="space-y-3">
           {archivedConversations.length === 0 ? (
