@@ -1144,7 +1144,7 @@
   
   /* Content area that accounts for fixed header */
   .content-safe-top {
-    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 4rem);
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
   
   /* Fixed header height that includes safe area */
@@ -1154,7 +1154,7 @@
   
   /* Ensure content doesn't scroll under fixed elements */
   .scroll-safe {
-    scroll-padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 4rem);
+    scroll-padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
 }
 
@@ -1169,7 +1169,7 @@
   }
   
   .content-safe-top {
-    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 4rem);
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
   
   .header-height {

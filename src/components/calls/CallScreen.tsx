@@ -199,7 +199,7 @@ const CallScreen = ({
         onClick={handleOverlayClick}
       >
         {/* Top Bar */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10">
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
               <div className="text-2xl">{participantAvatar}</div>
