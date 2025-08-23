@@ -59,8 +59,17 @@ const CallScreen = ({
   useEffect(() => {
     if (isOpen && !callState.isInCall) {
       startCall(participantId, participantName, participantAvatar, callType);
+      // Reset settings modal state when starting a new call
+      setShowSettings(false);
     }
   }, [isOpen, participantId, participantName, participantAvatar, callType, startCall, callState.isInCall]);
+
+  // Reset settings modal when call ends
+  useEffect(() => {
+    if (!isOpen) {
+      setShowSettings(false);
+    }
+  }, [isOpen]);
 
   // Manage body classes when callscreen is active
   useEffect(() => {
@@ -162,10 +171,19 @@ const CallScreen = ({
     }
   };
 
+  const handleSettingsToggle = () => {
+    setShowSettings(!showSettings);
+  };
+
+  const handleSettingsPanelClick = (e: React.MouseEvent) => {
+    // Prevent the click from bubbling up to the overlay
+    e.stopPropagation();
+  };
+
   if (!isOpen) return null;
 
   const callScreenContent = (
-    <div className="fixed inset-0 z-[9999] bg-black">
+    <div className="fixed inset-0 z-[9999] bg-black" onClick={handleOverlayClick}>
       {/* Video Background */}
       {callType === 'video' && (
         <div className="absolute inset-0">
@@ -198,8 +216,10 @@ const CallScreen = ({
         className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90"
         onClick={handleOverlayClick}
       >
-        {/* Top Bar */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top">
+        {/* Top Bar - Positioned above local camera for video calls */}
+        <div className={`absolute left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top ${
+          callType === 'video' ? 'top-4' : 'top-0'
+        }`}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
               <div className="text-2xl">{participantAvatar}</div>
@@ -229,7 +249,7 @@ const CallScreen = ({
               variant="ghost"
               size="icon"
               className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
-              onClick={() => setShowSettings(!showSettings)}
+              onClick={handleSettingsToggle}
             >
               <Settings size={20} />
             </Button>
@@ -313,8 +333,10 @@ const CallScreen = ({
         {/* Settings Panel */}
         {showSettings && (
           <div 
-            className="absolute top-20 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
-            onClick={(e) => e.stopPropagation()}
+            className={`absolute right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-[99999] ${
+              callType === 'video' ? 'top-28' : 'top-20'
+            }`}
+            onClick={handleSettingsPanelClick}
           >
             <h3 className="text-white font-semibold mb-3">Call Settings</h3>
             <div className="space-y-3">

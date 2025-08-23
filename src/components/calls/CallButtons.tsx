@@ -63,6 +63,7 @@ const CallButtons = ({
         </DropdownMenu>
 
         <CallScreen
+          key={`${callType}-${participantId}`}
           isOpen={showCallScreen}
           onClose={handleCloseCall}
           participantId={participantId}
@@ -97,6 +98,7 @@ const CallButtons = ({
       </div>
 
       <CallScreen
+        key={`${callType}-${participantId}`}
         isOpen={showCallScreen}
         onClose={handleCloseCall}
         participantId={participantId}
