@@ -110,3 +110,48 @@
   touch-action: pan-x !important;
   -webkit-touch-action: pan-x !important;
 }
+
+/* Final fix: Ensure the swipeable card itself is completely fixed vertically */
+.swipe-card.fixed-vertical {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: translateZ(0) !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Ensure the card content area doesn't allow vertical scrolling */
+.swipe-card.fixed-vertical > div {
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+}
+
+/* Final container fix: Ensure the card container itself is completely fixed */
+.match-card-stack .swipe-card.fixed-vertical {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: translateZ(0) !important;
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  will-change: transform !important;
+}
+
+/* Ensure no vertical movement can occur in the entire card stack */
+.match-card-stack {
+  touch-action: pan-x !important;
+  -webkit-touch-action: pan-x !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  overflow: hidden !important;
+}

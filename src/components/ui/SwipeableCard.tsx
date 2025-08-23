@@ -240,7 +240,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       } catch (error) {
         // Ignore passive event listener errors
       }
-      handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      // Only pass X coordinate to ensure no vertical movement
+      handleMove(e.touches[0].clientX, 0);
     }
   }, [handleMove, isDragging]);
 
