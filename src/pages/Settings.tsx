@@ -27,7 +27,8 @@ import {
   Wifi,
   Database,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
@@ -35,6 +36,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useCall } from '@/contexts/CallContext';
 import { toast } from '@/hooks/use-toast';
 import { UpdateBanner } from '@/components/UpdateBanner';
+import { serviceWorkerManager } from '@/lib/serviceWorkerManager';
 
 // CollapsibleSection Component
 interface CollapsibleSectionProps {
@@ -672,12 +674,28 @@ const Settings = () => {
         </CollapsibleSection>
 
         {/* Help & Support */}
-        <CollapsibleSection title="Help & Support" icon={<HelpCircle className="h-4 w-4" />}>
+        <CollapsibleSection title="Help & Support" icon={<HelpCircle className="h-4 h-4" />}>
             <Button variant="outline" className="w-full justify-start">
               FAQ & Help Center
             </Button>
             <Button variant="outline" className="w-full justify-start">
               Contact Support
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-blue-600 hover:text-blue-700"
+              onClick={async () => {
+                try {
+                  await serviceWorkerManager.forceUpdate();
+                } catch (error) {
+                  console.error('Force update failed:', error);
+                  // Fallback: just reload
+                  window.location.reload();
+                }
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Force App Update
             </Button>
             <Button variant="outline" className="w-full justify-start">
               Privacy Policy

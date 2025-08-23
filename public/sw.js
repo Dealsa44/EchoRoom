@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echoroom-v10';
+const CACHE_NAME = 'echoroom-v11';
 const urlsToCache = [
   '/',
   '/EchoRoom.png',
@@ -33,6 +33,34 @@ self.addEventListener('fetch', (event) => {
 
   // Skip service worker for iOS Safari to prevent interference
   if (isIOS && request.mode === 'navigate') {
+    return;
+  }
+
+  // For HTML/JS/CSS files: Network-first with cache fallback (better for updates)
+  if (request.destination === 'document' || 
+      request.destination === 'script' || 
+      request.destination === 'style' ||
+      request.url.includes('.js') ||
+      request.url.includes('.css') ||
+      request.url.includes('.html')) {
+    
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache the fresh response
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(request);
+        })
+    );
     return;
   }
 
@@ -114,10 +142,28 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CHECK_FOR_UPDATE') {
     self.registration.update();
   }
+  if (event.data && event.data.type === 'FORCE_UPDATE') {
+    // Force update by clearing cache and reloading
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('Force clearing cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      // Notify all clients to reload
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'FORCE_RELOAD' });
+        });
+      });
+    });
+  }
 });
 
-// Check for updates every 5 minutes during active development
-// You can adjust this frequency based on your needs
+// Check for updates every 2 minutes during active development
+// More frequent updates for better PWA experience
 setInterval(() => {
   self.registration.update();
-}, 5 * 60 * 1000); // 5 minutes
+}, 2 * 60 * 1000); // 2 minutes

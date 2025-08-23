@@ -39,6 +39,14 @@ class ServiceWorkerManager {
         this.handleControllerChange();
       });
 
+      // Listen for messages from service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'FORCE_RELOAD') {
+          console.log('🔄 Service worker requesting force reload...');
+          window.location.reload();
+        }
+      });
+
       // Check for updates more frequently during development
       const updateInterval = this.isDevelopmentMode ? 30 * 1000 : 5 * 60 * 1000; // 30 seconds in dev, 5 minutes in production
       setInterval(() => {
@@ -166,6 +174,41 @@ class ServiceWorkerManager {
     setTimeout(async () => {
       await this.checkForUpdates();
     }, 1000);
+  }
+
+  // Force update by clearing all caches and reloading (for PWA cache issues)
+  async forceUpdate(): Promise<void> {
+    console.log('💥 Force updating - clearing all caches...');
+    
+    if (!this.registration) {
+      console.log('No service worker registration found');
+      return;
+    }
+
+    try {
+      // Send message to service worker to force update
+      if (this.registration.active) {
+        this.registration.active.postMessage({ type: 'FORCE_UPDATE' });
+      }
+
+      // Also clear caches manually
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+
+      console.log('✅ All caches cleared, reloading...');
+      
+      // Reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+
+    } catch (error) {
+      console.error('Failed to force update:', error);
+      // Fallback: just reload
+      window.location.reload();
+    }
   }
 
   // Get development mode status
