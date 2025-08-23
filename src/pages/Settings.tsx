@@ -166,7 +166,7 @@ const Settings = () => {
     <div className="min-h-screen bg-background">
       <TopBar title="Settings" showBack />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-safe-bottom">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-with-nav">
         
         {/* App Updates */}
         <UpdateBanner />

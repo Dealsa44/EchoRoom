@@ -1154,7 +1154,25 @@
   
   /* Content area that accounts for fixed bottom elements */
   .content-safe-bottom {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 5rem);
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 8rem);
+  }
+  
+  .content-with-nav {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 6rem);
+  }
+  
+  .content-with-chat {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 10rem);
+  }
+  
+  /* Content area that accounts for bottom navigation specifically */
+  .content-with-nav {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 6rem);
+  }
+  
+  /* Content area that accounts for chat input boxes */
+  .content-with-chat {
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 10rem);
   }
   
   /* Fixed header height that includes safe area */
@@ -1187,7 +1205,7 @@
   }
   
   .content-safe-bottom {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 5rem);
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.25rem) + 8rem);
   }
   
   .header-height {
