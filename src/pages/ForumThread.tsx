@@ -476,14 +476,14 @@ const ForumThread = () => {
   };
 
   return (
-    <div className="h-screen bg-background overflow-hidden">
+    <div className="h-screen bg-background relative overflow-hidden">
       <TopBar 
         title="Deep Discussions" 
         showBack={true}
         onBack={() => navigate('/forum')}
       />
       
-      <div className="h-screen overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16 pb-20">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
         {/* Thread Post */}
         <Card>
           <CardContent className="p-6">

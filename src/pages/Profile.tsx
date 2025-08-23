@@ -208,7 +208,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="h-screen bg-background overflow-hidden">
+      <div className="h-screen bg-background relative overflow-hidden">
         <TopBar title="Profile" />
         <LoadingState message="Loading profile..." />
       </div>
@@ -216,13 +216,13 @@ const Profile = () => {
   }
 
   return (
-    <div className="h-screen bg-background overflow-hidden">
+    <div className="h-screen bg-background relative overflow-hidden">
       <TopBar 
         title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
         showBack={!isOwnProfile}
       />
       
-      <div className="h-screen overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16 pb-20">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
         <Card className="relative overflow-hidden animate-breathe">
           {/* Floating background accents */}
           <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
