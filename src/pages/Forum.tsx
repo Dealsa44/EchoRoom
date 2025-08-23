@@ -146,7 +146,7 @@ const Forum = () => {
         onBack={() => navigate('/community')}
       />
       
-      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16">
+      <div className="h-screen overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 pt-16 pb-20">
         {/* Header */}
         <div className="text-center animate-fade-in">
           <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Community Forum</h1>

@@ -222,7 +222,7 @@ const Profile = () => {
         showBack={!isOwnProfile}
       />
       
-      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
+      <div className="h-screen overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16 pb-20">
         <Card className="relative overflow-hidden animate-breathe">
           {/* Floating background accents */}
           <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />

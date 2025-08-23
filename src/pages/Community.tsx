@@ -44,7 +44,7 @@ const Community = () => {
       
       <TopBar title="Community" />
       
-      <div className="h-full overflow-y-auto px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16">
+      <div className="h-screen overflow-y-auto px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16 pb-20">
         {/* Welcome Section */}
         <Card className={`shadow-medium animate-breathe-slow transition-smooth ${
           isLoaded ? 'opacity-100 translate-y-0 animate-scale-in' : 'opacity-0 translate-y-4'

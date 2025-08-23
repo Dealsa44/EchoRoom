@@ -163,7 +163,7 @@ const Settings = () => {
     <div className="h-screen bg-background overflow-hidden">
       <TopBar title="Settings" showBack />
       
-      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
+      <div className="h-screen overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16 pb-20">
         
         {/* App Language & Theme */}
         <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />}>
