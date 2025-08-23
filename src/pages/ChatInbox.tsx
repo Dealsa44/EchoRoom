@@ -353,13 +353,13 @@ const ChatInbox = () => {
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-24 right-10 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
-        <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-xl animate-float" style={{ animationDelay: '1.4s' }} />
+        <div className="absolute bottom-28 left-6 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.4s' }} />
         <div className="absolute top-1/2 right-4 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '2.8s' }} />
       </div>
 
       <TopBar title="Messages" />
       
-      <div className="h-[calc(100vh-72px-80px)] overflow-y-auto px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 pt-16">
+      <div className="h-full overflow-y-auto px-4 py-6 max-w-md mx-auto space-y-6 pt-16">
         {/* Search with Menu */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
