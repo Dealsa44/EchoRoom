@@ -975,7 +975,7 @@ const ChatRoom = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top content-with-chat`}>
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
         <div className="space-y-4">
           {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -1242,7 +1242,7 @@ const ChatRoom = () => {
       )}
 
       {/* Message Input */}
-              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full safe-bottom">
+              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
         {anonymousMode && (
           <div className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
             <EyeOff size={12} />
