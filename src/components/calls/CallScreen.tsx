@@ -180,7 +180,7 @@ const CallScreen = ({
           
           {/* Local Video (Picture-in-Picture) */}
           {callState.isVideoEnabled && (
-            <div className="absolute top-20 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg z-10">
+            <div className="absolute top-24 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/20 shadow-lg z-10">
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -238,7 +238,7 @@ const CallScreen = ({
 
         {/* Center Content (for voice calls or when video is off) */}
         {callType === 'voice' || !callState.isVideoEnabled ? (
-          <div className="absolute top-20 bottom-32 left-0 right-0 flex items-center justify-center">
+          <div className="absolute top-24 bottom-32 left-0 right-0 flex items-center justify-center">
             <div className="text-center">
               <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-white/20">
                 <div className="text-6xl">{participantAvatar}</div>
@@ -313,8 +313,7 @@ const CallScreen = ({
         {/* Settings Panel */}
         {showSettings && (
           <div 
-            className="absolute top-20 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
-            onClick={(e) => e.stopPropagation()}
+            className="absolute top-24 right-4 w-64 bg-black/90 backdrop-blur-md rounded-lg p-4 border border-white/20 z-50"
           >
             <h3 className="text-white font-semibold mb-3">Call Settings</h3>
             <div className="space-y-3">
