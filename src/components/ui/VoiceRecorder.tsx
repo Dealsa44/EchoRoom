@@ -29,6 +29,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const pauseStartTimeRef = useRef<number>(0);
+  const totalPausedTimeRef = useRef<number>(0);
 
   // Check if browser supports audio recording
   const isSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -47,27 +50,47 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     try {
       const constraints = getMobileAudioConstraints();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+      streamRef.current = stream;
       
       const mimeType = getSupportedAudioMimeType();
       mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
+      totalPausedTimeRef.current = 0;
+      pauseStartTimeRef.current = 0;
       
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
       
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { 
-          type: mediaRecorderRef.current?.mimeType || mimeType
-        });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioURL(audioUrl);
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { 
+            type: mediaRecorderRef.current?.mimeType || mimeType
+          });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setAudioURL(audioUrl);
+          
+          // Validate the blob has actual audio data
+          if (audioBlob.size > 100) { // Minimum size for valid audio
+            console.log('Recording completed successfully, blob size:', audioBlob.size);
+          } else {
+            console.warn('Recording blob seems too small, size:', audioBlob.size);
+          }
+        } else {
+          console.error('No audio chunks collected during recording');
+        }
         
         // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
       };
       
-      mediaRecorderRef.current.start();
+      // Start recording with smaller timeslice for better pause/resume support
+      mediaRecorderRef.current.start(100);
       setIsRecording(true);
       setIsPaused(false);
       setRecordingTime(0);
@@ -86,7 +109,17 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   const pauseRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.pause();
+      // Store the current time when pausing
+      pauseStartTimeRef.current = Date.now();
+      
+      // Stop the current recording session
+      mediaRecorderRef.current.stop();
+      
+      // Request data to ensure all chunks are collected
+      if (mediaRecorderRef.current.state === 'inactive') {
+        mediaRecorderRef.current.requestData();
+      }
+      
       setIsPaused(true);
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
@@ -94,14 +127,61 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     }
   };
 
-  const resumeRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
-      mediaRecorderRef.current.resume();
-      setIsPaused(false);
-      // Resume timer
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+  const resumeRecording = async () => {
+    if (isPaused && streamRef.current) {
+      try {
+        // Calculate total paused time
+        if (pauseStartTimeRef.current > 0) {
+          totalPausedTimeRef.current += Date.now() - pauseStartTimeRef.current;
+          pauseStartTimeRef.current = 0;
+        }
+        
+        // Create a new MediaRecorder with the same stream
+        const mimeType = getSupportedAudioMimeType();
+        mediaRecorderRef.current = new MediaRecorder(streamRef.current, { mimeType });
+        
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorderRef.current.onstop = () => {
+          if (audioChunksRef.current.length > 0) {
+            const audioBlob = new Blob(audioChunksRef.current, { 
+              type: mediaRecorderRef.current?.mimeType || mimeType
+            });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            setAudioURL(audioUrl);
+            
+            // Validate the blob
+            if (audioBlob.size > 100) {
+              console.log('Resumed recording completed, blob size:', audioBlob.size);
+            } else {
+              console.warn('Resumed recording blob seems too small, size:', audioBlob.size);
+            }
+          }
+          
+          // Stop all tracks
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+        };
+        
+        // Start recording again
+        mediaRecorderRef.current.start(100);
+        setIsPaused(false);
+        
+        // Resume timer
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingTime(prev => prev + 1);
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Error resuming recording:', error);
+        setIsPaused(false);
+      }
     }
   };
 
@@ -117,13 +197,25 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && (mediaRecorderRef.current.state === 'recording' || mediaRecorderRef.current.state === 'paused')) {
-      mediaRecorderRef.current.stop();
+      // Request data before stopping to ensure all chunks are available
+      try {
+        mediaRecorderRef.current.requestData();
+        mediaRecorderRef.current.stop();
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+      }
     }
     
     setIsRecording(false);
     setIsPaused(false);
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
+    }
+    
+    // Ensure stream is stopped
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
   };
 
@@ -132,28 +224,43 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       stopRecording();
     }
     
-    if (audioURL) {
-      // Use actual recorded audio
-      const audioBlob = audioChunksRef.current.length > 0 
-        ? new Blob(audioChunksRef.current, { 
-            type: mediaRecorderRef.current?.mimeType || getSupportedAudioMimeType()
-          })
-        : new Blob([''], { type: getSupportedAudioMimeType() }); // Fallback blob
+    // Wait a bit for the MediaRecorder to finish processing
+    setTimeout(() => {
+      if (audioChunksRef.current.length > 0) {
+        // Create blob from collected chunks
+        const mimeType = mediaRecorderRef.current?.mimeType || getSupportedAudioMimeType();
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        
+        // Validate the blob
+        if (audioBlob.size > 100) {
+          console.log('Sending valid audio blob, size:', audioBlob.size);
+          onRecordingComplete(audioBlob, recordingTime);
+        } else {
+          console.warn('Audio blob too small, size:', audioBlob.size);
+          // Try to create a valid blob from the chunks
+          const validBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          onRecordingComplete(validBlob, recordingTime);
+        }
+      } else if (audioURL) {
+        // Fallback to URL if chunks are not available
+        console.log('Using audioURL fallback');
+        const fallbackBlob = new Blob([''], { type: getSupportedAudioMimeType() });
+        onRecordingComplete(fallbackBlob, recordingTime);
+      } else {
+        console.error('No audio data available');
+        const mockBlob = new Blob([''], { type: getSupportedAudioMimeType() });
+        onRecordingComplete(mockBlob, recordingTime);
+      }
       
-      onRecordingComplete(audioBlob, recordingTime);
-    } else {
-      // Fallback: create a mock audio blob
-      const mockBlob = new Blob([''], { type: getSupportedAudioMimeType() });
-      onRecordingComplete(mockBlob, recordingTime);
-    }
-    
-    // Reset state
-    setRecordingTime(0);
-    setAudioURL(null);
-    setCurrentTime(0);
-    setDuration(0);
-    setIsAudioLoaded(false);
-    setIsPaused(false);
+      // Reset state
+      setRecordingTime(0);
+      setAudioURL(null);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsAudioLoaded(false);
+      setIsPaused(false);
+      audioChunksRef.current = [];
+    }, 100);
   };
 
   const initializeAudio = () => {
@@ -166,10 +273,14 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       audioRef.current.muted = false;
       audioRef.current.volume = 1.0;
       
+      // Set the source first
+      audioRef.current.src = audioURL;
+      
       // Set up event listeners
       audioRef.current.onloadedmetadata = () => {
         setDuration(audioRef.current?.duration || 0);
         setIsAudioLoaded(true);
+        console.log('Audio metadata loaded, duration:', audioRef.current?.duration);
       };
       
       audioRef.current.ontimeupdate = () => {
@@ -190,6 +301,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         console.error('Audio error:', error);
         setIsAudioLoaded(false);
       };
+      
+      // Load the audio
+      audioRef.current.load();
       
       return true;
     } catch (error) {
@@ -227,14 +341,17 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         if (isMobile) {
           // For mobile, ensure audio is properly loaded and user interaction is handled
           try {
-            // Set the source again to ensure it's fresh
-            audioRef.current.src = audioURL;
-            await audioRef.current.load();
+            // Ensure audio is properly loaded
+            if (audioRef.current.readyState < 2) { // HAVE_CURRENT_DATA
+              await audioRef.current.load();
+            }
             
             // Use the safe play utility
             const success = await safePlayAudio(audioRef.current);
             if (success) {
               setIsPlaying(true);
+              console.log('Audio playback started successfully on mobile');
+              
               // Start progress timer
               playTimerRef.current = setInterval(() => {
                 if (audioRef.current && !audioRef.current.paused) {
@@ -242,6 +359,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
                 }
               }, 100);
             } else {
+              console.error('Failed to play audio on mobile');
               setIsPlaying(false);
             }
           } catch (error) {
@@ -253,6 +371,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           const success = await safePlayAudio(audioRef.current);
           if (success) {
             setIsPlaying(true);
+            console.log('Audio playback started successfully on desktop');
             
             // Start progress timer
             playTimerRef.current = setInterval(() => {
@@ -295,6 +414,10 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       }
       if (audioURL) {
         URL.revokeObjectURL(audioURL);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
     };
   }, [audioURL]);

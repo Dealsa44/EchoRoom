@@ -39,8 +39,22 @@ export const safePlayAudio = async (audio: HTMLAudioElement): Promise<boolean> =
       audio.muted = false;
       audio.volume = 1.0;
       
-      // Ensure audio is loaded before playing
-      await audio.load();
+      // iOS Safari specific handling
+      if (isIOS()) {
+        // iOS Safari requires user interaction and proper loading
+        audio.preload = 'auto';
+        
+        // Ensure audio is loaded before playing
+        if (audio.readyState < 2) { // HAVE_CURRENT_DATA
+          await audio.load();
+        }
+        
+        // Wait a bit for iOS to process the audio
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        // Ensure audio is loaded before playing
+        await audio.load();
+      }
     }
     
     const playPromise = audio.play();
@@ -85,6 +99,11 @@ export const createMobileAudio = (): HTMLAudioElement => {
   audio.muted = false;
   audio.volume = 1.0;
   
+  // iOS Safari specific settings
+  if (isIOS()) {
+    audio.preload = 'auto';
+  }
+  
   return audio;
 };
 
@@ -99,6 +118,22 @@ export const getSupportedAudioMimeType = (): string => {
     'audio/ogg;codecs=opus',
     'audio/wav'
   ];
+  
+  // iOS Safari prefers MP4
+  if (isIOS()) {
+    const iosTypes = [
+      'audio/mp4',
+      'audio/aac',
+      'audio/wav',
+      'audio/webm'
+    ];
+    
+    for (const type of iosTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+  }
   
   for (const type of types) {
     if (MediaRecorder.isTypeSupported(type)) {
@@ -126,6 +161,9 @@ export const getMobileAudioConstraints = () => {
   if (isIOS()) {
     constraints.sampleRate = 48000;
     constraints.channelCount = 1;
+    // iOS Safari works better with these settings
+    constraints.echoCancellation = false;
+    constraints.noiseSuppression = false;
   }
   
   // Android-specific optimizations

@@ -390,11 +390,31 @@ const PrivateChat = () => {
     // Photo sent - toast removed per user request
   };
 
-  const handleVoiceRecord = async () => {
+    const handleVoiceRecord = async () => {
     if (!isRecording) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
+        // Use mobile-optimized audio constraints
+        const constraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 44100,
+            channelCount: 1
+          }
+        };
+        
+        // iOS Safari specific optimizations
+        if (/iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase())) {
+          constraints.audio.sampleRate = 48000;
+          constraints.audio.echoCancellation = false;
+          constraints.audio.noiseSuppression = false;
+        }
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const recorder = new MediaRecorder(stream, { 
+          mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+        });
         const chunks: Blob[] = [];
         
         recorder.ondataavailable = (event) => {
@@ -405,29 +425,43 @@ const PrivateChat = () => {
         };
         
         recorder.onstop = () => {
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-          setRecordedAudioBlob(audioBlob);
+          if (chunks.length > 0) {
+            const audioBlob = new Blob(chunks, { 
+              type: recorder.mimeType || 'audio/webm' 
+            });
+            
+            // Validate the blob
+            if (audioBlob.size > 100) {
+              console.log('Recording completed successfully, blob size:', audioBlob.size);
+              setRecordedAudioBlob(audioBlob);
+            } else {
+              console.warn('Recording blob seems too small, size:', audioBlob.size);
+              setRecordedAudioBlob(audioBlob);
+            }
+          } else {
+            console.error('No audio chunks collected during recording');
+          }
+          
           stream.getTracks().forEach(track => track.stop());
         };
         
         setMediaRecorder(recorder);
         setAudioChunks([]);
         recorder.start(100); // Record in 100ms chunks for better pause/resume
-      setIsRecording(true);
-      setRecordingTime(0);
+        setIsRecording(true);
+        setRecordingTime(0);
         
         // Generate static waveform heights
         const heights = Array.from({ length: 20 }, () => Math.random() * 60 + 20);
         setWaveformHeights(heights);
       
-      // Start timer
+        // Start timer
         const timer = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+          setRecordingTime(prev => prev + 1);
+        }, 1000);
         setRecordingTimerRef(timer);
         
-        // Start animation loop after setting isRecording
-        setIsRecording(true);
+        // Start animation loop
         const animate = () => {
           setAnimationFrame(prev => prev + 1);
           if (isRecording) {
@@ -450,12 +484,24 @@ const PrivateChat = () => {
 
   const handleStopRecording = () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
+      // Request data before stopping to ensure all chunks are available
+      try {
+        mediaRecorder.requestData();
+        mediaRecorder.stop();
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+      }
     }
     setIsRecording(false);
     if (recordingTimerRef) {
       clearInterval(recordingTimerRef);
       setRecordingTimerRef(null);
+    }
+    
+    // Stop animation loop
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+      setAnimationFrame(0);
     }
   };
 
@@ -472,30 +518,43 @@ const PrivateChat = () => {
       }
     }
     
-    if (recordedAudioBlob || recordingTime > 0) {
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'me' as const,
-      content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
-      timestamp: 'now',
-      translated: false,
-      corrected: false,
-      originalContent: '',
-      translatedContent: '',
-      hasErrors: false,
-      corrections: [],
-      type: 'voice' as const,
-      reactions: [],
-      isEdited: false,
-      isDeleted: false,
-      replyTo: replyingTo,
+        if (recordedAudioBlob || recordingTime > 0) {
+      // Validate and fix the audio blob if needed
+      let finalAudioBlob = recordedAudioBlob;
+      
+      if (recordedAudioBlob && recordedAudioBlob.size < 100) {
+        console.warn('Audio blob too small, attempting to fix...');
+        // Try to create a valid blob from the collected chunks
+        if (audioChunks.length > 0) {
+          const mimeType = mediaRecorder?.mimeType || 'audio/webm';
+          finalAudioBlob = new Blob(audioChunks, { type: mimeType });
+          console.log('Created new blob from chunks, size:', finalAudioBlob.size);
+        }
+      }
+      
+      const newMessage = {
+        id: messages.length + 1,
+        sender: 'me' as const,
+        content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
+        timestamp: 'now',
+        translated: false,
+        corrected: false,
+        originalContent: '',
+        translatedContent: '',
+        hasErrors: false,
+        corrections: [],
+        type: 'voice' as const,
+        reactions: [],
+        isEdited: false,
+        isDeleted: false,
+        replyTo: replyingTo,
       deliveryStatus: 'sent' as const,
       isEncrypted: true,
-      voiceData: {
-        duration: recordingTime,
+              voiceData: {
+          duration: recordingTime,
           waveform: Array.from({ length: 20 }, () => Math.random()),
-          audioBlob: recordedAudioBlob
-      }
+          audioBlob: finalAudioBlob
+        }
     };
 
     setMessages(prev => [...prev, newMessage]);
@@ -671,12 +730,24 @@ const PrivateChat = () => {
         const message = messages.find(msg => msg.id === messageId);
         if (message && message.voiceData?.audioBlob && audioRef.current) {
           try {
+            // Validate the audio blob
+            if (message.voiceData.audioBlob.size < 100) {
+              console.warn('Audio blob too small, size:', message.voiceData.audioBlob.size);
+              setPlayingVoiceId(null);
+              setCurrentAudioTime(0);
+              return;
+            }
+            
             const audioUrl = URL.createObjectURL(message.voiceData.audioBlob);
             audioRef.current.src = audioUrl;
+            
+            // Ensure audio is properly loaded before playing
+            await audioRef.current.load();
             
             // Mobile-friendly audio playback
             const success = await safePlayAudio(audioRef.current);
             if (success) {
+              console.log('Voice message playback started successfully');
               // Update progress in real time
               audioUpdateTimerRef.current = setInterval(() => {
                 if (audioRef.current && !audioRef.current.paused) {
@@ -684,6 +755,7 @@ const PrivateChat = () => {
                 }
               }, 100);
             } else {
+              console.error('Failed to play voice message');
               setPlayingVoiceId(null);
               setCurrentAudioTime(0);
             }
