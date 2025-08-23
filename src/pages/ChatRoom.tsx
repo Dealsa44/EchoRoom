@@ -1242,7 +1242,7 @@ const ChatRoom = () => {
       )}
 
       {/* Message Input */}
-              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
+              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full safe-bottom">
         {anonymousMode && (
           <div className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
             <EyeOff size={12} />

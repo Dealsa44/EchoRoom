@@ -111,7 +111,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   return (
     <div 
-      className={`fixed z-50 transition-all duration-300 ${getPositionClasses()} ${
+      className={`fixed z-50 transition-all duration-300 ${getPositionClasses()} safe-bottom ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'
       } ${className}`}
     >

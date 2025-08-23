@@ -891,8 +891,8 @@ const PrivateChat = () => {
 
 
 
-      {/* Message Input */}
-              <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border">
+            {/* Message Input */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border safe-bottom">
         {/* Reply indicator */}
         {replyingTo && (
           <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">

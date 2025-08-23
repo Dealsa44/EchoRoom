@@ -1142,6 +1142,11 @@
     padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
   }
   
+  /* Bottom safe area - much smaller than top for chat interfaces */
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.25rem);
+  }
+  
   /* Content area that accounts for fixed header */
   .content-safe-top {
     padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
@@ -1166,6 +1171,10 @@
   
   .safe-top {
     padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.25rem);
   }
   
   .content-safe-top {

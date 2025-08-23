@@ -663,7 +663,7 @@ const ForumThread = () => {
         </div>
 
                 {/* Floating Comment Button - for mobile/when scrolled */}
-        <div className="fixed bottom-0 right-4 z-50">
+        <div className="fixed bottom-0 right-4 z-50 safe-bottom">
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
