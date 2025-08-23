@@ -79,8 +79,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     const absX = Math.abs(clampedDeltaX);
     const scale = Math.max(0.98, 1 - absX / (maxSwipe * 4));
     
-    // Remove vertical movement completely - card stays fixed vertically
-    const dampedY = 0;
+    // Reduce vertical movement for better feel
+    const dampedY = deltaY * 0.05;
     
     currentTransformRef.current = {
       x: clampedDeltaX,
@@ -93,8 +93,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       if (cardRef.current) {
         const { x, y, rotation, scale } = currentTransformRef.current;
         
-        // Use transform3d for hardware acceleration - only horizontal movement
-        cardRef.current.style.transform = `translate3d(${x}px, 0px, 0) rotate(${rotation}deg) scale(${scale})`;
+        // Use transform3d for hardware acceleration
+        cardRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg) scale(${scale})`;
         
         // Smoother color transitions with halfway threshold
         const progress = absX / halfwayThreshold;
@@ -163,13 +163,12 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     
     lastMoveRef.current = { x: clientX, y: clientY, time: now };
     
-    // Only allow horizontal swipes - ignore vertical movement completely
-    // Check if the movement is primarily horizontal (more than 1.5x horizontal vs vertical)
-    if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-      // Horizontal swipe - allow movement
-      updateTransform(deltaX, 0, true); // Pass 0 for deltaY to ensure no vertical movement
+    // Determine swipe direction - more lenient for mobile
+    const direction = Math.abs(deltaX) > Math.abs(deltaY) * 1.5 ? 'horizontal' : 'vertical';
+    
+    if (direction === 'horizontal') {
+      updateTransform(deltaX, deltaY, true); // Use immediate updates for touch
     }
-    // If movement is primarily vertical, do nothing - card stays in place
   }, [isDragging, disabled, isAnimating, updateTransform, calculateVelocity]);
 
   const handleEnd = useCallback(() => {
@@ -240,8 +239,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       } catch (error) {
         // Ignore passive event listener errors
       }
-      // Only pass X coordinate to ensure no vertical movement
-      handleMove(e.touches[0].clientX, 0);
+      handleMove(e.touches[0].clientX, e.touches[0].clientY);
     }
   }, [handleMove, isDragging]);
 
@@ -280,7 +278,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
     <div className="relative overflow-hidden rounded-2xl">
       <Card
         ref={cardRef}
-        className={`relative select-none swipe-card mobile-optimized fixed-vertical ${className} ${
+        className={`relative select-none swipe-card mobile-optimized ${className} ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         } transition-shadow duration-200 ${
           isDragging ? 'shadow-2xl' : 'shadow-xl'
@@ -297,7 +295,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           WebkitUserSelect: 'none',
           WebkitTouchCallout: 'none',
           willChange: isDragging ? 'transform' : 'auto',
-          touchAction: 'manipulation', // Allow manipulation while preventing vertical scrolling
+          touchAction: 'manipulation', // Better for mobile interactions
           transform: 'translateZ(0)', // Force hardware acceleration
         }}
       >
