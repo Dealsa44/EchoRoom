@@ -51,7 +51,7 @@ const Login = () => {
   };
 
   return (
-            <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            <div className="min-h-screen app-gradient-bg flex flex-col items-center justify-center p-6 relative overflow-hidden safe-top">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute top-32 left-12 w-28 h-28 bg-gradient-secondary rounded-full blur-3xl animate-float" />

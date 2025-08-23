@@ -938,7 +938,7 @@ const ChatRoom = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-              <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft">
+              <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Button
@@ -975,7 +975,7 @@ const ChatRoom = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full mt-20 ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
         <div className="space-y-4">
           {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
