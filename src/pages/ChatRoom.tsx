@@ -12,8 +12,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
-import { useLanguageAI, LanguageCode } from '@/contexts/LanguageAIContext';
+import { useApp } from '@/hooks/useApp';
+import { useLanguageAI } from '@/hooks/useLanguageAI';
+import { LanguageCode } from '@/types/languageAI';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';

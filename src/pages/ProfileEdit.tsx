@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users, MessageCircle, ChevronDown, ChevronRight, Camera, X } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { updateUserProfile } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
@@ -210,13 +210,13 @@ const ProfileEdit = () => {
     genderIdentity: user?.genderIdentity || 'prefer-not-to-say' as GenderIdentity,
     orientation: user?.orientation || 'other' as Orientation,
     ethnicity: (user as any)?.ethnicity || 'prefer-not-to-say' as Ethnicity,
-    lookingForRelationship: user?.lookingForRelationship || false,
-    lookingForFriendship: user?.lookingForFriendship || false,
+    lookingForRelationship: (user as any)?.lookingForRelationship || false,
+    lookingForFriendship: (user as any)?.lookingForFriendship || false,
     relationshipType: (user as any)?.relationshipType || 'not-sure-yet' as RelationshipType,
     customGender: user?.customGender || '',
     customOrientation: user?.customOrientation || '',
     // Language and lifestyle fields
-    languages: (user?.languages || []).map((lang: any) => {
+    languages: (user?.languages || []).map((lang) => {
       if (typeof lang === 'string') {
         return { language: lang, level: 'beginner' as LanguageLevel };
       } else if (lang && typeof lang === 'object') {
@@ -226,15 +226,15 @@ const ProfileEdit = () => {
         }
         // Handle the Register.tsx format: { language, level }
         if ('language' in lang && 'level' in lang) {
-          return { language: lang.language, level: lang.level as LanguageLevel };
+          return { language: (lang as any).language, level: (lang as any).level as LanguageLevel };
         }
       }
       return { language: '', level: '' as LanguageLevel };
     }),
     chatStyle: user?.chatStyle || '',
-    location: (user as any)?.location || '',
-    hometown: (user as any)?.hometown || '',
-    relationshipStatus: (user as any)?.relationshipStatus || 'prefer-not-to-say',
+    location: user?.location || '',
+    hometown: user?.hometown || '',
+    relationshipStatus: user?.relationshipStatus || 'prefer-not-to-say',
     smoking: user?.smoking || 'prefer-not-to-say',
     drinking: user?.drinking || 'prefer-not-to-say',
     hasChildren: user?.hasChildren || 'prefer-not-to-say',
@@ -359,7 +359,7 @@ const ProfileEdit = () => {
       const result = await updateUserProfile(user.id, updates);
 
       if (result.success && result.user) {
-        setUser(result.user as any);
+        setUser(result.user);
         // Update initial form data to reflect saved state
         initialFormData.current = { ...formData };
         setHasUnsavedChanges(false);

@@ -10,7 +10,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ArrowLeft, Eye, EyeOff, ArrowRight, ArrowLeft as ArrowLeftIcon, Check, User, Mail, Lock, Heart, Languages, MessageCircle, Camera, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
 import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
@@ -352,16 +352,34 @@ const Register = () => {
         location: formData.location,
         hometown: formData.hometown,
         relationshipStatus: formData.relationshipStatus,
-        languages: formData.languages.filter(lang => lang.language && lang.level) as any,
+        languages: formData.languages.filter(lang => lang.language && lang.level).map(lang => ({
+          code: lang.language,
+          name: getLanguageDisplayName(lang.language),
+          proficiency: lang.level === 'native' ? 'native' : 
+                      lang.level === 'c2' || lang.level === 'c1' ? 'advanced' :
+                      lang.level === 'b2' || lang.level === 'b1' ? 'intermediate' : 'beginner'
+        })),
         chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
         interests: formData.interests,
         // Fields for gender and orientation
         genderIdentity: formData.genderIdentity,
         orientation: formData.orientation,
-        ethnicity: formData.ethnicity as any,
+        ethnicity: formData.ethnicity === 'black-african-american' ? 'black' : 
+                  formData.ethnicity === 'hispanic-latino' ? 'hispanic' :
+                  formData.ethnicity === 'native-american' ? 'other' :
+                  formData.ethnicity === 'pacific-islander' ? 'other' :
+                  formData.ethnicity === 'middle-eastern' ? 'middle-eastern' :
+                  formData.ethnicity === 'mixed-race' ? 'mixed' : formData.ethnicity,
         lookingForRelationship: formData.lookingForRelationship,
         lookingForFriendship: formData.lookingForFriendship,
-        relationshipType: formData.lookingForRelationship ? formData.relationshipType as any : undefined,
+        relationshipType: formData.lookingForRelationship ? 
+          (formData.relationshipType === 'casual-dating' ? 'casual' :
+           formData.relationshipType === 'serious-relationship' ? 'serious' :
+           formData.relationshipType === 'marriage' ? 'marriage' :
+           formData.relationshipType === 'open-relationship' ? 'friendship' :
+           formData.relationshipType === 'friends-with-benefits' ? 'friendship' :
+           formData.relationshipType === 'not-sure-yet' ? 'friendship' :
+           formData.relationshipType === 'prefer-not-to-say' ? 'friendship' : 'friendship') : undefined,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
         // Lifestyle fields
@@ -390,7 +408,7 @@ const Register = () => {
           }
         }
         
-        setUser(result.user as any);
+        setUser(result.user);
         setIsAuthenticated(true);
         // Welcome to EchoRoom - toast removed per user request
         navigate('/match');
@@ -470,16 +488,16 @@ const Register = () => {
         break;
         
       case 'languages':
-        if (!value || (value as any[]).length === 0) {
+        if (!value || (value as Array<{ language?: string; level?: string; [key: string]: unknown }>).length === 0) {
           newErrors.languages = 'Please add at least one language';
         } else {
           // Check if all languages have both language and level selected
-          const incompleteLanguages = (value as any[]).filter((lang: { language?: string; level?: string; [key: string]: unknown }) => !lang.language || !lang.level);
+          const incompleteLanguages = (value as Array<{ language?: string; level?: string; [key: string]: unknown }>).filter((lang: { language?: string; level?: string; [key: string]: unknown }) => !lang.language || !lang.level);
           if (incompleteLanguages.length > 0) {
             newErrors.languages = 'Please complete all language selections';
             // Set specific errors for incomplete languages
             const newLanguageErrors: {[key: number]: string} = {};
-            (value as any[]).forEach((lang: { language?: string; level?: string; [key: string]: unknown }, index: number) => {
+            (value as Array<{ language?: string; level?: string; [key: string]: unknown }>).forEach((lang: { language?: string; level?: string; [key: string]: unknown }, index: number) => {
               if (!lang.language || !lang.level) {
                 newLanguageErrors[index] = 'Please select both language and level';
               }
@@ -588,7 +606,7 @@ const Register = () => {
           newErrors.languages = 'Please add at least one language';
         } else {
           // Check if all languages have both language and level selected
-          const incompleteLanguages = (formData.languages as any).filter((lang: { language?: string; level?: string; [key: string]: unknown }) => !lang.language || !lang.level);
+          const incompleteLanguages = formData.languages.filter((lang) => !lang.language || !lang.level);
           if (incompleteLanguages.length > 0) {
             newErrors.languages = 'Please complete all language selections';
           }

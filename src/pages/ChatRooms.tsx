@@ -11,7 +11,7 @@ import TopBar from '@/components/layout/TopBar';
 import CreateRoomModal from '@/components/modals/CreateRoomModal';
 import { ChatRoomSkeleton } from '@/components/ui/SkeletonLoader';
 
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
 import { markConversationAsRejoined } from '@/lib/conversationStorage';

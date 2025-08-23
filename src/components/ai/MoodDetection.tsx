@@ -111,18 +111,6 @@ const MoodDetection: React.FC<MoodDetectionProps> = ({ messages, isActive }) => 
   const [recommendations, setRecommendations] = useState<PersonalizedRecommendation[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    if (isActive && messages.length > 0) {
-      analyzeMood(messages);
-    }
-  }, [messages, isActive]);
-
-  useEffect(() => {
-    if (currentMood.primary !== 'neutral') {
-      generateRecommendations(currentMood);
-    }
-  }, [currentMood]);
-
   const analyzeMood = useCallback(async (messageList: string[]) => {
     setIsAnalyzing(true);
     
@@ -148,6 +136,18 @@ const MoodDetection: React.FC<MoodDetectionProps> = ({ messages, isActive }) => 
     }
     
     setIsAnalyzing(false);
+  }, [currentMood]);
+
+  useEffect(() => {
+    if (isActive && messages.length > 0) {
+      analyzeMood(messages);
+    }
+  }, [messages, isActive, analyzeMood]);
+
+  useEffect(() => {
+    if (currentMood.primary !== 'neutral') {
+      generateRecommendations(currentMood);
+    }
   }, [currentMood]);
 
   const performSentimentAnalysis = async (text: string): Promise<MoodData> => {

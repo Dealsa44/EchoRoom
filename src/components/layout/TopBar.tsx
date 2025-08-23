@@ -1,6 +1,6 @@
 import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationModal from '@/components/modals/NotificationModal';

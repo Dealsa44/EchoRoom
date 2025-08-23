@@ -1,4 +1,5 @@
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
+import { ProfileQuestion } from '@/types';
 
 // Define missing types locally
 type Ethnicity = 'white' | 'black' | 'hispanic' | 'asian' | 'middle-eastern' | 'pacific-islander' | 'mixed' | 'other' | 'prefer-not-to-say';
@@ -44,7 +45,7 @@ interface User {
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   languageProficiency: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
   photos?: string[];
-  profileQuestions: any[];
+  profileQuestions: ProfileQuestion[];
 }
 import { getRandomProfileQuestions } from '@/data/profileQuestions';
 

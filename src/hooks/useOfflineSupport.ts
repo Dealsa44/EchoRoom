@@ -38,6 +38,20 @@ export const useOfflineSupport = () => {
     cacheSize: 0
   });
 
+  const calculateCacheSize = useCallback(() => {
+    let totalSize = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(CACHE_PREFIX)) {
+        const value = localStorage.getItem(key);
+        if (value) {
+          totalSize += new Blob([value]).size;
+        }
+      }
+    }
+    setState(prev => ({ ...prev, cacheSize: totalSize }));
+  }, []);
+
   // Initialize offline queue from localStorage
   useEffect(() => {
     const savedQueue = localStorage.getItem(OFFLINE_QUEUE_KEY);
@@ -54,67 +68,7 @@ export const useOfflineSupport = () => {
     }
     
     calculateCacheSize();
-  }, []);
-
-  // Online/offline event listeners
-  useEffect(() => {
-    const handleOnline = () => {
-      setState(prev => ({ ...prev, isOnline: true }));
-      // Back online - toast removed per user request
-      syncQueuedMessages();
-    };
-
-    const handleOffline = () => {
-      setState(prev => ({ ...prev, isOnline: false }));
-      // You're offline - toast removed per user request
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Save offline queue to localStorage whenever it changes
-  useEffect(() => {
-    if (state.queuedMessages.length > 0) {
-      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(state.queuedMessages));
-    } else {
-      localStorage.removeItem(OFFLINE_QUEUE_KEY);
-    }
-  }, [state.queuedMessages]);
-
-  const calculateCacheSize = () => {
-    let totalSize = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(CACHE_PREFIX)) {
-        const value = localStorage.getItem(key);
-        if (value) {
-          totalSize += new Blob([value]).size;
-        }
-      }
-    }
-    setState(prev => ({ ...prev, cacheSize: totalSize }));
-  };
-
-  const queueMessage = useCallback((message: Omit<OfflineMessage, 'id' | 'retry'>) => {
-    const queuedMessage: OfflineMessage = {
-      ...message,
-      id: Date.now().toString() + Math.random().toString(36),
-      retry: 0
-    };
-
-    setState(prev => ({
-      ...prev,
-      queuedMessages: [...prev.queuedMessages, queuedMessage]
-    }));
-
-    // Message queued - toast removed per user request
-  }, []);
+  }, [calculateCacheSize]);
 
   const syncQueuedMessages = useCallback(async () => {
     if (state.syncInProgress || state.queuedMessages.length === 0 || !state.isOnline) {
@@ -177,58 +131,53 @@ export const useOfflineSupport = () => {
     return Math.random() > 0.1;
   };
 
-  // Cache management
-  const setCache = useCallback(<T>(key: string, data: T, ttl: number = DEFAULT_TTL) => {
-    try {
-      const cacheEntry: CacheEntry<T> = {
-        data,
-        timestamp: Date.now(),
-        ttl
-      };
-      
-      const cacheKey = CACHE_PREFIX + key;
-      const serialized = JSON.stringify(cacheEntry);
-      
-      // Check if adding this would exceed cache limit
-      const newSize = new Blob([serialized]).size;
-      if (state.cacheSize + newSize > MAX_CACHE_SIZE) {
-        cleanupCache();
-      }
-      
-      localStorage.setItem(cacheKey, serialized);
-      calculateCacheSize();
-      
-      return true;
-    } catch (error) {
-      console.error('Failed to set cache:', error);
-      return false;
-    }
-  }, [state.cacheSize]);
+  // Online/offline event listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setState(prev => ({ ...prev, isOnline: true }));
+      // Back online - toast removed per user request
+      syncQueuedMessages();
+    };
 
-  const getCache = useCallback(<T>(key: string): T | null => {
-    try {
-      const cacheKey = CACHE_PREFIX + key;
-      const cached = localStorage.getItem(cacheKey);
-      
-      if (!cached) return null;
-      
-      const cacheEntry: CacheEntry<T> = JSON.parse(cached);
-      const now = Date.now();
-      
-      // Check if cache has expired
-      if (now - cacheEntry.timestamp > cacheEntry.ttl) {
-        localStorage.removeItem(cacheKey);
-        calculateCacheSize();
-        return null;
-      }
-      
-      return cacheEntry.data;
-    } catch (error) {
-      console.error('Failed to get cache:', error);
-      return null;
+    const handleOffline = () => {
+      setState(prev => ({ ...prev, isOnline: false }));
+      // You're offline - toast removed per user request
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [syncQueuedMessages]);
+
+  // Save offline queue to localStorage whenever it changes
+  useEffect(() => {
+    if (state.queuedMessages.length > 0) {
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(state.queuedMessages));
+    } else {
+      localStorage.removeItem(OFFLINE_QUEUE_KEY);
     }
+  }, [state.queuedMessages]);
+
+  const queueMessage = useCallback((message: Omit<OfflineMessage, 'id' | 'retry'>) => {
+    const queuedMessage: OfflineMessage = {
+      ...message,
+      id: Date.now().toString() + Math.random().toString(36),
+      retry: 0
+    };
+
+    setState(prev => ({
+      ...prev,
+      queuedMessages: [...prev.queuedMessages, queuedMessage]
+    }));
+
+    // Message queued - toast removed per user request
   }, []);
 
+  // Cache management
   const cleanupCache = useCallback(() => {
     const cacheKeys: { key: string; timestamp: number }[] = [];
     
@@ -260,7 +209,58 @@ export const useOfflineSupport = () => {
     calculateCacheSize();
     
     // Cache cleaned - toast removed per user request
-  }, []);
+  }, [calculateCacheSize]);
+
+  const setCache = useCallback(<T>(key: string, data: T, ttl: number = DEFAULT_TTL) => {
+    try {
+      const cacheEntry: CacheEntry<T> = {
+        data,
+        timestamp: Date.now(),
+        ttl
+      };
+      
+      const cacheKey = CACHE_PREFIX + key;
+      const serialized = JSON.stringify(cacheEntry);
+      
+      // Check if adding this would exceed cache limit
+      const newSize = new Blob([serialized]).size;
+      if (state.cacheSize + newSize > MAX_CACHE_SIZE) {
+        cleanupCache();
+      }
+      
+      localStorage.setItem(cacheKey, serialized);
+      calculateCacheSize();
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to set cache:', error);
+      return false;
+    }
+  }, [state.cacheSize, cleanupCache, calculateCacheSize]);
+
+  const getCache = useCallback(<T>(key: string): T | null => {
+    try {
+      const cacheKey = CACHE_PREFIX + key;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (!cached) return null;
+      
+      const cacheEntry: CacheEntry<T> = JSON.parse(cached);
+      const now = Date.now();
+      
+      // Check if cache has expired
+      if (now - cacheEntry.timestamp > cacheEntry.ttl) {
+        localStorage.removeItem(cacheKey);
+        calculateCacheSize();
+        return null;
+      }
+      
+      return cacheEntry.data;
+    } catch (error) {
+      console.error('Failed to get cache:', error);
+      return null;
+    }
+  }, [calculateCacheSize]);
 
   const clearAllCache = useCallback(() => {
     for (let i = localStorage.length - 1; i >= 0; i--) {

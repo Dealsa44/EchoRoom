@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import TopBar from '@/components/layout/TopBar';
-import { useCall } from '@/contexts/CallContext';
+import { useCall } from '@/hooks/useCall';
 import { CallRecord, CallType, CallStatus } from '@/types';
 import { Input } from '@/components/ui/input';
 

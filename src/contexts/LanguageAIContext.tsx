@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 
-export type LanguageCode = 'english' | 'georgian' | 'spanish' | 'french';
-export type LanguageLevel = 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2';
-export type AIPersonality = 'friendly' | 'academic' | 'casual' | 'encouraging';
+import { LanguageCode, LanguageLevel, AIPersonality } from '@/types/languageAI';
 
 interface LanguageCorrection {
   id: string;
@@ -68,7 +66,7 @@ interface LanguageAISettings {
   readingSpeed: number;
 }
 
-interface LanguageAIContextType extends LanguageAISettings {
+export interface LanguageAIContextType extends LanguageAISettings {
   // Setters
   setLearningLanguage: (language: LanguageCode) => void;
   setLanguageLevel: (level: LanguageLevel) => void;
@@ -247,15 +245,7 @@ const defaultSettings: LanguageAISettings = {
   readingSpeed: 75,
 };
 
-const LanguageAIContext = createContext<LanguageAIContextType | undefined>(undefined);
-
-export const useLanguageAI = () => {
-  const context = useContext(LanguageAIContext);
-  if (!context) {
-    throw new Error('useLanguageAI must be used within a LanguageAIProvider');
-  }
-  return context;
-};
+export const LanguageAIContext = createContext<LanguageAIContextType | undefined>(undefined);
 
 export const LanguageAIProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<LanguageAISettings>(defaultSettings);

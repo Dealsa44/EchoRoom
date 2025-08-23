@@ -19,7 +19,7 @@ import {
   Maximize2,
   Minimize2
 } from 'lucide-react';
-import { useCall } from '@/contexts/CallContext';
+import { useCall } from '@/hooks/useCall';
 import { CallType } from '@/types';
 
 interface CallScreenProps {

@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, BookOpen, CheckCircle, Target, Award, Mic, Headphones, PenTool, Eye, Brain, Zap, Lightbulb, MessageCircle, Star } from 'lucide-react';
-import { useLanguageAI } from '@/contexts/LanguageAIContext';
+import { useLanguageAI } from '@/hooks/useLanguageAI';
 
 interface LanguageProgressCardProps {
   language: string;

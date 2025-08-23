@@ -13,7 +13,7 @@ import { Heart, MessageCircle, X, Filter, MapPin, Info, ChevronDown, ChevronUp, 
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import SmartConversationStarters from '@/components/chat/SmartConversationStarters';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { getAttractionPreferences } from '@/contexts/app-utils';
 import { toast } from '@/hooks/use-toast';
 import { Profile } from '@/types';

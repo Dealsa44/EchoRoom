@@ -280,10 +280,10 @@ const ForumThread = () => {
     }
   };
 
-  const countReplies = (comment: any): number => {
+  const countReplies = (comment: { replies?: Array<{ replies?: unknown[] }> }): number => {
     if (!comment.replies || comment.replies.length === 0) return 0;
     let total = comment.replies.length;
-    comment.replies.forEach((reply: any) => {
+    comment.replies.forEach((reply) => {
       total += countReplies(reply);
     });
     return total;

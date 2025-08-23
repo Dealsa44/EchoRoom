@@ -8,7 +8,7 @@ import { Edit, BarChart3, LogOut, Mail, User, Users, MessageCircle, Heart, Arrow
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
-import { useApp } from '@/contexts/AppContext';
+import { useApp } from '@/hooks/useApp';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 import CallButtons from '@/components/calls/CallButtons';
 
@@ -90,12 +90,12 @@ interface UserType {
   politicalViews: 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say';
   languageProficiency: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'native'>;
   photos?: string[];
-  profileQuestions: any[];
+  profileQuestions: ProfileQuestion[];
   location?: string;
   relationshipType?: string;
 }
 import { getAttractionPreferences } from '@/contexts/app-utils';
-import { Profile as ProfileType } from '@/types';
+import { Profile as ProfileType, ProfileQuestion } from '@/types';
 import { getProfileById } from '@/data/mockProfiles';
 import { LoadingState } from '@/components/ui/LoadingSpinner';
 import { toast } from '@/hooks/use-toast';
@@ -419,7 +419,7 @@ const Profile = () => {
                   <Badge variant="outline">
                     {isOwnProfile
                       ? ((user as any)?.ethnicity && (user as any).ethnicity !== 'prefer-not-to-say'
-                                                      ? (user as any).ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                        ? (user as any).ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                           : 'Not specified')
                       : (profileData?.ethnicity && profileData.ethnicity !== 'prefer-not-to-say'
                           ? profileData.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
@@ -437,22 +437,22 @@ const Profile = () => {
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
                 <p className="text-muted-foreground">Location</p>
                                   <p className="mt-1 font-medium">
-                    {isOwnProfile ? ((user as any)?.location || 'Not set') : (profileData?.location || 'Not specified')}
+                    {isOwnProfile ? (user?.location || 'Not set') : (profileData?.location || 'Not specified')}
                   </p>
               </div>
-              {(isOwnProfile ? (user as any)?.hometown : profileData?.hometown) && (
+              {(isOwnProfile ? user?.hometown : profileData?.hometown) && (
                 <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
                   <p className="text-muted-foreground">Hometown</p>
                   <p className="mt-1 font-medium">
-                    {isOwnProfile ? (user as any)?.hometown : profileData?.hometown}
+                    {isOwnProfile ? user?.hometown : profileData?.hometown}
                   </p>
                 </div>
               )}
             </div>
-            {(isOwnProfile ? user?.about : (profileData as any)?.about) && (
+            {(isOwnProfile ? user?.about : profileData?.about) && (
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
                 <p className="text-muted-foreground text-sm mb-1">About</p>
-                <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : (profileData as any)?.about}</p>
+                <p className="text-sm leading-relaxed">{isOwnProfile ? user?.about : profileData?.about}</p>
               </div>
             )}
           </CardContent>
@@ -502,9 +502,9 @@ const Profile = () => {
                     {isOwnProfile ? (
                       user?.languages && user.languages.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {(user.languages as any).map((lang: any, index: number) => (
+                          {user.languages.map((lang, index: number) => (
                             <Badge key={index} variant="outline" className="text-xs">
-                              {lang.language.charAt(0).toUpperCase() + lang.language.slice(1)} ({lang.level})
+                              {(lang as any).language.charAt(0).toUpperCase() + (lang as any).language.slice(1)} ({(lang as any).level})
                             </Badge>
                           ))}
                         </div>
@@ -537,7 +537,7 @@ const Profile = () => {
                   <p className="mt-1 font-medium">
                     {isOwnProfile
                       ? (user?.relationshipStatus && user.relationshipStatus !== 'prefer-not-to-say' ? formatRelationshipStatus(user.relationshipStatus) : 'Not specified')
-                      : ((profileData as any)?.relationshipStatus && (profileData as any).relationshipStatus !== 'prefer-not-to-say' ? formatRelationshipStatus((profileData as any).relationshipStatus) : 'Not specified')}
+                      : (profileData?.relationshipStatus && profileData.relationshipStatus !== 'prefer-not-to-say' ? formatRelationshipStatus(profileData.relationshipStatus) : 'Not specified')}
                   </p>
                 </div>
               </div>
@@ -640,7 +640,7 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.smoking && user.smoking !== 'prefer-not-to-say' ? user.smoking.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.smoking && (profileData as any).smoking !== 'prefer-not-to-say' ? (profileData as any).smoking.replace('-', ' ') : 'Not specified')}
+                    : (profileData?.smoking && profileData.smoking !== 'prefer-not-to-say' ? profileData.smoking.replace('-', ' ') : 'Not specified')}
                 </p>
               </div>
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '150ms' }}>
@@ -648,7 +648,7 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.drinking && user.drinking !== 'prefer-not-to-say' ? user.drinking.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.drinking && (profileData as any).drinking !== 'prefer-not-to-say' ? (profileData as any).drinking.replace('-', ' ') : 'Not specified')}
+                    : (profileData?.drinking && profileData.drinking !== 'prefer-not-to-say' ? profileData.drinking.replace('-', ' ') : 'Not specified')}
                 </p>
               </div>
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '300ms' }}>
@@ -656,7 +656,7 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.hasChildren && user.hasChildren !== 'prefer-not-to-say' ? formatChildrenDisplay(user.hasChildren) : 'Not specified')
-                    : ((profileData as any)?.hasChildren && (profileData as any).hasChildren !== 'prefer-not-to-say' ? formatChildrenDisplay((profileData as any).hasChildren) : 'Not specified')}
+                    : (profileData?.hasChildren && profileData.hasChildren !== 'prefer-not-to-say' ? formatChildrenDisplay(profileData.hasChildren) : 'Not specified')}
                 </p>
               </div>
 
@@ -665,13 +665,13 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.education && user.education !== 'prefer-not-to-say' ? user.education.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.education && (profileData as any).education !== 'prefer-not-to-say' ? (profileData as any).education.replace('-', ' ') : 'Not specified')}
+                    : (profileData?.education && profileData.education !== 'prefer-not-to-say' ? profileData.education.replace('-', ' ') : 'Not specified')}
                 </p>
               </div>
-              {(isOwnProfile ? user?.occupation : (profileData as any)?.occupation) && (
+              {(isOwnProfile ? user?.occupation : profileData?.occupation) && (
                 <div className="col-span-2 rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '600ms' }}>
                   <p className="text-muted-foreground">Occupation</p>
-                  <p className="mt-1 font-medium">{isOwnProfile ? user?.occupation : (profileData as any)?.occupation}</p>
+                  <p className="mt-1 font-medium">{isOwnProfile ? user?.occupation : profileData?.occupation}</p>
                 </div>
               )}
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '750ms' }}>
@@ -679,7 +679,7 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.religion && user.religion !== 'prefer-not-to-say' ? user.religion.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.religion && (profileData as any).religion !== 'prefer-not-to-say' ? (profileData as any).religion.replace('-', ' ') : 'Not specified')}
+                    : (profileData?.religion && profileData.religion !== 'prefer-not-to-say' ? profileData.religion.replace('-', ' ') : 'Not specified')}
                 </p>
               </div>
               <div className="rounded-xl border-2 border-border bg-card/60 p-3 animate-float-ambient" style={{ animationDelay: '900ms' }}>
@@ -687,7 +687,7 @@ const Profile = () => {
                 <p className="mt-1 font-medium capitalize">
                   {isOwnProfile
                     ? (user?.politicalViews && user.politicalViews !== 'prefer-not-to-say' ? user.politicalViews.replace('-', ' ') : 'Not specified')
-                    : ((profileData as any)?.politicalViews && (profileData as any).politicalViews !== 'prefer-not-to-say' ? (profileData as any).politicalViews.replace('-', ' ') : 'Not specified')}
+                    : (profileData?.politicalViews && profileData.politicalViews !== 'prefer-not-to-say' ? profileData.politicalViews.replace('-', ' ') : 'Not specified')}
                 </p>
               </div>
             </div>

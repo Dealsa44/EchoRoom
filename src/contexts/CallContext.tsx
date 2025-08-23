@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { CallRecord, CallSettings, CallState, CallType, CallStatus, CallDirection } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
-interface CallContextType {
+export interface CallContextType {
   // Call History
   callHistory: CallRecord[];
   addCallRecord: (call: Omit<CallRecord, 'id'>) => void;
@@ -30,15 +30,7 @@ interface CallContextType {
   getCallStats: () => { total: number; voice: number; video: number; missed: number };
 }
 
-const CallContext = createContext<CallContextType | undefined>(undefined);
-
-export const useCall = () => {
-  const context = useContext(CallContext);
-  if (!context) {
-    throw new Error('useCall must be used within a CallProvider');
-  }
-  return context;
-};
+export const CallContext = createContext<CallContextType | undefined>(undefined);
 
 const CALL_HISTORY_STORAGE_KEY = 'echoroom_call_history';
 const CALL_SETTINGS_STORAGE_KEY = 'echoroom_call_settings';
@@ -76,9 +68,9 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         const stored = localStorage.getItem(CALL_HISTORY_STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          const history = parsed.map((call: any) => ({
+          const history = parsed.map((call: Partial<CallRecord>) => ({
             ...call,
-            startTime: new Date(call.startTime),
+            startTime: new Date(call.startTime!),
             endTime: call.endTime ? new Date(call.endTime) : undefined
           }));
           setCallHistory(history);
@@ -143,7 +135,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         setCallDurationTimer(null);
       }
     }
-  }, [callState.isInCall, callState.currentCall]);
+  }, [callState.isInCall, callState.currentCall, callDurationTimer]);
 
   const addCallRecord = (call: Omit<CallRecord, 'id'>) => {
     const newCall: CallRecord = {

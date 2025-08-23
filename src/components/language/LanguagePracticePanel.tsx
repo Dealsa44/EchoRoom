@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Languages, BookOpen, Target, TrendingUp, Award, Mic, Headphones, PenTool, Eye, Brain, Zap, Lightbulb, MessageCircle } from 'lucide-react';
-import { useLanguageAI } from '@/contexts/LanguageAIContext';
+import { useLanguageAI } from '@/hooks/useLanguageAI';
 import { toast } from '@/hooks/use-toast';
 
 interface LanguagePracticePanelProps {

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Bot, MessageCircle, BookOpen, Target, Zap, Lightbulb, Mic, Headphones, PenTool, Eye, Brain, Star, TrendingUp, Award } from 'lucide-react';
-import { useLanguageAI } from '@/contexts/LanguageAIContext';
+import { useLanguageAI } from '@/hooks/useLanguageAI';
 import { toast } from '@/hooks/use-toast';
 
 interface AIAssistantModalProps {

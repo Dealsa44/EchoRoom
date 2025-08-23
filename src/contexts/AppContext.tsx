@@ -68,7 +68,7 @@ interface AppState {
   joinedRooms: string[];
 }
 
-interface AppContextType extends AppState {
+export interface AppContextType extends AppState {
   setUser: (user: User | null) => void;
   setIsAuthenticated: (auth: boolean) => void;
   setLanguage: (lang: Language) => void;
@@ -79,15 +79,7 @@ interface AppContextType extends AppState {
   logout: () => void;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
-
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
-};
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Initialize state with saved user if available

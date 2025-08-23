@@ -32,8 +32,8 @@ import {
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import { useApp } from '@/contexts/AppContext';
-import { useCall } from '@/contexts/CallContext';
+import { useApp } from '@/hooks/useApp';
+import { useCall } from '@/hooks/useCall';
 import { toast } from '@/hooks/use-toast';
 import { UpdateBanner } from '@/components/UpdateBanner';
 import { serviceWorkerManager } from '@/lib/serviceWorkerManager';
