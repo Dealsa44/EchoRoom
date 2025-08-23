@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+ import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { safePlayAudio, createMobileAudio } from '@/lib/audioUtils';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -595,7 +596,8 @@ const PrivateChat = () => {
       
       // Create audio element if it doesn't exist
       if (!audioRef.current) {
-        const audio = new Audio();
+        const audio = createMobileAudio();
+        
         audio.onended = () => {
           setPlayingVoiceId(null);
           setCurrentAudioTime(0);
@@ -611,60 +613,85 @@ const PrivateChat = () => {
           }
         };
         
+        audio.onerror = (error) => {
+          console.error('Audio error:', error);
+          setPlayingVoiceId(null);
+          setCurrentAudioTime(0);
+        };
+        
         audioRef.current = audio;
       }
       
       // If it's the current recording, play the recorded blob
       if (messageId === -1 && recordedAudioBlob && audioRef.current) {
-        const audioUrl = URL.createObjectURL(recordedAudioBlob);
-        audioRef.current.src = audioUrl;
-        
-        // Get the actual duration of the audio blob (including resumed parts)
-        const actualDuration = await getAudioDuration(recordedAudioBlob);
-        setAudioDuration(actualDuration);
-        
-        audioRef.current.play().catch(error => {
-          console.error('Error playing audio:', error);
-        });
-        
-        // Update progress in real time - use actual audio duration
-        audioUpdateTimerRef.current = setInterval(() => {
-          if (audioRef.current && !audioRef.current.paused) {
-            const newTime = audioRef.current.currentTime;
-            // Update visual progress to match actual audio position
-            setCurrentAudioTime(newTime);
-            
-            // Stop playback when reaching the end
-            if (newTime >= actualDuration) {
-              audioRef.current.pause();
-              setPlayingVoiceId(null);
-              setCurrentAudioTime(0);
-              if (audioUpdateTimerRef.current) {
-                clearInterval(audioUpdateTimerRef.current);
-                audioUpdateTimerRef.current = null;
+        try {
+          const audioUrl = URL.createObjectURL(recordedAudioBlob);
+          audioRef.current.src = audioUrl;
+          
+          // Get the actual duration of the audio blob (including resumed parts)
+          const actualDuration = await getAudioDuration(recordedAudioBlob);
+          setAudioDuration(actualDuration);
+          
+          // Mobile-friendly audio playback
+          const success = await safePlayAudio(audioRef.current);
+          if (success) {
+            // Update progress in real time - use actual audio duration
+            audioUpdateTimerRef.current = setInterval(() => {
+              if (audioRef.current && !audioRef.current.paused) {
+                const newTime = audioRef.current.currentTime;
+                // Update visual progress to match actual audio position
+                setCurrentAudioTime(newTime);
+                
+                // Stop playback when reaching the end
+                if (newTime >= actualDuration) {
+                  audioRef.current.pause();
+                  setPlayingVoiceId(null);
+                  setCurrentAudioTime(0);
+                  if (audioUpdateTimerRef.current) {
+                    clearInterval(audioUpdateTimerRef.current);
+                    audioUpdateTimerRef.current = null;
+                  }
+                }
               }
-            }
+            }, 100);
+          } else {
+            setPlayingVoiceId(null);
+            setCurrentAudioTime(0);
           }
-        }, 100);
-        
-        // Store the actual audio duration for visual progress calculations
-        setAudioDuration(actualDuration);
+          
+          // Store the actual audio duration for visual progress calculations
+          setAudioDuration(actualDuration);
+        } catch (error) {
+          console.error('Error setting up audio playback:', error);
+          setPlayingVoiceId(null);
+          setCurrentAudioTime(0);
+        }
       } else {
         // For sent messages, check if they have audio blob
         const message = messages.find(msg => msg.id === messageId);
         if (message && message.voiceData?.audioBlob && audioRef.current) {
-          const audioUrl = URL.createObjectURL(message.voiceData.audioBlob);
-          audioRef.current.src = audioUrl;
-          audioRef.current.play().catch(error => {
-            console.error('Error playing audio:', error);
-          });
-          
-          // Update progress in real time
-          audioUpdateTimerRef.current = setInterval(() => {
-            if (audioRef.current && !audioRef.current.paused) {
-              setCurrentAudioTime(audioRef.current.currentTime);
+          try {
+            const audioUrl = URL.createObjectURL(message.voiceData.audioBlob);
+            audioRef.current.src = audioUrl;
+            
+            // Mobile-friendly audio playback
+            const success = await safePlayAudio(audioRef.current);
+            if (success) {
+              // Update progress in real time
+              audioUpdateTimerRef.current = setInterval(() => {
+                if (audioRef.current && !audioRef.current.paused) {
+                  setCurrentAudioTime(audioRef.current.currentTime);
+                }
+              }, 100);
+            } else {
+              setPlayingVoiceId(null);
+              setCurrentAudioTime(0);
             }
-          }, 100);
+          } catch (error) {
+            console.error('Error setting up audio playback:', error);
+            setPlayingVoiceId(null);
+            setCurrentAudioTime(0);
+          }
         } else {
           // For messages without audio blob, simulate playback for demo
           audioUpdateTimerRef.current = setInterval(() => {
@@ -1488,17 +1515,12 @@ const PrivateChat = () => {
               <div className="flex items-center gap-2 text-red-600">
                 <div className={`w-3 h-3 bg-red-600 rounded-full ${isRecording ? 'animate-pulse' : ''}`}></div>
                 <span className="text-sm font-medium">
-                  {isRecording ? 'Recording' : 'Recording Paused'} {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                  {isRecording ? 'Recording' : (playingVoiceId === -1 ? 'Recording Playing' : 'Recording Paused')} {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
                 </span>
                 {!isRecording && recordingTime > 0 && (
-                  <>
-                    <span className="text-xs text-muted-foreground min-w-[40px]">
-                      {Math.floor(currentAudioTime)}:{(currentAudioTime % 60).toFixed(1).padStart(4, '0')}
-                    </span>
-                    <span className="text-xs text-muted-foreground min-w-[40px]">
-                      {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                    </span>
-                  </>
+                  <span className="text-xs text-muted-foreground min-w-[40px]">
+                    {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                  </span>
                 )}
               </div>
               {isRecording && (

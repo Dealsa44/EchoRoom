@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Play, Pause, Volume2, Download } from 'lucide-react';
+import { Mic, Square, Play, Pause, Volume2, Download, Pause as PauseIcon } from 'lucide-react';
+import { isMobileDevice, safePlayAudio, getSupportedAudioMimeType, getMobileAudioConstraints } from '@/lib/audioUtils';
 
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob, duration: number) => void;
@@ -14,11 +15,14 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   className = '' 
 }) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -29,6 +33,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   // Check if browser supports audio recording
   const isSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
+  // Detect mobile device
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
+
   const startRecording = async () => {
     if (!isSupported) {
       console.warn('Audio recording not supported in this browser');
@@ -36,9 +45,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints = getMobileAudioConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
       
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const mimeType = getSupportedAudioMimeType();
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
       
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -46,7 +57,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       };
       
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { 
+          type: mediaRecorderRef.current?.mimeType || mimeType
+        });
         const audioUrl = URL.createObjectURL(audioBlob);
         setAudioURL(audioUrl);
         
@@ -56,6 +69,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      setIsPaused(false);
       setRecordingTime(0);
       
       // Start timer
@@ -70,8 +84,30 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     }
   };
 
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
+      setIsPaused(true);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+      setIsPaused(false);
+      // Resume timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
   const simulateRecording = () => {
     setIsRecording(true);
+    setIsPaused(false);
     setRecordingTime(0);
     
     recordingTimerRef.current = setInterval(() => {
@@ -80,11 +116,12 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && (mediaRecorderRef.current.state === 'recording' || mediaRecorderRef.current.state === 'paused')) {
       mediaRecorderRef.current.stop();
     }
     
     setIsRecording(false);
+    setIsPaused(false);
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
     }
@@ -98,13 +135,15 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     if (audioURL) {
       // Use actual recorded audio
       const audioBlob = audioChunksRef.current.length > 0 
-        ? new Blob(audioChunksRef.current, { type: 'audio/wav' })
-        : new Blob([''], { type: 'audio/wav' }); // Fallback blob
+        ? new Blob(audioChunksRef.current, { 
+            type: mediaRecorderRef.current?.mimeType || getSupportedAudioMimeType()
+          })
+        : new Blob([''], { type: getSupportedAudioMimeType() }); // Fallback blob
       
       onRecordingComplete(audioBlob, recordingTime);
     } else {
       // Fallback: create a mock audio blob
-      const mockBlob = new Blob([''], { type: 'audio/wav' });
+      const mockBlob = new Blob([''], { type: getSupportedAudioMimeType() });
       onRecordingComplete(mockBlob, recordingTime);
     }
     
@@ -113,41 +152,120 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     setAudioURL(null);
     setCurrentTime(0);
     setDuration(0);
+    setIsAudioLoaded(false);
+    setIsPaused(false);
   };
 
-  const playAudio = () => {
-    if (!audioURL) return;
+  const initializeAudio = () => {
+    if (!audioURL || !audioRef.current) return false;
     
-    if (!audioRef.current) {
-      audioRef.current = new Audio(audioURL);
+    try {
+      // Set audio properties for better mobile compatibility
+      audioRef.current.preload = 'metadata';
+      audioRef.current.controls = false;
+      audioRef.current.muted = false;
+      audioRef.current.volume = 1.0;
+      
+      // Set up event listeners
       audioRef.current.onloadedmetadata = () => {
         setDuration(audioRef.current?.duration || 0);
+        setIsAudioLoaded(true);
       };
-      audioRef.current.ontimeupdate = () => {
-        setCurrentTime(audioRef.current?.currentTime || 0);
-      };
-      audioRef.current.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-      };
-    }
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      if (playTimerRef.current) {
-        clearInterval(playTimerRef.current);
-      }
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
       
-      // Update progress
-      playTimerRef.current = setInterval(() => {
+      audioRef.current.ontimeupdate = () => {
         if (audioRef.current) {
           setCurrentTime(audioRef.current.currentTime);
         }
-      }, 100);
+      };
+      
+      audioRef.current.onended = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+        if (playTimerRef.current) {
+          clearInterval(playTimerRef.current);
+        }
+      };
+      
+      audioRef.current.onerror = (error) => {
+        console.error('Audio error:', error);
+        setIsAudioLoaded(false);
+      };
+      
+      return true;
+    } catch (error) {
+      console.error('Error initializing audio:', error);
+      return false;
+    }
+  };
+
+  const playAudio = async () => {
+    if (!audioURL) return;
+    
+    try {
+      // Create audio element if it doesn't exist
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      
+      // Initialize audio if not already done
+      if (!isAudioLoaded) {
+        if (!initializeAudio()) {
+          console.error('Failed to initialize audio');
+          return;
+        }
+      }
+      
+      if (isPlaying) {
+        // Pause audio
+        audioRef.current.pause();
+        setIsPlaying(false);
+        if (playTimerRef.current) {
+          clearInterval(playTimerRef.current);
+        }
+      } else {
+        // Play audio with mobile-friendly approach
+        if (isMobile) {
+          // For mobile, ensure audio is properly loaded and user interaction is handled
+          try {
+            // Set the source again to ensure it's fresh
+            audioRef.current.src = audioURL;
+            await audioRef.current.load();
+            
+            // Use the safe play utility
+            const success = await safePlayAudio(audioRef.current);
+            if (success) {
+              setIsPlaying(true);
+              // Start progress timer
+              playTimerRef.current = setInterval(() => {
+                if (audioRef.current && !audioRef.current.paused) {
+                  setCurrentTime(audioRef.current.currentTime);
+                }
+              }, 100);
+            } else {
+              setIsPlaying(false);
+            }
+          } catch (error) {
+            console.error('Error playing audio on mobile:', error);
+            setIsPlaying(false);
+          }
+        } else {
+          // Desktop playback
+          const success = await safePlayAudio(audioRef.current);
+          if (success) {
+            setIsPlaying(true);
+            
+            // Start progress timer
+            playTimerRef.current = setInterval(() => {
+              if (audioRef.current && !audioRef.current.paused) {
+                setCurrentTime(audioRef.current.currentTime);
+              }
+            }, 100);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in playAudio:', error);
+      setIsPlaying(false);
     }
   };
 
@@ -173,11 +291,20 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       }
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = '';
       }
       if (audioURL) {
         URL.revokeObjectURL(audioURL);
       }
     };
+  }, [audioURL]);
+
+  // Initialize audio when audioURL changes
+  useEffect(() => {
+    if (audioURL && audioRef.current) {
+      setIsAudioLoaded(false);
+      initializeAudio();
+    }
   }, [audioURL]);
 
   if (!isSupported && !isRecording) {
@@ -213,18 +340,41 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
             <div className="flex items-center gap-2 text-red-600">
               <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">
-                Recording {formatTime(recordingTime)}
+                {isPaused ? 'Recording Paused' : 'Recording'} {formatTime(recordingTime)}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={stopRecording}
-              className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
-            >
-              <Square size={14} />
-              <span className="ml-1 text-xs">Stop</span>
-            </Button>
+            <div className="flex gap-2">
+              {isPaused ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resumeRecording}
+                  className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+                >
+                  <Play size={14} />
+                  <span className="ml-1 text-xs">Resume</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={pauseRecording}
+                  className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+                >
+                  <PauseIcon size={14} />
+                  <span className="ml-1 text-xs">Pause</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={stopRecording}
+                className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Square size={14} />
+                <span className="ml-1 text-xs">Stop</span>
+              </Button>
+            </div>
           </div>
           
           {/* Waveform visualization */}
@@ -246,7 +396,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
             <div className="flex items-center gap-2">
               <Volume2 className="w-4 h-4 text-green-600" />
               <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                Recording Complete ({formatTime(duration || recordingTime)})
+                {isPlaying ? 'Playing' : 'Recording Complete'} ({formatTime(duration || recordingTime)})
               </span>
             </div>
           </div>
@@ -258,6 +408,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
               variant="outline"
               size="sm"
               className="h-8 px-3"
+              disabled={!isAudioLoaded}
             >
               {isPlaying ? <Pause size={14} /> : <Play size={14} />}
               <span className="ml-1 text-xs">
