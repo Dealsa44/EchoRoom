@@ -67,6 +67,15 @@ const CameraScreen = ({
     }
   }, [isOpen, capturedImage]);
 
+  // Ensure flashlight state is properly managed when camera type changes
+  useEffect(() => {
+    if (isOpen && streamRef.current) {
+      console.log('🔄 Camera type changed to:', isFrontCamera ? 'front' : 'back', '- rechecking flashlight capabilities');
+      // Re-check flashlight capabilities when camera type changes
+      checkFlashlightCapabilities(streamRef.current);
+    }
+  }, [isFrontCamera, isOpen]);
+
   const startCamera = async () => {
     try {
       const constraints = {
@@ -77,9 +86,11 @@ const CameraScreen = ({
         }
       };
 
+      console.log('📹 Starting camera with constraints:', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
+      console.log('📹 Camera stream obtained, checking flashlight capabilities...');
       // Check for flashlight capabilities
       checkFlashlightCapabilities(stream);
       
@@ -87,9 +98,10 @@ const CameraScreen = ({
         videoRef.current.srcObject = stream;
         // Ensure video plays
         videoRef.current.play().catch(console.error);
+        console.log('📹 Video element updated and playing');
       }
     } catch (error) {
-      console.error('Failed to access camera:', error);
+      console.error('❌ Failed to access camera:', error);
       // Fallback to simulated camera for demo
       simulateCamera();
     }
@@ -159,16 +171,23 @@ const CameraScreen = ({
   };
 
   const toggleCamera = () => {
+    console.log('🔄 Switching camera from', isFrontCamera ? 'front' : 'back', 'to', !isFrontCamera ? 'front' : 'back');
+    
     // Turn off flash when switching cameras
     if (isFlashOn) {
       turnOffFlash();
     }
+    
     setIsFrontCamera(!isFrontCamera);
     stopCamera();
+    
     setTimeout(() => {
+      console.log('🔄 Starting camera for', !isFrontCamera ? 'front' : 'back', 'camera');
       startCamera();
       // Reset flash state after camera restart
       setIsFlashOn(false);
+      // Force re-detection of flashlight capabilities
+      setHasFlashlight(false);
     }, 100);
   };
 
@@ -190,25 +209,25 @@ const CameraScreen = ({
       // For front camera, just toggle the screen brightness overlay
       setIsFlashOn(!isFlashOn);
       console.log('📱 Front camera flash toggled:', !isFlashOn);
-    } else if (hasFlashlight && flashTrackRef.current) {
-      // For back camera, control actual device flashlight - ONLY use hardware
-      try {
-        const newFlashState = !isFlashOn;
-        console.log('🔦 Attempting to toggle hardware flashlight to:', newFlashState);
-        await flashTrackRef.current.applyConstraints({
-          advanced: [{ torch: newFlashState }]
-        });
-        setIsFlashOn(newFlashState);
-        console.log('✅ Hardware flashlight toggled successfully to:', newFlashState);
-      } catch (error) {
-        console.error('❌ Failed to toggle hardware flashlight:', error);
-        // Don't fallback to visual overlay for back camera
-        // Just keep the current state
-      }
     } else {
-      // For back camera without hardware flashlight - do nothing
-      // No visual fallback, just ignore the tap
-      console.log('⚠️ No hardware flashlight available for back camera');
+      // BACK CAMERA - NEVER use screen lightening, ONLY hardware flashlight
+      if (hasFlashlight && flashTrackRef.current) {
+        try {
+          const newFlashState = !isFlashOn;
+          console.log('🔦 Back camera: Attempting to toggle hardware flashlight to:', newFlashState);
+          await flashTrackRef.current.applyConstraints({
+            advanced: [{ torch: newFlashState }]
+          });
+          setIsFlashOn(newFlashState);
+          console.log('✅ Back camera: Hardware flashlight toggled successfully to:', newFlashState);
+        } catch (error) {
+          console.error('❌ Back camera: Failed to toggle hardware flashlight:', error);
+          // ABSOLUTELY NO FALLBACK - keep current state, no screen lightening
+        }
+      } else {
+        // Back camera without hardware flashlight - DO NOTHING, NO SCREEN LIGHTENING
+        console.log('⚠️ Back camera: No hardware flashlight available - ignoring tap, no visual effects');
+      }
     }
   };
 
@@ -322,7 +341,7 @@ const CameraScreen = ({
           />
         )}
         
-        {/* Flash overlay - ONLY for front camera selfie flash */}
+        {/* Flash overlay - ONLY for front camera selfie flash, NEVER for back camera */}
         {isFlashOn && !capturedImage && isFrontCamera && (
           <div 
             className="absolute inset-0 pointer-events-none transition-opacity duration-200 bg-white opacity-80"
