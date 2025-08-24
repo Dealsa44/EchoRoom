@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, MessageCircle, Heart, TrendingUp, Clock } from 'lucide-react';
+import { Search, Plus, MessageCircle, Heart, TrendingUp, Clock, Shield } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import CreateThreadModal from '@/components/modals/CreateThreadModal';

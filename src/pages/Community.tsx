@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Brain, MessageCircle, Globe, Lock, Star, BookOpen, Lightbulb } from 'lucide-react';
+import { Users, Brain, MessageCircle, Globe, Lock, Star, BookOpen, Lightbulb, Shield } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { chatRooms } from '@/data/chatRooms';
+import { Button } from '@/components/ui/button';
 
 const Community = () => {
   const navigate = useNavigate();

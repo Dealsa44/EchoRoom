@@ -32,6 +32,7 @@ import ProfileStats from "./pages/ProfileStats";
 import Settings from "./pages/Settings";
 import CallHistory from "./pages/CallHistory";
 import ArchivedChats from "./pages/ArchivedChats";
+import SafetyCenter from "./components/security/SafetyCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -165,6 +166,11 @@ const App = () => {
             <Route path="/archived-chats" element={
               <AuthGuard>
                 <ArchivedChats />
+              </AuthGuard>
+            } />
+            <Route path="/safety-center" element={
+              <AuthGuard>
+                <SafetyCenter />
               </AuthGuard>
             } />
             

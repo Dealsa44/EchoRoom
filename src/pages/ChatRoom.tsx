@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { safePlayAudio, createMobileAudio } from '@/lib/audioUtils';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle, Volume2 } from 'lucide-react';
+import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
 import { useLanguageAI } from '@/hooks/useLanguageAI';
 import { LanguageCode } from '@/types/languageAI';
@@ -22,8 +21,6 @@ import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import TypingIndicator from '@/components/ui/TypingIndicator';
-import MultiTypingIndicator from '@/components/ui/MultiTypingIndicator';
 
 const ChatRoom = () => {
   const { id } = useParams();
@@ -67,27 +64,131 @@ const ChatRoom = () => {
   const [showAttachments, setShowAttachments] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
-  const [recordingTimerRef, setRecordingTimerRef] = useState<NodeJS.Timeout | null>(null);
-  const [waveformHeights, setWaveformHeights] = useState<number[]>([]);
-  const [animationFrame, setAnimationFrame] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
   const [actionSheetMessageId, setActionSheetMessageId] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(false);
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('english');
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  const [currentAudioTime, setCurrentAudioTime] = useState(0);
-  const [audioDuration, setAudioDuration] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const audioUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Typing indicators for chat rooms
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Simulate other users typing
+  const simulateOtherUsersTyping = () => {
+    const mockUsers = [
+      { name: 'Luna', avatar: '🌙' },
+      { name: 'Alex', avatar: '📚' },
+      { name: 'Sage', avatar: '🌱' },
+      { name: 'Maya', avatar: '🎨' },
+      { name: 'Kai', avatar: '🏃' }
+    ];
+    
+    // Randomly select 1-2 users to show as typing
+    const numTyping = Math.floor(Math.random() * 2) + 1;
+    const selectedUsers = mockUsers
+      .sort(() => 0.5 - Math.random())
+      .slice(0, numTyping)
+      .map(user => user.name);
+    
+    setTypingUsers(new Set(selectedUsers));
+    
+    // Stop typing after 3-5 seconds
+    setTimeout(() => {
+      setTypingUsers(new Set());
+    }, 3000 + Math.random() * 2000);
+  };
+
+  // Handle user typing in chat room
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    setIsTyping(e.target.value.length > 0);
+    
+    // Show typing indicator immediately when user types
+    if (e.target.value.length > 0) {
+      setTypingUsers(new Set(['You']));
+    } else {
+      setTypingUsers(new Set());
+    }
+  };
+
+  // Show typing indicator when user types
+  useEffect(() => {
+    if (isTyping) {
+      setTypingUsers(prev => new Set([...prev, 'You']));
+      const timer = setTimeout(() => {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('You');
+          return newSet;
+        });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTyping]);
+
+  // Auto-scroll to bottom when typing indicators appear (only if already at bottom)
+  useEffect(() => {
+    if (typingUsers.size > 0 && messagesEndRef.current) {
+      const messagesContainer = messagesEndRef.current.parentElement?.parentElement;
+      if (messagesContainer) {
+        const isAtBottom = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 10;
+        if (isAtBottom) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  }, [typingUsers.size]);
+
+  // Simulate other users typing periodically
+  useEffect(() => {
+    const typingInterval = setInterval(() => {
+      // 30% chance to show someone typing
+      if (Math.random() < 0.3) {
+        simulateOtherUsersTyping();
+      }
+    }, 15000); // Every 15 seconds
+    
+    return () => clearInterval(typingInterval);
+  }, []);
+
+  // Simulate random typing activity to make chat room feel alive
+  useEffect(() => {
+    const randomTypingInterval = setInterval(() => {
+      // 40% chance to show someone typing (more frequent than bot messages)
+      if (Math.random() < 0.4) {
+        const mockUsers = [
+          { name: 'Luna', avatar: '🌙' },
+          { name: 'Alex', avatar: '📚' },
+          { name: 'Sage', avatar: '🌱' },
+          { name: 'Maya', avatar: '🎨' },
+          { name: 'Kai', avatar: '🏃' },
+          { name: 'Zoe', avatar: '🌟' },
+          { name: 'Max', avatar: '🎯' }
+        ];
+        
+        // Randomly select 1-3 users to show as typing
+        const numTyping = Math.floor(Math.random() * 3) + 1;
+        const selectedUsers = mockUsers
+          .sort(() => 0.5 - Math.random())
+          .slice(0, numTyping)
+          .map(user => user.name);
+        
+        setTypingUsers(new Set(selectedUsers));
+        
+        // Stop typing after 2-4 seconds
+        setTimeout(() => {
+          setTypingUsers(new Set());
+        }, 2000 + Math.random() * 2000);
+      }
+    }, 8000); // Every 8 seconds (more frequent than bot messages)
+    
+    return () => clearInterval(randomTypingInterval);
+  }, []);
 
   // Find the actual room data based on the ID
   const room = chatRooms.find(r => r.id === id);
@@ -100,29 +201,14 @@ const ChatRoom = () => {
     }
   }, [room, navigate]);
 
-  // Cleanup on unmount
+  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (recordingTimerRef) {
-        clearInterval(recordingTimerRef);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
       }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (mediaRecorder) {
-        mediaRecorder.ondataavailable = null;
-        mediaRecorder.onstop = null;
-        mediaRecorder.stop();
-        setMediaRecorder(null);
-        setAudioChunks([]);
-        setRecordedAudioBlob(null);
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
       }
     };
   }, []);
@@ -367,7 +453,7 @@ const ChatRoom = () => {
           replyTo: null,
           replies: [],
           isPinned: false,
-          reactions: [{ emoji: '💫', count: 4, users: ['user9', 'user10', 'user11', 'user12'] }]
+          reactions: [{ emoji: '��', count: 4, users: ['user9', 'user10', 'user11', 'user12'] }]
         }
       ],
       'science': [
@@ -404,6 +490,56 @@ const ChatRoom = () => {
   const [messages, setMessages] = useState(() => 
     roomData ? getInitialMessages(roomData.category, roomData.title, roomData.moderators) : []
   );
+
+  // Simulate random bot messages to make chat room feel alive
+  useEffect(() => {
+    const botMessageInterval = setInterval(() => {
+      // 25% chance to send a bot message
+      if (Math.random() < 0.25) {
+        const botMessages = [
+          "Great discussion everyone! Keep the conversation flowing.",
+          "I love seeing such thoughtful exchanges here.",
+          "This is exactly the kind of community we want to build.",
+          "Remember to be respectful and supportive of each other.",
+          "Feel free to ask questions - we're all here to learn!",
+          "What a wonderful group of people we have here.",
+          "Keep up the amazing energy in this room!",
+          "I'm impressed by the quality of our discussions."
+        ];
+        
+        const randomMessage = botMessages[Math.floor(Math.random() * botMessages.length)];
+        
+        // Show typing indicator first
+        setTypingUsers(new Set(['Helper']));
+        
+        setTimeout(() => {
+          setTypingUsers(new Set());
+          
+          const newMessage = {
+            id: messages.length + 1,
+            user: {
+              name: 'Helper',
+              avatar: roomData?.icon || '🤖',
+              isAnonymous: false,
+              role: 'bot'
+            },
+            content: randomMessage,
+            timestamp: 'just now',
+            isAI: true,
+            channel: activeChannel,
+            replyTo: null,
+            replies: [],
+            isPinned: false,
+            reactions: []
+          };
+          
+          setMessages(prev => [...prev, newMessage]);
+        }, 2000);
+      }
+    }, 25000); // Every 25 seconds
+    
+    return () => clearInterval(botMessageInterval);
+  }, [messages, roomData, activeChannel]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -564,7 +700,8 @@ const ChatRoom = () => {
     
     setMessages(prev => prev.map(msg => 
       msg.id === editingMessageId 
-        ? { ...msg, content: editingText, isEdited: true } : msg
+        ? { ...msg, content: editingText, isEdited: true }
+        : msg
     ));
     
     setEditingMessageId(null);
@@ -788,550 +925,66 @@ const ChatRoom = () => {
     }, 1500 + Math.random() * 1000); // Random delay for more realistic feel
   };
 
-    const handleVoiceRecord = async () => {
+  const handleVoiceRecord = () => {
     if (!isRecording) {
-      try {
-        // Use mobile-optimized audio constraints
-        const constraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            sampleRate: 44100,
-            channelCount: 1
-          }
-        };
-        
-        // iOS Safari specific optimizations
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase())) {
-          constraints.audio.sampleRate = 48000;
-          constraints.audio.echoCancellation = false;
-          constraints.audio.noiseSuppression = false;
-        }
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        const recorder = new MediaRecorder(stream, { 
-          mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
-        });
-        const chunks: Blob[] = [];
-        
-        recorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            chunks.push(event.data);
-            setAudioChunks([...chunks]);
-          }
-        };
-        
-        recorder.onstop = () => {
-          if (chunks.length > 0) {
-            const audioBlob = new Blob(chunks, { 
-              type: recorder.mimeType || 'audio/webm' 
-            });
-            
-            // Validate the blob
-            if (audioBlob.size > 100) {
-              console.log('Recording completed successfully, blob size:', audioBlob.size);
-              setRecordedAudioBlob(audioBlob);
-            } else {
-              console.warn('Recording blob seems too small, size:', audioBlob.size);
-              setRecordedAudioBlob(audioBlob);
-            }
-          } else {
-            console.error('No audio chunks collected during recording');
-          }
-          
-          stream.getTracks().forEach(track => track.stop());
-        };
-        
-        setMediaRecorder(recorder);
-        setAudioChunks([]);
-        recorder.start(100); // Record in 100ms chunks for better pause/resume
-        setIsRecording(true);
-        setRecordingTime(0);
-        
-        // Generate static waveform heights
-        const heights = Array.from({ length: 20 }, () => Math.random() * 60 + 20);
-        setWaveformHeights(heights);
+      setIsRecording(true);
+      setRecordingTime(0);
       
-        // Start timer
-        const timer = setInterval(() => {
-          setRecordingTime(prev => prev + 1);
-        }, 1000);
-        setRecordingTimerRef(timer);
-        
-        // Start animation loop
-        const animate = () => {
-          setAnimationFrame(prev => prev + 1);
-          if (isRecording) {
-            requestAnimationFrame(animate);
-          }
-        };
-        requestAnimationFrame(animate);
-      } catch (error) {
-        console.error('Error accessing microphone:', error);
-        // Fallback to simulation
-        setIsRecording(true);
-        setRecordingTime(0);
-        const timer = setInterval(() => {
-          setRecordingTime(prev => prev + 1);
-        }, 1000);
-        setRecordingTimerRef(timer);
-      }
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
     }
   };
 
   const handleStopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      // Request data before stopping to ensure all chunks are available
-      try {
-        mediaRecorder.requestData();
-        mediaRecorder.stop();
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-      }
-    }
     setIsRecording(false);
-    if (recordingTimerRef) {
-      clearInterval(recordingTimerRef);
-      setRecordingTimerRef(null);
-    }
-    
-    // Stop animation loop
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-      setAnimationFrame(0);
+    setRecordingTime(0);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
     }
   };
 
   const handleSendRecording = () => {
-    // Stop any currently playing audio
-    if (playingVoiceId === -1 && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-        audioUpdateTimerRef.current = null;
-      }
-    }
-    
-    if (recordedAudioBlob || recordingTime > 0) {
-      // Validate and fix the audio blob if needed
-      let finalAudioBlob = recordedAudioBlob;
-      
-      if (recordedAudioBlob && recordedAudioBlob.size < 100) {
-        console.warn('Audio blob too small, attempting to fix...');
-        // Try to create a valid blob from the collected chunks
-        if (audioChunks.length > 0) {
-          const mimeType = mediaRecorder?.mimeType || 'audio/webm';
-          finalAudioBlob = new Blob(audioChunks, { type: mimeType });
-          console.log('Created new blob from chunks, size:', finalAudioBlob.size);
-        }
-      }
-      
-      const newMessage = {
-        id: messages.length + 1,
-        sender: 'me' as const,
-        content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
-        timestamp: 'now',
-        translated: false,
-        corrected: false,
-        originalContent: '',
-        translatedContent: '',
-        hasErrors: false,
-        corrections: [],
-        type: 'voice' as const,
-        reactions: [],
-        isEdited: false,
-        isDeleted: false,
-        replyTo: replyingTo,
-        deliveryStatus: 'sent' as const,
-        isEncrypted: true,
-              voiceData: {
-          duration: recordingTime,
-          waveform: Array.from({ length: 20 }, () => Math.random()),
-          audioBlob: finalAudioBlob
-        }
-    };
-
-    setMessages(prev => [...prev, newMessage]);
-    setReplyingTo(null);
-      
-      // Reset recording state
-      setRecordedAudioBlob(null);
-      setRecordingTime(0);
-      setIsRecording(false);
-      setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      
-      // Clear timer if running
-      if (recordingTimerRef) {
-        clearInterval(recordingTimerRef);
-        setRecordingTimerRef(null);
-      }
-      
-      // Stop media recorder if active
-      if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
-        mediaRecorder.stop();
-      }
-    }
-  };
-
-  const handleVoiceRecordingComplete = (audioBlob: Blob, duration: number) => {
     const newMessage = {
       id: messages.length + 1,
-      sender: 'me' as const,
-      content: `🎵 Voice message (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`,
+      user: {
+        name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
+        avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
+        isAnonymous: anonymousMode,
+        role: 'member'
+      },
+      content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
       timestamp: 'now',
-      translated: false,
-      corrected: false,
-      originalContent: '',
-      translatedContent: '',
-      hasErrors: false,
-      corrections: [],
-      type: 'voice' as const,
-      reactions: [],
-      isEdited: false,
-      isDeleted: false,
+      isAI: false,
+      channel: activeChannel,
       replyTo: replyingTo,
-      deliveryStatus: 'sent' as const,
-      isEncrypted: true,
+      replies: [],
+      isPinned: false,
+      reactions: [],
+      type: 'voice',
       voiceData: {
-        duration: duration,
-        waveform: Array.from({ length: 20 }, () => Math.random()),
-        audioBlob: audioBlob
+        duration: recordingTime,
+        waveform: Array.from({ length: 20 }, () => Math.random())
       }
     };
 
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
-    setShowAttachments(false);
+    handleStopRecording();
   };
 
-  // Helper function to get actual audio duration from blob
-  const getAudioDuration = (blob: Blob): Promise<number> => {
-    return new Promise((resolve) => {
-      const audio = new Audio();
-      audio.onloadedmetadata = () => {
-        const duration = audio.duration;
-        // Validate duration before resolving
-        if (duration && isFinite(duration) && duration > 0) {
-          resolve(duration);
-        } else {
-          // If duration is invalid, try to estimate from blob size
-          const estimatedDuration = Math.max(1, Math.ceil(blob.size / 10000)); // Rough estimate
-          resolve(estimatedDuration);
-        }
-      };
-      audio.onerror = () => {
-        // If audio fails to load, estimate from blob size
-        const estimatedDuration = Math.max(1, Math.ceil(blob.size / 10000)); // Rough estimate
-        resolve(estimatedDuration);
-      };
-      audio.src = URL.createObjectURL(blob);
-    });
-  };
-
-  const handleVoicePlay = async (messageId: number, duration: number) => {
+  const handleVoicePlay = (messageId: number) => {
     if (playingVoiceId === messageId) {
-      // Stop playing
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
       setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-        audioUpdateTimerRef.current = null;
-      }
     } else {
-      // Start playing
       setPlayingVoiceId(messageId);
-      setCurrentAudioTime(0);
-      
-      // Create audio element if it doesn't exist
-      if (!audioRef.current) {
-        const audio = createMobileAudio();
-        
-        audio.onended = () => {
-          setPlayingVoiceId(null);
-          setCurrentAudioTime(0);
-          if (audioUpdateTimerRef.current) {
-            clearInterval(audioUpdateTimerRef.current);
-            audioUpdateTimerRef.current = null;
-          }
-        };
-        
-        audio.ontimeupdate = () => {
-          if (audioRef.current) {
-            setCurrentAudioTime(audioRef.current.currentTime);
-          }
-        };
-        
-        audio.onerror = (error) => {
-          console.error('Audio error:', error);
-          setPlayingVoiceId(null);
-          setCurrentAudioTime(0);
-        };
-        
-        audioRef.current = audio;
-      }
-      
-      // If it's the current recording, play the recorded blob
-      if (messageId === -1 && recordedAudioBlob && audioRef.current) {
-        try {
-          const audioUrl = URL.createObjectURL(recordedAudioBlob);
-          audioRef.current.src = audioUrl;
-          
-          // Get the actual duration of the audio blob (including resumed parts)
-          const actualDuration = await getAudioDuration(recordedAudioBlob);
-          setAudioDuration(actualDuration);
-          
-          // Mobile-friendly audio playback
-          const success = await safePlayAudio(audioRef.current);
-          if (success) {
-            // Update progress in real time - use actual audio duration
-            audioUpdateTimerRef.current = setInterval(() => {
-              if (audioRef.current && !audioRef.current.paused) {
-                const newTime = audioRef.current.currentTime;
-                // Update visual progress to match actual audio position
-                setCurrentAudioTime(newTime);
-                
-                // Stop playback when reaching the end
-                if (newTime >= actualDuration) {
-                  audioRef.current.pause();
-                  setPlayingVoiceId(null);
-                  setCurrentAudioTime(0);
-                  if (audioUpdateTimerRef.current) {
-                    clearInterval(audioUpdateTimerRef.current);
-                    audioUpdateTimerRef.current = null;
-                  }
-                }
-              }
-            }, 100);
-          } else {
-            setPlayingVoiceId(null);
-            setCurrentAudioTime(0);
-          }
-          
-          // Store the actual audio duration for visual progress calculations
-          setAudioDuration(actualDuration);
-        } catch (error) {
-          console.error('Error setting up audio playback:', error);
-          setPlayingVoiceId(null);
-          setCurrentAudioTime(0);
-        }
-      } else {
-        // For sent messages, check if they have audio blob
-        const message = messages.find(msg => msg.id === messageId);
-        if (message && message.voiceData?.audioBlob && audioRef.current) {
-          try {
-            // Validate the audio blob
-            if (message.voiceData.audioBlob.size < 100) {
-              console.warn('Audio blob too small, size:', message.voiceData.audioBlob.size);
-              setPlayingVoiceId(null);
-              setCurrentAudioTime(0);
-              return;
-            }
-            
-            const audioUrl = URL.createObjectURL(message.voiceData.audioBlob);
-            audioRef.current.src = audioUrl;
-            
-            // Ensure audio is properly loaded before playing
-            await audioRef.current.load();
-            
-            // Mobile-friendly audio playback
-            const success = await safePlayAudio(audioRef.current);
-            if (success) {
-              console.log('Voice message playback started successfully');
-              // Update progress in real time
-              audioUpdateTimerRef.current = setInterval(() => {
-                if (audioRef.current && !audioRef.current.paused) {
-                  setCurrentAudioTime(audioRef.current.currentTime);
-                }
-              }, 100);
-            } else {
-              console.error('Failed to play voice message');
-              setPlayingVoiceId(null);
-              setCurrentAudioTime(0);
-            }
-          } catch (error) {
-            console.error('Error setting up audio playback:', error);
-            setPlayingVoiceId(null);
-            setCurrentAudioTime(0);
-          }
-        } else {
-          // For messages without audio blob, simulate playback for demo
-          audioUpdateTimerRef.current = setInterval(() => {
-            setCurrentAudioTime(prev => {
-              if (prev >= duration) {
-                setPlayingVoiceId(null);
-                if (audioUpdateTimerRef.current) {
-                  clearInterval(audioUpdateTimerRef.current);
-                  audioUpdateTimerRef.current = null;
-                }
-                return 0;
-              }
-              return prev + 0.1;
-            });
-          }, 100);
-        }
-      }
+      // Simulate playing for demo
+      setTimeout(() => {
+        setPlayingVoiceId(null);
+      }, 3000);
     }
-  };
-
-  const handleVoiceSeek = (messageId: number, duration: number, seekTime: number) => {
-    if (playingVoiceId === messageId) {
-      setCurrentAudioTime(seekTime);
-      // In real implementation, this would seek the actual audio
-      if (audioRef.current) {
-        audioRef.current.currentTime = seekTime;
-      }
-    }
-  };
-
-  const handlePauseRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      // Request data before stopping to ensure all chunks are available
-      mediaRecorder.requestData();
-      // Stop the current recording session completely
-      mediaRecorder.stop();
-    }
-    setIsRecording(false);
-    
-    // Stop recording timer completely
-    if (recordingTimerRef) {
-      clearInterval(recordingTimerRef);
-      setRecordingTimerRef(null);
-    }
-    
-    // Stop animation loop completely
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-      setAnimationFrame(0);
-    }
-    
-    // Reset playback position to 0
-    setCurrentAudioTime(0);
-    
-    // Create current audio blob for preview from collected chunks
-    if (audioChunks.length > 0) {
-      const currentBlob = new Blob(audioChunks, { type: 'audio/webm' });
-      setRecordedAudioBlob(currentBlob);
-    }
-    
-    // Clear the media recorder - we'll create a new one on resume
-    setMediaRecorder(null);
-  };
-
-  const handleResumeRecording = async () => {
-    // Stop any currently playing audio
-    if (playingVoiceId === -1 && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-        audioUpdateTimerRef.current = null;
-      }
-    }
-    
-    // Always start a new recording session
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          setAudioChunks(prev => {
-            const newChunks = [...prev, event.data];
-            // Update blob with all chunks
-            const audioBlob = new Blob(newChunks, { type: 'audio/webm' });
-            setRecordedAudioBlob(audioBlob);
-            return newChunks;
-          });
-        }
-      };
-      
-      recorder.onstop = () => {
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      setMediaRecorder(recorder);
-      recorder.start(100);
-    } catch (error) {
-      console.error('Error resuming recording:', error);
-    }
-    
-    setIsRecording(true);
-    // Resume timer - continue from where we left off
-    const timer = setInterval(() => {
-      setRecordingTime(prev => prev + 1);
-    }, 1000);
-    setRecordingTimerRef(timer);
-    
-    // Restart animation loop
-    const animate = () => {
-      if (isRecording) {
-        setAnimationFrame(prev => prev + 1);
-        requestAnimationFrame(animate);
-      }
-    };
-    requestAnimationFrame(animate);
-  };
-
-  const pauseAllVoiceMessages = () => {
-    // Pause any currently playing voice message
-    if (playingVoiceId !== null && audioRef.current) {
-      audioRef.current.pause();
-      setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-        audioUpdateTimerRef.current = null;
-      }
-    }
-  };
-
-  const handleDeleteRecording = () => {
-    // Stop any currently playing audio
-    if (playingVoiceId === -1 && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setPlayingVoiceId(null);
-      setCurrentAudioTime(0);
-      if (audioUpdateTimerRef.current) {
-        clearInterval(audioUpdateTimerRef.current);
-        audioUpdateTimerRef.current = null;
-      }
-    }
-    
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-    }
-    setIsRecording(false);
-    setRecordingTime(0);
-    setPlayingVoiceId(null);
-    setCurrentAudioTime(0);
-    setRecordedAudioBlob(null);
-    
-    // Stop recording timer
-    if (recordingTimerRef) {
-      clearInterval(recordingTimerRef);
-      setRecordingTimerRef(null);
-    }
-    
-    // Stop animation loop completely
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-      setAnimationFrame(0);
-    }
-    
-    // Clear audio chunks
-    setAudioChunks([]);
   };
 
   const handleImageUpload = () => {
@@ -1571,46 +1224,35 @@ const ChatRoom = () => {
                             </div>
                           )}
                           
-                          {/* Voice message content */}
                           {msg.type === 'voice' && msg.voiceData && (
                             <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 w-8 p-0 flex-shrink-0"
-                                onClick={() => handleVoicePlay(msg.id, msg.voiceData!.duration)}
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  if (playingVoiceId === msg.id) {
+                                    setPlayingVoiceId(null);
+                                  } else {
+                                    setPlayingVoiceId(msg.id);
+                                    setTimeout(() => setPlayingVoiceId(null), msg.voiceData!.duration * 1000);
+                                  }
+                                }}
                               >
                                 {playingVoiceId === msg.id ? <Pause size={14} /> : <Play size={14} />}
                               </Button>
-                              
-                              {/* Clickable waveform visualization - extends all the way to the right */}
-                              <div className="flex items-center gap-1 flex-1 cursor-pointer">
+                              <div className="flex-1 flex items-center gap-1">
                                 {msg.voiceData.waveform.map((height, i) => (
                                   <div
                                     key={i}
-                                    className={`w-1 rounded transition-colors duration-200 ${
-                                      playingVoiceId === msg.id && i < (currentAudioTime / msg.voiceData!.duration) * msg.voiceData.waveform.length
-                                        ? 'bg-primary' 
-                                        : 'bg-current'
+                                    className={`w-1 bg-current rounded ${
+                                      playingVoiceId === msg.id ? 'animate-pulse' : ''
                                     }`}
                                     style={{ height: `${Math.max(height * 20, 4)}px` }}
-                                    onClick={() => {
-                                      if (playingVoiceId === msg.id) {
-                                        const seekTime = (i / msg.voiceData.waveform.length) * msg.voiceData!.duration;
-                                        handleVoiceSeek(msg.id, msg.voiceData!.duration, seekTime);
-                                      }
-                                    }}
-                                    title={playingVoiceId === msg.id ? `Click to seek to ${Math.floor((i / msg.voiceData.waveform.length) * msg.voiceData!.duration)}s` : ''}
                                   />
                                 ))}
                               </div>
-                              
-                              <span className="text-xs min-w-[30px] flex-shrink-0">
-                                {playingVoiceId === msg.id 
-                                  ? `${Math.floor(currentAudioTime)}:${(currentAudioTime % 60).toFixed(1).padStart(4, '0')}`
-                                  : `${Math.floor(msg.voiceData.duration / 60)}:${(msg.voiceData.duration % 60).toString().padStart(2, '0')}`
-                                }
-                              </span>
+                              <span className="text-xs">{msg.voiceData.duration}s</span>
                             </div>
                           )}
 
@@ -1711,10 +1353,7 @@ const ChatRoom = () => {
                       )}
                       {!isMyMessage && (
                         <AITooltip title="Ask AI for Help" description="Get AI suggestions for how to respond to this message">
-                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => {
-                  pauseAllVoiceMessages();
-                  setShowAIModal(true);
-                }}>
+                          <Button variant="ghost" size="sm" className="h-6 px-1 hover:bg-primary/10" onClick={() => setShowAIModal(true)}>
                             <HelpCircle size={10} />
                           </Button>
                         </AITooltip>
@@ -1731,14 +1370,51 @@ const ChatRoom = () => {
             );
           })}
 
-          {/* Typing indicators for multiple users */}
-          <MultiTypingIndicator
-            typingUsers={Array.from(typingUsers).map(typingUser => ({
-              name: typingUser,
-              avatar: typingUser === 'Luna' ? '🌙' : typingUser === 'Alex' ? '📚' : typingUser === 'Sage' ? '🌱' : typingUser === 'Maya' ? '🎨' : '👤'
-            }))}
-            isVisible={typingUsers.size > 0}
-          />
+          {/* Typing indicators for chat rooms */}
+          {typingUsers.size > 0 && (
+            <div className="flex justify-start">
+              <Card className="bg-card max-w-[80%]">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    {/* Show up to 2 user avatars */}
+                    <div className="flex -space-x-1">
+                      {Array.from(typingUsers).slice(0, 2).map((userName, index) => {
+                        const mockUsers = [
+                          { name: 'Luna', avatar: '🌙' },
+                          { name: 'Alex', avatar: '📚' },
+                          { name: 'Sage', avatar: '🌱' },
+                          { name: 'Maya', avatar: '🎨' },
+                          { name: 'Kai', avatar: '🏃' },
+                          { name: 'Zoe', avatar: '🌟' },
+                          { name: 'Max', avatar: '🎯' },
+                          { name: 'You', avatar: '👤' }
+                        ];
+                        const user = mockUsers.find(u => u.name === userName);
+                        return (
+                          <div key={index} className="text-sm bg-background rounded-full border-2 border-background">
+                            {user?.avatar || '👤'}
+                          </div>
+                        );
+                      })}
+                      {/* Show +N if more than 2 users typing */}
+                      {typingUsers.size > 2 && (
+                        <div className="text-xs bg-muted text-muted-foreground rounded-full w-6 h-6 flex items-center justify-center border-2 border-background">
+                          +{typingUsers.size - 2}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* User typing indicator - REMOVED */}
 
           <div ref={messagesEndRef} />
         </div>
@@ -1769,10 +1445,7 @@ const ChatRoom = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                pauseAllVoiceMessages();
-                setShowAIModal(true);
-              }}
+              onClick={() => setShowAIModal(true)}
               className="w-full text-xs"
             >
               <Lightbulb size={12} className="mr-1" />
@@ -1798,10 +1471,7 @@ const ChatRoom = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                pauseAllVoiceMessages();
-                setShowAIModal(true);
-              }}
+              onClick={() => setShowAIModal(true)}
             >
               <Bot size={14} />
               <span className="ml-1 text-xs hidden sm:inline">AI Help</span>
@@ -1834,10 +1504,7 @@ const ChatRoom = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => {
-                pauseAllVoiceMessages();
-                setShowLanguagePanel(true);
-              }}
+              onClick={() => setShowLanguagePanel(true)}
               className={showLanguagePanel ? 'text-primary' : ''}
             >
               <BookOpen size={14} />
@@ -1860,10 +1527,7 @@ const ChatRoom = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  pauseAllVoiceMessages();
-                  handleImageUpload();
-                }}
+                onClick={handleImageUpload}
                 className="flex-col h-auto p-3 gap-1"
               >
                 <Image size={20} />
@@ -1873,7 +1537,6 @@ const ChatRoom = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  pauseAllVoiceMessages();
                   // Simulate camera
                   handleImageUpload();
                 }}
@@ -1885,137 +1548,22 @@ const ChatRoom = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  pauseAllVoiceMessages();
-                  handleFileUpload();
-                }}
+                onClick={handleFileUpload}
                 className="flex-col h-auto p-3 gap-1"
               >
                 <File size={20} />
                 <span className="text-xs">File</span>
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleVoiceRecord}
+                className={`flex-col h-auto p-3 gap-1 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+              >
+                <Mic size={20} />
+                <span className="text-xs">{isRecording ? 'Stop' : 'Voice'}</span>
+              </Button>
             </div>
-          </div>
-        )}
-
-                {/* Voice recording interface - always red */}
-        {(isRecording || recordingTime > 0) && (
-          <div className="mb-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <div className={`w-3 h-3 bg-red-600 rounded-full ${isRecording ? 'animate-pulse' : ''}`}></div>
-                <span className="text-sm font-medium">
-                  {isRecording ? 'Recording' : (playingVoiceId === -1 ? 'Recording Playing' : 'Recording Paused')} {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                </span>
-                {!isRecording && recordingTime > 0 && (
-                  <span className="text-xs text-muted-foreground min-w-[40px]">
-                    {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                  </span>
-                )}
-              </div>
-              {isRecording && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handlePauseRecording}
-                    className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  >
-                    <Pause size={14} />
-                    <span className="ml-1 text-xs">Pause</span>
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDeleteRecording}
-                    className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  >
-                    <X size={14} />
-                    <span className="ml-1 text-xs">Delete</span>
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* Interactive waveform visualization with button on the left */}
-            <div className="space-y-3 mb-3">
-              <div className="flex items-center gap-3">
-                {!isRecording && recordingTime > 0 && (
-                  <Button
-                    onClick={() => handleVoicePlay(-1, recordingTime)}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3"
-                  >
-                    {playingVoiceId === -1 ? <Pause size={14} /> : <Play size={14} />}
-                    <span className="ml-1 text-xs">
-                      {playingVoiceId === -1 ? 'Pause' : 'Play'}
-                    </span>
-                  </Button>
-                )}
-                
-                <div className="flex items-center h-12 flex-1">
-                  {Array.from({ length: 20 }, (_, i) => {
-                    const height = waveformHeights[i] || 40;
-                    const isActive = isRecording || (playingVoiceId === -1 && i < (currentAudioTime / recordingTime) * 20);
-                    return (
-                      <div
-                        key={i}
-                        className={`flex-1 rounded cursor-pointer transition-colors duration-200 ${
-                          isActive ? 'bg-red-500' : 'bg-red-300'
-                        }`}
-                        style={{ 
-                          height: isRecording ? `${height + Math.sin((animationFrame * 0.1) + i) * 15}%` : `${height}%`,
-                          transition: 'height 0.05s ease-out'
-                        }}
-                        onClick={() => {
-                          if (!isRecording && recordingTime > 0) {
-                            const seekTime = (i / 20) * recordingTime;
-                            handleVoiceSeek(-1, recordingTime, seekTime);
-                          }
-                        }}
-                        title={!isRecording ? `Click to seek to ${Math.floor((i / 20) * recordingTime)}s` : ''}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-            
-            {/* Action buttons */}
-            {!isRecording && recordingTime > 0 && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleResumeRecording}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 border-red-300 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
-                >
-                  <Play size={14} />
-                  <span className="ml-1 text-xs">Resume</span>
-                </Button>
-                
-                <Button
-                  onClick={handleSendRecording}
-                  variant="default"
-                  className="flex-1 bg-red-600 hover:bg-red-700"
-                >
-                  <Send size={14} />
-                  <span className="ml-1 text-xs">Send</span>
-                </Button>
-                
-                <Button
-                  onClick={handleDeleteRecording}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <X size={14} />
-                  <span className="ml-1 text-xs">Delete</span>
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
@@ -2023,10 +1571,7 @@ const ChatRoom = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              pauseAllVoiceMessages();
-              setShowAttachments(!showAttachments);
-            }}
+            onClick={() => setShowAttachments(!showAttachments)}
             className={`p-2 ${showAttachments ? 'text-primary' : ''}`}
           >
             <Paperclip size={16} />
@@ -2037,52 +1582,7 @@ const ChatRoom = () => {
             name="messageInput"
             placeholder="Type a thoughtful message..."
             value={message}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              setMessage(newValue);
-              
-              // Show typing indicator when user starts typing (but don't show for current user)
-              if (newValue.length > 0 && !isTyping) {
-                setIsTyping(true);
-                // Add current user to typing users (but this won't be displayed)
-                setTypingUsers(prev => new Set(prev).add(user?.username || 'Guest'));
-              }
-              
-              // Clear existing timeout and set new one
-              if (typingTimeoutRef.current) {
-                clearTimeout(typingTimeoutRef.current);
-              }
-              
-              // Hide typing indicator after 1 second of no typing
-              typingTimeoutRef.current = setTimeout(() => {
-                setIsTyping(false);
-                // Remove current user from typing users
-                setTypingUsers(prev => {
-                  const newSet = new Set(prev);
-                  newSet.delete(user?.username || 'Guest');
-                  return newSet;
-                });
-              }, 1000);
-              
-              // Simulate other users typing (realistic behavior)
-              if (newValue.length > 0 && Math.random() > 0.7) {
-                const mockUsers = ['Luna', 'Alex', 'Sage', 'Maya'];
-                const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-                
-                setTimeout(() => {
-                  setTypingUsers(prev => new Set(prev).add(randomUser));
-                  
-                  // Hide typing after random duration
-                  setTimeout(() => {
-                    setTypingUsers(prev => {
-                      const newSet = new Set(prev);
-                      newSet.delete(randomUser);
-                      return newSet;
-                    });
-                  }, Math.random() * 3000 + 2000);
-                }, Math.random() * 2000 + 1000);
-              }
-            }}
+            onChange={handleInputChange}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             autoComplete="off"
             className="flex-1"
@@ -2104,6 +1604,39 @@ const ChatRoom = () => {
             >
               <Mic size={16} />
             </Button>
+          )}
+        </div>
+
+        {/* Recording indicator */}
+        {isRecording && (
+          <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 text-red-600">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStopRecording}
+                className="h-8 px-3 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Square size={14} />
+                <span className="ml-1 text-xs">Stop</span>
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSendRecording}
+                className="h-8 px-3 bg-red-600 hover:bg-red-700"
+              >
+                <Send size={14} />
+                <span className="ml-1 text-xs">Send</span>
+              </Button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -2147,7 +1680,6 @@ const ChatRoom = () => {
           </div>
         </SheetContent>
       </Sheet>
-      </div>
     </div>
   );
 };

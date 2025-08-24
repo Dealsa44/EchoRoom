@@ -10,14 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Globe, 
   Bell, 
-  Palette, 
+  Shield,
+  Lock,
   Volume2, 
   MessageCircle, 
   Heart,
   Eye,
   EyeOff,
-  Lock,
-  Shield,
   Trash2,
   Download,
   Upload,
@@ -73,7 +72,7 @@ const CollapsibleSection = ({ title, icon, children, defaultOpen = false }: Coll
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, setUser, language, setLanguage, toggleDarkMode, isDarkMode, safeMode, setSafeMode } = useApp();
+  const { user, setUser, language, setLanguage, toggleDarkMode, isDarkMode } = useApp();
   const { callSettings, updateCallSettings } = useCall();
   
   // Password change state
@@ -92,16 +91,6 @@ const Settings = () => {
     quietHours: false,
     quietStart: '22:00',
     quietEnd: '08:00'
-  });
-
-  const [privacy, setPrivacy] = useState({
-    showOnlineStatus: true,
-    showLastSeen: true,
-    allowDirectMessages: true,
-    showInSearch: true,
-    dataCollection: false,
-    analyticsOptIn: false,
-    locationSharing: false
   });
 
   const [sounds, setSounds] = useState({
@@ -171,62 +160,59 @@ const Settings = () => {
         {/* App Updates */}
         <UpdateBanner />
         
+        {/* Safety Center */}
+        <div className="border rounded-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/safety-center')}
+            className="w-full px-4 py-3 flex items-center hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="font-semibold">Safety Center</span>
+            </div>
+          </button>
+        </div>
+        
         {/* App Language & Theme */}
-        <CollapsibleSection title="Appearance & Language" icon={<Palette className="h-4 w-4" />}>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              App Language
-            </Label>
-            <Select value={language} onValueChange={(value: 'en' | 'ka') => setLanguage(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">🇺🇸 English</SelectItem>
-                <SelectItem value="ka">🇬🇪 Georgian (ქართული)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Dark Mode</Label>
-            <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-          </div>
-        </CollapsibleSection>
-
-        {/* Safe Mode Settings */}
-        <CollapsibleSection title="Safe Mode Settings" icon={<Shield className="h-4 w-4" />}>
+        <CollapsibleSection title="App Language & Theme" icon={<Globe className="h-4 w-4" />}>
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Light Mode</Label>
-                <p className="text-xs text-muted-foreground">Standard conversation mode</p>
-              </div>
-              <Switch 
-                checked={safeMode === 'light'} 
-                onCheckedChange={() => setSafeMode('light')} 
-              />
+            <div>
+              <Label className="text-sm font-medium">Language</Label>
+              <Select 
+                value={language} 
+                onValueChange={(value: 'en' | 'es' | 'fr' | 'de' | 'ja' | 'ko' | 'zh') => setLanguage(value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="de">Deutsch</SelectItem>
+                  <SelectItem value="ja">日本語</SelectItem>
+                  <SelectItem value="ko">한국어</SelectItem>
+                  <SelectItem value="zh">中文</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Deep Mode</Label>
-                <p className="text-xs text-muted-foreground">More meaningful conversations</p>
-              </div>
-              <Switch 
-                checked={safeMode === 'deep'} 
-                onCheckedChange={() => setSafeMode('deep')} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Learning Mode</Label>
-                <p className="text-xs text-muted-foreground">Educational and practice conversations</p>
-              </div>
-              <Switch 
-                checked={safeMode === 'learning'} 
-                onCheckedChange={() => setSafeMode('learning')} 
-              />
+            
+            <div>
+              <Label className="text-sm font-medium">Theme</Label>
+              <Select 
+                value={isDarkMode ? 'dark' : 'light'} 
+                onValueChange={(value: 'light' | 'dark' | 'system') => toggleDarkMode(value === 'dark')}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CollapsibleSection>
@@ -457,42 +443,6 @@ const Settings = () => {
                   </div>
                 </div>
               )}
-            </div>
-        </CollapsibleSection>
-
-        {/* Privacy & Data */}
-        <CollapsibleSection title="Privacy & Data" icon={<Lock className="h-4 w-4" />}>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Analytics & Insights</Label>
-                  <p className="text-xs text-muted-foreground">Help improve EchoRoom with usage data</p>
-                </div>
-                <Switch 
-                  checked={privacy.analyticsOptIn} 
-                  onCheckedChange={(checked) => setPrivacy(prev => ({...prev, analyticsOptIn: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Data Collection</Label>
-                  <p className="text-xs text-muted-foreground">Collect data for personalized experience</p>
-                </div>
-                <Switch 
-                  checked={privacy.dataCollection} 
-                  onCheckedChange={(checked) => setPrivacy(prev => ({...prev, dataCollection: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Location Sharing</Label>
-                  <p className="text-xs text-muted-foreground">Share location for better matches</p>
-                </div>
-                <Switch 
-                  checked={privacy.locationSharing} 
-                  onCheckedChange={(checked) => setPrivacy(prev => ({...prev, locationSharing: checked}))} 
-                />
-              </div>
             </div>
         </CollapsibleSection>
 

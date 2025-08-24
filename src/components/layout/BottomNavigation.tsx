@@ -25,7 +25,8 @@ const BottomNavigation = () => {
       // Profile is active for profile and its sub-pages
       return location.pathname === '/profile' || 
              location.pathname.startsWith('/profile/') ||
-             location.pathname === '/settings';
+             location.pathname === '/settings' ||
+             location.pathname === '/safety-center';
     }
     return location.pathname === path;
   };

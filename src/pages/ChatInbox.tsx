@@ -25,7 +25,8 @@ import {
   VolumeX,
   UserX,
   History,
-  Calendar
+  Calendar,
+  Shield
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -182,6 +183,29 @@ const ChatInbox = () => {
     // This will trigger a re-render when joinedRooms changes,
     // which will update the joinedRoomConversations
   }, [joinedRooms]);
+
+  // Simulate typing in conversations to make them feel alive
+  useEffect(() => {
+    const typingInterval = setInterval(() => {
+      // 20% chance to show someone typing
+      if (Math.random() < 0.2) {
+        setConversations(prev => prev.map(conv => {
+          // Only show typing for online users and not for the current user
+          if (conv.participant.isOnline && conv.participant.name !== 'You') {
+            return { ...conv, isTyping: true };
+          }
+          return conv;
+        }));
+
+        // Stop typing after 2-4 seconds
+        setTimeout(() => {
+          setConversations(prev => prev.map(conv => ({ ...conv, isTyping: false })));
+        }, 2000 + Math.random() * 2000);
+      }
+    }, 20000); // Every 20 seconds
+    
+    return () => clearInterval(typingInterval);
+  }, []);
 
   // Add joined rooms to conversations (exclude left rooms)
   const joinedRoomConversations: ChatConversation[] = (joinedRooms || []).map(roomId => {
