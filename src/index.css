@@ -1123,6 +1123,20 @@
   z-index: 9999 !important;
 }
 
+/* Ensure camera controls are properly interactive */
+.camera-active .camera-controls {
+  pointer-events: auto !important;
+}
+
+.camera-active .camera-overlay {
+  pointer-events: auto !important;
+}
+
+/* Ensure video element doesn't block pointer events */
+.camera-active video {
+  pointer-events: none !important;
+}
+
 /* Safe Area Utilities - Mobile First */
 @layer utilities {
   /* Safe area padding for modern devices with notches and status bars */

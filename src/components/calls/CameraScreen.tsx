@@ -177,7 +177,7 @@ const CameraScreen = ({
   const cameraContent = (
     <div className="fixed inset-0 z-[9999] bg-black">
       {/* Camera View */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         <video
           ref={videoRef}
           autoPlay
@@ -193,9 +193,9 @@ const CameraScreen = ({
       </div>
 
       {/* Camera Overlay */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-10 camera-overlay">
         {/* Top Bar with Safe Space */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-white/10 safe-top z-10">
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-t border-white/10 safe-top z-20 pointer-events-auto camera-controls">
           {/* Left side - Close button */}
           <Button
             variant="ghost"
@@ -233,7 +233,7 @@ const CameraScreen = ({
 
           {/* Right side - Edit tools (only visible after capture) */}
           {capturedImage && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pointer-events-auto">
               <Button
                 variant="ghost"
                 size="icon"
@@ -308,7 +308,7 @@ const CameraScreen = ({
         )}
 
         {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10 z-10">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10 z-20 pointer-events-auto">
           {!capturedImage ? (
             // Camera mode controls
             <div className="flex items-center justify-center">
