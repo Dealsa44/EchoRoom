@@ -70,11 +70,18 @@ const CameraScreen = ({
   // Ensure flashlight state is properly managed when camera type changes
   useEffect(() => {
     if (isOpen && streamRef.current) {
-      console.log('🔄 Camera type changed to:', isFrontCamera ? 'front' : 'back', '- rechecking flashlight capabilities');
       // Re-check flashlight capabilities when camera type changes
       checkFlashlightCapabilities(streamRef.current);
     }
   }, [isFrontCamera, isOpen]);
+
+  // Auto-start camera when isFrontCamera changes (for camera switching)
+  useEffect(() => {
+    if (isOpen && !capturedImage) {
+      // Start camera with new facing mode when camera type changes
+      startCamera();
+    }
+  }, [isFrontCamera, isOpen, capturedImage]);
 
   const startCamera = async () => {
     const facingMode = isFrontCamera ? 'user' : 'environment';
@@ -187,14 +194,10 @@ const CameraScreen = ({
     setIsFrontCamera(!isFrontCamera);
     stopCamera();
     
-    // Use a longer delay to ensure state is updated
-    setTimeout(() => {
-      startCamera();
-      // Reset flash state after camera restart
-      setIsFlashOn(false);
-      // Force re-detection of flashlight capabilities
-      setHasFlashlight(false);
-    }, 200);
+    // Don't start camera here - let useEffect handle it
+    // Reset flash state immediately
+    setIsFlashOn(false);
+    setHasFlashlight(false);
   };
 
   const turnOffFlash = async () => {
