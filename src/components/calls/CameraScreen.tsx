@@ -105,9 +105,11 @@ const CameraScreen = ({
         if (capabilities.torch) {
           setHasFlashlight(true);
           flashTrackRef.current = videoTrack;
+          console.log('✅ Flashlight capabilities detected for', isFrontCamera ? 'front' : 'back', 'camera');
         } else {
           setHasFlashlight(false);
           flashTrackRef.current = null;
+          console.log('❌ No torch capability detected');
         }
       } catch (error) {
         console.log('Flashlight capabilities not available');
@@ -187,22 +189,26 @@ const CameraScreen = ({
     if (isFrontCamera) {
       // For front camera, just toggle the screen brightness overlay
       setIsFlashOn(!isFlashOn);
+      console.log('📱 Front camera flash toggled:', !isFlashOn);
     } else if (hasFlashlight && flashTrackRef.current) {
-      // For back camera, control actual device flashlight
+      // For back camera, control actual device flashlight - ONLY use hardware
       try {
         const newFlashState = !isFlashOn;
+        console.log('🔦 Attempting to toggle hardware flashlight to:', newFlashState);
         await flashTrackRef.current.applyConstraints({
           advanced: [{ torch: newFlashState }]
         });
         setIsFlashOn(newFlashState);
+        console.log('✅ Hardware flashlight toggled successfully to:', newFlashState);
       } catch (error) {
-        console.error('Failed to toggle flashlight:', error);
-        // Fallback to visual overlay if flashlight fails
-        setIsFlashOn(!isFlashOn);
+        console.error('❌ Failed to toggle hardware flashlight:', error);
+        // Don't fallback to visual overlay for back camera
+        // Just keep the current state
       }
     } else {
-      // No flashlight support, just toggle visual overlay
-      setIsFlashOn(!isFlashOn);
+      // For back camera without hardware flashlight - do nothing
+      // No visual fallback, just ignore the tap
+      console.log('⚠️ No hardware flashlight available for back camera');
     }
   };
 
@@ -316,14 +322,10 @@ const CameraScreen = ({
           />
         )}
         
-        {/* Flash overlay - only for front camera or when no real flashlight */}
-        {isFlashOn && !capturedImage && (isFrontCamera || !hasFlashlight) && (
+        {/* Flash overlay - ONLY for front camera selfie flash */}
+        {isFlashOn && !capturedImage && isFrontCamera && (
           <div 
-            className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
-              isFrontCamera 
-                ? 'bg-white opacity-80' // Brighter for front camera selfies
-                : 'bg-white opacity-30' // Subtle fallback for devices without flashlight
-            }`} 
+            className="absolute inset-0 pointer-events-none transition-opacity duration-200 bg-white opacity-80"
           />
         )}
       </div>
