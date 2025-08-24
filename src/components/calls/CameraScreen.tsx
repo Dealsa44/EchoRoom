@@ -4,16 +4,14 @@ import { Button } from '@/components/ui/button';
 import { 
   Camera, 
   X, 
+  ArrowLeft,
   RotateCcw, 
   Zap, 
   PenTool, 
   Type, 
   Sticker, 
   Crop, 
-  Save,
-  Send,
-  ChevronLeft,
-  ChevronRight
+  Send
 } from 'lucide-react';
 
 interface CameraScreenProps {
@@ -175,6 +173,18 @@ const CameraScreen = ({
     setCurrentEditTool(null);
   };
 
+  const handleCloseOrBack = () => {
+    if (capturedImage) {
+      // If we have a captured image, go back to camera
+      setCapturedImage(null);
+      setIsEditing(false);
+      setCurrentEditTool(null);
+    } else {
+      // If we're in camera mode, close the camera
+      onClose();
+    }
+  };
+
   const handleScreenTap = () => {
     const now = Date.now();
     const timeDiff = now - lastTapRef.current;
@@ -221,40 +231,42 @@ const CameraScreen = ({
       <div className="absolute inset-0 z-10 camera-overlay">
         {/* Top Bar with Safe Space */}
         <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/60 backdrop-blur-md border-b border-white/20 safe-top z-50 pointer-events-auto camera-controls">
-          {/* Left side - Close button */}
+          {/* Left side - Close/Back button */}
           <Button
             variant="ghost"
             size="icon"
             className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
-            onClick={onClose}
+            onClick={handleCloseOrBack}
           >
-            <X size={20} />
+            {capturedImage ? <ArrowLeft size={20} /> : <X size={20} />}
           </Button>
 
-          {/* Center - Camera controls */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
-              onClick={toggleCamera}
-            >
-              <RotateCcw size={20} />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-10 w-10 backdrop-blur-sm text-white border border-white/20 ${
-                isFlashOn 
-                  ? 'bg-yellow-500 hover:bg-yellow-600' 
-                  : 'bg-white/20 hover:bg-white/30'
-              }`}
-              onClick={toggleFlash}
-            >
-              <Zap size={20} />
-            </Button>
-          </div>
+          {/* Center - Camera controls (only visible in camera mode) */}
+          {!capturedImage && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
+                onClick={toggleCamera}
+              >
+                <RotateCcw size={20} />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-10 w-10 backdrop-blur-sm text-white border border-white/20 ${
+                  isFlashOn 
+                    ? 'bg-yellow-500 hover:bg-yellow-600' 
+                    : 'bg-white/20 hover:bg-white/30'
+                }`}
+                onClick={toggleFlash}
+              >
+                <Zap size={20} />
+              </Button>
+            </div>
+          )}
 
           {/* Right side - Edit tools (only visible after capture) */}
           {capturedImage && (
@@ -349,40 +361,19 @@ const CameraScreen = ({
                 <Camera size={32} />
               </Button>
             </div>
-          ) : (
-            // Edit mode controls
-            <div className="flex items-center justify-between">
-              {/* Left - Save button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
-                onClick={handleSave}
-              >
-                <Save size={24} />
-              </Button>
-
-              {/* Center - Retake button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/20"
-                onClick={handleRetake}
-              >
-                <ChevronLeft size={24} />
-              </Button>
-
-              {/* Right - Send button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white border border-blue-400"
-                onClick={handleSend}
-              >
-                <Send size={24} />
-              </Button>
-            </div>
-          )}
+                     ) : (
+             // Edit mode controls - only send button
+             <div className="flex items-center justify-center">
+               <Button
+                 variant="ghost"
+                 size="icon"
+                 className="h-16 w-16 bg-blue-500 hover:bg-blue-600 text-white border border-blue-400"
+                 onClick={handleSend}
+               >
+                 <Send size={28} />
+               </Button>
+             </div>
+           )}
         </div>
       </div>
 
