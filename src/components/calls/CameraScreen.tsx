@@ -36,10 +36,13 @@ const CameraScreen = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const doubleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTapRef = useRef<number>(0);
 
   // Start camera when component mounts
   useEffect(() => {
     if (isOpen) {
+      resetCamera();
       startCamera();
       document.body.classList.add('camera-active');
       document.body.style.overflow = 'hidden';
@@ -172,22 +175,44 @@ const CameraScreen = ({
     setCurrentEditTool(null);
   };
 
+  const handleScreenTap = () => {
+    const now = Date.now();
+    const timeDiff = now - lastTapRef.current;
+    
+    if (timeDiff < 300 && timeDiff > 0) {
+      // Double tap detected
+      toggleCamera();
+    }
+    
+    lastTapRef.current = now;
+  };
+
+  const resetCamera = () => {
+    setCapturedImage(null);
+    setIsEditing(false);
+    setCurrentEditTool(null);
+    setIsFrontCamera(false);
+    setIsFlashOn(false);
+  };
+
   if (!isOpen) return null;
 
   const cameraContent = (
     <div className="fixed inset-0 z-[9999] bg-black">
       {/* Camera View */}
       <div className="absolute inset-0 z-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-        />
+        {!capturedImage && (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+        )}
         
         {/* Flash overlay */}
-        {isFlashOn && (
+        {isFlashOn && !capturedImage && (
           <div className="absolute inset-0 bg-white opacity-30 pointer-events-none" />
         )}
       </div>
@@ -195,7 +220,7 @@ const CameraScreen = ({
       {/* Camera Overlay */}
       <div className="absolute inset-0 z-10 camera-overlay">
         {/* Top Bar with Safe Space */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/40 backdrop-blur-md border-t border-white/10 safe-top z-20 pointer-events-auto camera-controls">
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-black/60 backdrop-blur-md border-b border-white/20 safe-top z-50 pointer-events-auto camera-controls">
           {/* Left side - Close button */}
           <Button
             variant="ghost"
@@ -292,7 +317,10 @@ const CameraScreen = ({
         {/* Center Content */}
         {!capturedImage ? (
           // Camera view mode
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            onClick={handleScreenTap}
+          >
             {/* Camera frame guides */}
             <div className="w-80 h-80 border-2 border-white/30 rounded-lg pointer-events-none" />
           </div>
@@ -308,7 +336,7 @@ const CameraScreen = ({
         )}
 
         {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10 z-20 pointer-events-auto">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/60 backdrop-blur-md border-t border-white/20 z-50 pointer-events-auto">
           {!capturedImage ? (
             // Camera mode controls
             <div className="flex items-center justify-center">

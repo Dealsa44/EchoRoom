@@ -1137,6 +1137,22 @@
   pointer-events: none !important;
 }
 
+/* Prevent blue highlights and selection on long press */
+.camera-active * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Ensure proper z-index for camera controls */
+.camera-active .camera-controls {
+  z-index: 50 !important;
+}
+
 /* Safe Area Utilities - Mobile First */
 @layer utilities {
   /* Safe area padding for modern devices with notches and status bars */
