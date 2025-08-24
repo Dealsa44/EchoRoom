@@ -83,36 +83,7 @@ const CameraScreen = ({
 
   const startCameraWithFacingMode = async (facingMode: 'user' | 'environment') => {
     try {
-      // First, enumerate available cameras
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      
-      // Find the appropriate camera based on facing mode
-      let targetDevice = null;
-      if (facingMode === 'user') {
-        // For front camera, look for device with 'user' facing mode or 'front' in label
-        targetDevice = videoDevices.find(device => 
-          device.label.toLowerCase().includes('front') || 
-          device.label.toLowerCase().includes('user') ||
-          device.label.toLowerCase().includes('selfie')
-        );
-      } else {
-        // For back camera, look for device with 'environment' facing mode or 'back' in label
-        targetDevice = videoDevices.find(device => 
-          device.label.toLowerCase().includes('back') || 
-          device.label.toLowerCase().includes('environment') ||
-          device.label.toLowerCase().includes('world')
-        );
-      }
-      
-      // If we can't find a specific device, fall back to facingMode constraint
-      const constraints = targetDevice ? {
-        video: {
-          deviceId: { exact: targetDevice.deviceId },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      } : {
+      const constraints = {
         video: {
           facingMode: facingMode,
           width: { ideal: 1920 },
@@ -207,23 +178,23 @@ const CameraScreen = ({
   };
 
   const toggleCamera = () => {
-    const newCameraType = !isFrontCamera;
-    
     // Turn off flash when switching cameras
     if (isFlashOn) {
       turnOffFlash();
     }
     
-    setIsFrontCamera(newCameraType);
+    // Switch camera type first
+    setIsFrontCamera(!isFrontCamera);
     stopCamera();
     
+    // Use a longer delay to ensure state is updated
     setTimeout(() => {
-      startCameraWithFacingMode(newCameraType);
+      startCamera();
       // Reset flash state after camera restart
       setIsFlashOn(false);
       // Force re-detection of flashlight capabilities
       setHasFlashlight(false);
-    }, 100);
+    }, 200);
   };
 
   const turnOffFlash = async () => {
