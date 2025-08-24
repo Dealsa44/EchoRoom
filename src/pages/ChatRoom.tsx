@@ -21,6 +21,7 @@ import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import CameraScreen from '@/components/calls/CameraScreen';
 
 const ChatRoom = () => {
   const { id } = useParams();
@@ -62,6 +63,7 @@ const ChatRoom = () => {
   const [mutedUsers, setMutedUsers] = useState<Set<string>>(new Set());
   const [pinnedMessages, setPinnedMessages] = useState<Set<number>>(new Set());
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
@@ -73,6 +75,8 @@ const ChatRoom = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+
 
   // Typing indicators for chat rooms
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
@@ -988,7 +992,12 @@ const ChatRoom = () => {
   };
 
   const handleImageUpload = () => {
-    // Simulate image upload
+    setShowCamera(true);
+    setShowAttachments(false);
+  };
+
+  const handleImageCaptured = (imageData: string) => {
+    // Create a new message with the captured image
     const newMessage = {
       id: messages.length + 1,
       user: {
@@ -1006,12 +1015,11 @@ const ChatRoom = () => {
       isPinned: false,
       reactions: [],
       type: 'image',
-      imageUrl: 'https://picsum.photos/300/200?random=' + Math.random()
+      imageUrl: imageData
     };
 
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
-    setShowAttachments(false);
     
     // Photo sent - toast removed per user request
   };
@@ -1142,7 +1150,7 @@ const ChatRoom = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top ${showAIPanel ? 'pb-48' : 'pb-32'}`}>
+              <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top ${showAIPanel ? 'pb-48' : showAttachments ? 'pb-52' : 'pb-32'}`}>
         <div className="space-y-4">
           {messages.filter(msg => msg.channel === activeChannel).map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -1420,6 +1428,44 @@ const ChatRoom = () => {
         </div>
       </div>
 
+      {/* Attachment panel - positioned above fixed input */}
+      {showAttachments && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full z-10">
+          <div className="grid grid-cols-3 gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleImageUpload}
+              className="flex-col h-auto p-3 gap-1"
+            >
+              <Image size={20} />
+              <span className="text-xs">Photo</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Simulate camera
+                handleImageUpload();
+              }}
+              className="flex-col h-auto p-3 gap-1"
+            >
+              <Camera size={20} />
+              <span className="text-xs">Camera</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFileUpload}
+              className="flex-col h-auto p-3 gap-1 col-span-1"
+            >
+              <File size={20} />
+              <span className="text-xs">File</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* AI Suggestions Panel */}
       {showAIPanel && (
         <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 max-w-md mx-auto w-full z-20">
@@ -1456,7 +1502,7 @@ const ChatRoom = () => {
       )}
 
       {/* Message Input */}
-              <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full">
+      <div className={`fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full ${showAttachments ? 'bottom-20' : ''}`}>
         {anonymousMode && (
           <div className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
             <EyeOff size={12} />
@@ -1520,52 +1566,7 @@ const ChatRoom = () => {
           )}
         </div>
         
-        {/* Attachment panel */}
-        {showAttachments && (
-          <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleImageUpload}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <Image size={20} />
-                <span className="text-xs">Photo</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Simulate camera
-                  handleImageUpload();
-                }}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <Camera size={20} />
-                <span className="text-xs">Camera</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleFileUpload}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <File size={20} />
-                <span className="text-xs">File</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleVoiceRecord}
-                className={`flex-col h-auto p-3 gap-1 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
-              >
-                <Mic size={20} />
-                <span className="text-xs">{isRecording ? 'Stop' : 'Voice'}</span>
-              </Button>
-            </div>
-          </div>
-        )}
+
 
         <div className="flex gap-2">
           <Button
@@ -1680,6 +1681,13 @@ const ChatRoom = () => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Camera Screen */}
+      <CameraScreen
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onImageCaptured={handleImageCaptured}
+      />
     </div>
   );
 };

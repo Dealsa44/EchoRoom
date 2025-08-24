@@ -25,6 +25,7 @@ import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 import CallButtons from '@/components/calls/CallButtons';
 import BlockReportModal from '@/components/modals/BlockReportModal';
+import CameraScreen from '@/components/calls/CameraScreen';
 
 const PrivateChat = () => {
   const { userId } = useParams();
@@ -43,6 +44,7 @@ const PrivateChat = () => {
   const [editingText, setEditingText] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
@@ -54,6 +56,8 @@ const PrivateChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+
 
   // Mock user data - in real app this would come from API
   const getUserById = (id: string) => {
@@ -446,7 +450,12 @@ const PrivateChat = () => {
 
   // File attachment handlers
   const handleImageUpload = () => {
-    // Simulate image upload
+    setShowCamera(true);
+    setShowAttachments(false);
+  };
+
+  const handleImageCaptured = (imageData: string) => {
+    // Create a new message with the captured image
     const newMessage = {
       id: messages.length + 1,
       sender: 'me' as const,
@@ -465,12 +474,11 @@ const PrivateChat = () => {
       replyTo: replyingTo,
       deliveryStatus: 'sent' as const,
       isEncrypted: true,
-      imageUrl: 'https://picsum.photos/300/200?random=' + Math.random()
+      imageUrl: imageData
     };
 
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
-    setShowAttachments(false);
     
     // Photo sent - toast removed per user request
   };
@@ -802,7 +810,7 @@ const PrivateChat = () => {
       />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-24 pb-36 content-safe-top">
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-24 content-safe-top ${showAttachments ? 'pb-52' : 'pb-36'}`}>
         <div className="space-y-4">
           {messages.map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -1037,10 +1045,46 @@ const PrivateChat = () => {
         </div>
       </div>
 
-
+      {/* Attachment panel - positioned above fixed input */}
+      {showAttachments && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full z-10">
+          <div className="grid grid-cols-3 gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleImageUpload}
+              className="flex-col h-auto p-3 gap-1"
+            >
+              <Image size={20} />
+              <span className="text-xs">Photo</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Simulate camera
+                handleImageUpload();
+              }}
+              className="flex-col h-auto p-3 gap-1"
+            >
+              <Camera size={20} />
+              <span className="text-xs">Camera</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFileUpload}
+              className="flex-col h-auto p-3 gap-1 col-span-1"
+            >
+              <File size={20} />
+              <span className="text-xs">File</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Message Input */}
-              <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border">
+      <div className={`fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border ${showAttachments ? 'bottom-20' : ''}`}>
         {/* Reply indicator */}
         {replyingTo && (
           <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">
@@ -1066,52 +1110,7 @@ const PrivateChat = () => {
           </div>
         )}
 
-        {/* Attachment panel */}
-        {showAttachments && (
-          <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleImageUpload}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <Image size={20} />
-                <span className="text-xs">Photo</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Simulate camera
-                  handleImageUpload();
-                }}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <Camera size={20} />
-                <span className="text-xs">Camera</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleFileUpload}
-                className="flex-col h-auto p-3 gap-1"
-              >
-                <File size={20} />
-                <span className="text-xs">File</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleVoiceRecord}
-                className={`flex-col h-auto p-3 gap-1 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
-              >
-                <Mic size={20} />
-                <span className="text-xs">{isRecording ? 'Stop' : 'Voice'}</span>
-              </Button>
-            </div>
-          </div>
-        )}
+
 
         <div className="flex flex-wrap gap-2 mb-2">
           <AITooltip 
@@ -1304,6 +1303,13 @@ const PrivateChat = () => {
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* Camera Screen */}
+        <CameraScreen
+          isOpen={showCamera}
+          onClose={() => setShowCamera(false)}
+          onImageCaptured={handleImageCaptured}
+        />
       </div>
     </div>
   );

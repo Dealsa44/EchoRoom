@@ -1107,6 +1107,22 @@
   z-index: 9999 !important;
 }
 
+/* CameraScreen Layout Fixes */
+/* Ensure camera screen properly overlays all content */
+.camera-active {
+  overflow: hidden !important;
+}
+
+/* Prevent any content from appearing above camera screen */
+.camera-active * {
+  z-index: auto !important;
+}
+
+/* Ensure proper stacking context for camera screen elements */
+.camera-active .fixed.inset-0 {
+  z-index: 9999 !important;
+}
+
 /* Safe Area Utilities - Mobile First */
 @layer utilities {
   /* Safe area padding for modern devices with notches and status bars */
