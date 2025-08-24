@@ -34,6 +34,9 @@ import CallHistory from "./pages/CallHistory";
 import ArchivedChats from "./pages/ArchivedChats";
 import SafetyCenter from "./components/security/SafetyCenter";
 import NotFound from "./pages/NotFound";
+import NotificationsCommunication from "./pages/NotificationsCommunication";
+import AppearanceExperience from "./pages/AppearanceExperience";
+import DeviceData from "./pages/DeviceData";
 
 const queryClient = new QueryClient();
 
@@ -168,11 +171,10 @@ const App = () => {
                 <ArchivedChats />
               </AuthGuard>
             } />
-            <Route path="/safety-center" element={
-              <AuthGuard>
-                <SafetyCenter />
-              </AuthGuard>
-            } />
+            <Route path="/safety-center" element={<AuthGuard><SafetyCenter /></AuthGuard>} />
+            <Route path="/notifications-communication" element={<AuthGuard><NotificationsCommunication /></AuthGuard>} />
+            <Route path="/appearance-experience" element={<AuthGuard><AppearanceExperience /></AuthGuard>} />
+            <Route path="/device-data" element={<AuthGuard><DeviceData /></AuthGuard>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

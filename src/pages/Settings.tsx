@@ -2,29 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Globe, 
-  Bell, 
   Shield,
   Lock,
-  Volume2, 
-  MessageCircle, 
+  Globe,
+  Smartphone,
+  MessageCircle,
   Heart,
   Eye,
   EyeOff,
   Trash2,
-  Download,
-  Upload,
   HelpCircle,
-  Smartphone,
-  Phone,
-  Wifi,
-  Database,
   ChevronDown,
   ChevronRight,
   RefreshCw
@@ -32,7 +23,6 @@ import {
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { useApp } from '@/hooks/useApp';
-import { useCall } from '@/hooks/useCall';
 import { toast } from '@/hooks/use-toast';
 import { UpdateBanner } from '@/components/UpdateBanner';
 import { serviceWorkerManager } from '@/lib/serviceWorkerManager';
@@ -72,8 +62,7 @@ const CollapsibleSection = ({ title, icon, children, defaultOpen = false }: Coll
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, setUser, language, setLanguage, toggleDarkMode, isDarkMode } = useApp();
-  const { callSettings, updateCallSettings } = useCall();
+  const { user, setUser } = useApp();
   
   // Password change state
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -82,46 +71,6 @@ const Settings = () => {
     currentPassword: '',
     newPassword: ''
   });
-
-  // App-specific settings state
-  const [notifications, setNotifications] = useState({
-    pushNotifications: true,
-    emailNotifications: false,
-    smsNotifications: false,
-    quietHours: false,
-    quietStart: '22:00',
-    quietEnd: '08:00'
-  });
-
-  const [sounds, setSounds] = useState({
-    messageSound: true,
-    notificationSound: true,
-    typingSound: false,
-    volume: 70,
-    vibration: true
-  });
-
-  const [accessibility, setAccessibility] = useState({
-    highContrast: false,
-    largeText: false,
-    reduceMotion: false,
-    screenReader: false
-  });
-
-  const [storage, setStorage] = useState({
-    cacheSize: '125 MB',
-    autoDownloadImages: true,
-    autoDownloadVideos: false,
-    offlineMode: false
-  });
-
-  const handleExportData = () => {
-    // Export data functionality - toast removed per user request
-  };
-
-  const handleDeleteAccount = () => {
-    // Account deletion functionality - toast removed per user request
-  };
 
   const handlePasswordChange = async () => {
     if (!user) return;
@@ -153,7 +102,11 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar title="Settings" showBack />
+      <TopBar 
+        title="Settings" 
+        showBack 
+        onBack={() => navigate('/profile')}
+      />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
         
@@ -174,49 +127,48 @@ const Settings = () => {
           </button>
         </div>
         
-        {/* App Language & Theme */}
-        <CollapsibleSection title="App Language & Theme" icon={<Globe className="h-4 w-4" />}>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm font-medium">Language</Label>
-              <Select 
-                value={language} 
-                onValueChange={(value: 'en' | 'es' | 'fr' | 'de' | 'ja' | 'ko' | 'zh') => setLanguage(value)}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
-                  <SelectItem value="ko">한국어</SelectItem>
-                  <SelectItem value="zh">中文</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Notifications & Communication */}
+        <div className="border rounded-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/notifications-communication')}
+            className="w-full px-4 py-3 flex items-center hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              <span className="font-semibold">Notifications & Communication</span>
             </div>
-            
-            <div>
-              <Label className="text-sm font-medium">Theme</Label>
-              <Select 
-                value={isDarkMode ? 'dark' : 'light'} 
-                onValueChange={(value: 'light' | 'dark' | 'system') => toggleDarkMode(value === 'dark')}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
+          </button>
+        </div>
+        
+        {/* Appearance & Experience */}
+        <div className="border rounded-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/appearance-experience')}
+            className="w-full px-4 py-3 flex items-center hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              <span className="font-semibold">Appearance & Experience</span>
             </div>
-          </div>
-        </CollapsibleSection>
-
+          </button>
+        </div>
+        
+        {/* Device & Data */}
+        <div className="border rounded-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/device-data')}
+            className="w-full px-4 py-3 flex items-center hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4" />
+              <span className="font-semibold">Device & Data</span>
+            </div>
+          </button>
+        </div>
+        
         {/* Password & Security */}
         <CollapsibleSection title="Password & Security" icon={<Lock className="h-4 w-4" />}>
           <div className="space-y-2">
@@ -274,353 +226,6 @@ const Settings = () => {
           >
             Change Password
           </Button>
-        </CollapsibleSection>
-
-        {/* Device & Performance */}
-        <CollapsibleSection title="Device & Performance" icon={<Smartphone className="h-4 w-4" />}>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Auto-download Images</Label>
-                <p className="text-xs text-muted-foreground">Download images automatically</p>
-              </div>
-              <Switch 
-                checked={storage.autoDownloadImages} 
-                onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadImages: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Auto-download Videos</Label>
-                <p className="text-xs text-muted-foreground">Download videos on WiFi only</p>
-              </div>
-              <Switch 
-                checked={storage.autoDownloadVideos} 
-                onCheckedChange={(checked) => setStorage(prev => ({...prev, autoDownloadVideos: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Offline Mode</Label>
-                <p className="text-xs text-muted-foreground">Cache content for offline use</p>
-              </div>
-              <Switch 
-                checked={storage.offlineMode} 
-                onCheckedChange={(checked) => setStorage(prev => ({...prev, offlineMode: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Cache Size</Label>
-                <p className="text-xs text-muted-foreground">Current cache usage</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => {
-                setStorage(prev => ({...prev, cacheSize: '0 MB'}));
-                // Cache cleared notification removed - obvious action
-              }}>
-                Clear ({storage.cacheSize})
-              </Button>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Accessibility */}
-        <CollapsibleSection title="Accessibility" icon={<Eye className="h-4 w-4" />}>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">High Contrast</Label>
-                <p className="text-xs text-muted-foreground">Increase contrast for better visibility</p>
-              </div>
-              <Switch 
-                checked={accessibility.highContrast} 
-                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, highContrast: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Large Text</Label>
-                <p className="text-xs text-muted-foreground">Increase text size</p>
-              </div>
-              <Switch 
-                checked={accessibility.largeText} 
-                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, largeText: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Reduce Motion</Label>
-                <p className="text-xs text-muted-foreground">Minimize animations</p>
-              </div>
-              <Switch 
-                checked={accessibility.reduceMotion} 
-                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, reduceMotion: checked}))} 
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Screen Reader Support</Label>
-                <p className="text-xs text-muted-foreground">Enhanced screen reader compatibility</p>
-              </div>
-              <Switch 
-                checked={accessibility.screenReader} 
-                onCheckedChange={(checked) => setAccessibility(prev => ({...prev, screenReader: checked}))} 
-              />
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Notifications */}
-        <CollapsibleSection title="Notifications" icon={<Bell className="h-4 w-4" />}>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push Notifications</Label>
-                  <p className="text-xs text-muted-foreground">Receive notifications on your device</p>
-                </div>
-                <Switch 
-                  checked={notifications.pushNotifications} 
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, pushNotifications: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Email Notifications</Label>
-                  <p className="text-xs text-muted-foreground">Receive updates via email</p>
-                </div>
-                <Switch 
-                  checked={notifications.emailNotifications} 
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, emailNotifications: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Quiet Hours</Label>
-                  <p className="text-xs text-muted-foreground">Silence notifications during set hours</p>
-                </div>
-                <Switch 
-                  checked={notifications.quietHours} 
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, quietHours: checked}))} 
-                />
-              </div>
-              {notifications.quietHours && (
-                <div className="ml-4 space-y-2">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground">From</Label>
-                      <Select 
-                        value={notifications.quietStart} 
-                        onValueChange={(value) => setNotifications(prev => ({...prev, quietStart: value}))}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="20:00">8:00 PM</SelectItem>
-                          <SelectItem value="21:00">9:00 PM</SelectItem>
-                          <SelectItem value="22:00">10:00 PM</SelectItem>
-                          <SelectItem value="23:00">11:00 PM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground">To</Label>
-                      <Select 
-                        value={notifications.quietEnd} 
-                        onValueChange={(value) => setNotifications(prev => ({...prev, quietEnd: value}))}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="06:00">6:00 AM</SelectItem>
-                          <SelectItem value="07:00">7:00 AM</SelectItem>
-                          <SelectItem value="08:00">8:00 AM</SelectItem>
-                          <SelectItem value="09:00">9:00 AM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-        </CollapsibleSection>
-
-        {/* Call Settings */}
-        <CollapsibleSection title="Call Settings" icon={<Phone className="h-4 w-4" />}>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm font-medium">Video Quality</Label>
-              <Select 
-                value={callSettings.videoQuality} 
-                onValueChange={(value: 'low' | 'medium' | 'high') => updateCallSettings({ videoQuality: value })}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low (Save Data)</SelectItem>
-                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                  <SelectItem value="high">High (Best Quality)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium">Audio Quality</Label>
-              <Select 
-                value={callSettings.audioQuality} 
-                onValueChange={(value: 'low' | 'medium' | 'high') => updateCallSettings({ audioQuality: value })}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low (Save Data)</SelectItem>
-                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                  <SelectItem value="high">High (Best Quality)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Auto-Answer Calls</Label>
-                <p className="text-xs text-muted-foreground">Automatically answer incoming calls</p>
-              </div>
-              <Switch 
-                checked={callSettings.autoAnswer} 
-                onCheckedChange={(checked) => updateCallSettings({ autoAnswer: checked })} 
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Auto-Mute</Label>
-                <p className="text-xs text-muted-foreground">Start calls with microphone muted</p>
-              </div>
-              <Switch 
-                checked={callSettings.autoMute} 
-                onCheckedChange={(checked) => updateCallSettings({ autoMute: checked })} 
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Speaker Default</Label>
-                <p className="text-xs text-muted-foreground">Use speaker by default for calls</p>
-              </div>
-              <Switch 
-                checked={callSettings.speakerDefault} 
-                onCheckedChange={(checked) => updateCallSettings({ speakerDefault: checked })} 
-              />
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium">Bandwidth Limit</Label>
-              <Select 
-                value={callSettings.bandwidthLimit} 
-                onValueChange={(value: 'low' | 'medium' | 'high' | 'unlimited') => updateCallSettings({ bandwidthLimit: value })}
-              >
-                <SelectTrigger className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low (Save Data)</SelectItem>
-                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                  <SelectItem value="high">High (Good Quality)</SelectItem>
-                  <SelectItem value="unlimited">Unlimited (Best Quality)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Sound & Vibration */}
-        <CollapsibleSection title="Sound & Vibration" icon={<Volume2 className="h-4 w-4" />}>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Message Sounds</Label>
-                  <p className="text-xs text-muted-foreground">Play sound for new messages</p>
-                </div>
-                <Switch 
-                  checked={sounds.messageSound} 
-                  onCheckedChange={(checked) => setSounds(prev => ({...prev, messageSound: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Notification Sounds</Label>
-                  <p className="text-xs text-muted-foreground">Play sound for notifications</p>
-                </div>
-                <Switch 
-                  checked={sounds.notificationSound} 
-                  onCheckedChange={(checked) => setSounds(prev => ({...prev, notificationSound: checked}))} 
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Vibration</Label>
-                  <p className="text-xs text-muted-foreground">Vibrate on notifications</p>
-                </div>
-                <Switch 
-                  checked={sounds.vibration} 
-                  onCheckedChange={(checked) => setSounds(prev => ({...prev, vibration: checked}))} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="volumeSlider" className="text-sm font-medium">Volume ({sounds.volume}%)</Label>
-                <input
-                  id="volumeSlider"
-                  name="volumeSlider"
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={sounds.volume}
-                  onChange={(e) => setSounds(prev => ({...prev, volume: parseInt(e.target.value)}))}
-                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            </div>
-        </CollapsibleSection>
-
-        {/* Data Management */}
-        <CollapsibleSection title="Data Management" icon={<Database className="h-4 w-4" />}>
-            <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={handleExportData}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export My Data
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => {
-                  // Backup created - toast removed per user request
-                }}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Backup Data
-              </Button>
-              
-              <Separator />
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-destructive hover:text-destructive" 
-                onClick={() => {
-                  // Data cleared - toast removed per user request
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear App Data
-              </Button>
-            </div>
         </CollapsibleSection>
 
         {/* Help & Support */}

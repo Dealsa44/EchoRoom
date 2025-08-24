@@ -154,7 +154,7 @@ const BlockReportModal: React.FC<BlockReportModalProps> = ({
   if (showSuccess) {
     return (
       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-[calc(100vw-2rem)] max-w-sm mx-auto">
           <CardContent className="p-6 text-center">
             <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">
@@ -174,7 +174,7 @@ const BlockReportModal: React.FC<BlockReportModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-2xl max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <Card className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

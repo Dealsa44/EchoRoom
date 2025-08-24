@@ -14,14 +14,14 @@ export const UpdateBanner: React.FC = () => {
 
   if (!updateAvailable) {
     return (
-      <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <AlertTitle>App is up to date</AlertTitle>
-        <AlertDescription>
+      <Alert className="mb-4 border-green-300 bg-green-100 dark:border-green-800 dark:bg-green-950">
+        <CheckCircle className="h-4 w-4 text-green-700 dark:text-green-400" />
+        <AlertTitle className="text-green-800 dark:text-green-200">App is up to date</AlertTitle>
+        <AlertDescription className="text-green-700 dark:text-green-300">
           <div className="space-y-2">
             <p>You're running the latest version of EchoRoom.</p>
             {isDevelopmentMode && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-green-600 dark:text-green-400">
                 🔧 Development mode: Auto-checking every {formatInterval(updateInterval)}
               </p>
             )}
@@ -29,7 +29,7 @@ export const UpdateBanner: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={checkForUpdates}
-              className="h-6 px-2 text-xs"
+              className="h-6 px-2 text-xs text-green-700 hover:text-green-800 hover:bg-green-200 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900"
             >
               <RefreshCw className="h-3 w-3 mr-1" />
               Check now
