@@ -35,7 +35,7 @@ const CameraScreen = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const doubleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTapRef = useRef<number>(0);
+  const lastTapRef = useRef<number>(-1);
 
   // Start camera when component mounts
   useEffect(() => {
@@ -57,6 +57,14 @@ const CameraScreen = ({
     };
   }, [isOpen]);
 
+  // Restart camera when going back from edit mode
+  useEffect(() => {
+    if (isOpen && !capturedImage && streamRef.current === null) {
+      // Camera should be running but stream is null, restart it
+      startCamera();
+    }
+  }, [isOpen, capturedImage]);
+
   const startCamera = async () => {
     try {
       const constraints = {
@@ -72,6 +80,8 @@ const CameraScreen = ({
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video plays
+        videoRef.current.play().catch(console.error);
       }
     } catch (error) {
       console.error('Failed to access camera:', error);
@@ -179,6 +189,11 @@ const CameraScreen = ({
       setCapturedImage(null);
       setIsEditing(false);
       setCurrentEditTool(null);
+      // Restart camera when going back
+      setTimeout(() => {
+        stopCamera();
+        startCamera();
+      }, 100);
     } else {
       // If we're in camera mode, close the camera
       onClose();
@@ -189,7 +204,7 @@ const CameraScreen = ({
     const now = Date.now();
     const timeDiff = now - lastTapRef.current;
     
-    if (timeDiff < 300 && timeDiff > 0) {
+    if (lastTapRef.current !== -1 && timeDiff < 300 && timeDiff > 0) {
       // Double tap detected
       toggleCamera();
     }
