@@ -94,6 +94,13 @@ const CameraScreen = ({
       console.log('📹 Starting camera with constraints:', constraints);
       console.log('📹 Expected camera type:', facingMode === 'user' ? 'FRONT' : 'BACK');
       
+      // Stop any existing stream first
+      if (streamRef.current) {
+        console.log('📹 Stopping existing stream before starting new one');
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
@@ -104,6 +111,13 @@ const CameraScreen = ({
         console.log('📹 Actual camera settings:', settings);
         console.log('📹 Actual facing mode:', settings.facingMode);
         console.log('📹 Camera ID:', videoTrack.id);
+        
+        // Verify the camera actually changed
+        if (settings.facingMode !== facingMode) {
+          console.warn('⚠️ Camera facing mode mismatch! Expected:', facingMode, 'Got:', settings.facingMode);
+        } else {
+          console.log('✅ Camera facing mode matches expected value');
+        }
       }
       
       console.log('📹 Camera stream obtained, checking flashlight capabilities...');
@@ -188,10 +202,12 @@ const CameraScreen = ({
 
   const toggleCamera = () => {
     const newCameraType = !isFrontCamera;
+    console.log('🔄 ===== CAMERA SWITCH STARTED =====');
     console.log('🔄 Switching camera from', isFrontCamera ? 'front' : 'back', 'to', newCameraType ? 'front' : 'back');
     
     // Turn off flash when switching cameras
     if (isFlashOn) {
+      console.log('🔄 Turning off flash before camera switch');
       turnOffFlash();
     }
     
@@ -199,16 +215,21 @@ const CameraScreen = ({
     const currentCameraId = streamRef.current?.getVideoTracks()[0]?.id;
     console.log('🔄 Current camera ID before switch:', currentCameraId);
     
+    console.log('🔄 Setting new camera type:', newCameraType);
     setIsFrontCamera(newCameraType);
+    
+    console.log('🔄 Stopping current camera');
     stopCamera();
     
     setTimeout(() => {
+      console.log('🔄 ===== STARTING NEW CAMERA =====');
       console.log('🔄 Starting camera for', newCameraType ? 'front' : 'back', 'camera');
       startCameraWithFacingMode(newCameraType);
       // Reset flash state after camera restart
       setIsFlashOn(false);
       // Force re-detection of flashlight capabilities
       setHasFlashlight(false);
+      console.log('🔄 ===== CAMERA SWITCH COMPLETED =====');
     }, 100);
   };
 
