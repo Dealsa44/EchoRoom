@@ -152,6 +152,8 @@ const CameraScreen = ({
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    // Clear flashlight track reference
+    flashTrackRef.current = null;
   };
 
   const toggleCamera = () => {
@@ -161,7 +163,11 @@ const CameraScreen = ({
     }
     setIsFrontCamera(!isFrontCamera);
     stopCamera();
-    setTimeout(startCamera, 100);
+    setTimeout(() => {
+      startCamera();
+      // Reset flash state after camera restart
+      setIsFlashOn(false);
+    }, 100);
   };
 
   const turnOffFlash = async () => {
@@ -272,9 +278,12 @@ const CameraScreen = ({
     if (lastTapRef.current !== -1 && timeDiff < 300 && timeDiff > 0) {
       // Double tap detected
       toggleCamera();
+      // Reset after successful double tap
+      lastTapRef.current = -1;
+    } else {
+      // First tap or too slow, update timestamp
+      lastTapRef.current = now;
     }
-    
-    lastTapRef.current = now;
   };
 
   const resetCamera = () => {
@@ -286,6 +295,9 @@ const CameraScreen = ({
     if (isFlashOn) {
       turnOffFlash();
     }
+    // Reset flashlight detection
+    setHasFlashlight(false);
+    flashTrackRef.current = null;
   };
 
   if (!isOpen) return null;
@@ -304,13 +316,13 @@ const CameraScreen = ({
           />
         )}
         
-        {/* Flash overlay */}
-        {isFlashOn && !capturedImage && (
+        {/* Flash overlay - only for front camera or when no real flashlight */}
+        {isFlashOn && !capturedImage && (isFrontCamera || !hasFlashlight) && (
           <div 
             className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
               isFrontCamera 
                 ? 'bg-white opacity-80' // Brighter for front camera selfies
-                : 'bg-white opacity-30' // Subtle for back camera
+                : 'bg-white opacity-30' // Subtle fallback for devices without flashlight
             }`} 
           />
         )}
