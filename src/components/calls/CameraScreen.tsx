@@ -30,12 +30,14 @@ const CameraScreen = ({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditTool, setCurrentEditTool] = useState<'draw' | 'text' | 'sticker' | 'crop' | null>(null);
+  const [hasFlashlight, setHasFlashlight] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const doubleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTapRef = useRef<number>(-1);
+  const flashTrackRef = useRef<MediaStreamTrack | null>(null);
 
   // Start camera when component mounts
   useEffect(() => {
@@ -78,6 +80,9 @@ const CameraScreen = ({
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
+      // Check for flashlight capabilities
+      checkFlashlightCapabilities(stream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         // Ensure video plays
@@ -87,6 +92,31 @@ const CameraScreen = ({
       console.error('Failed to access camera:', error);
       // Fallback to simulated camera for demo
       simulateCamera();
+    }
+  };
+
+  const checkFlashlightCapabilities = (stream: MediaStream) => {
+    // Check if device supports flashlight
+    const videoTrack = stream.getVideoTracks()[0];
+    if (videoTrack && 'getCapabilities' in videoTrack) {
+      try {
+        const capabilities = videoTrack.getCapabilities();
+        // Check if flashlight is supported
+        if (capabilities.torch) {
+          setHasFlashlight(true);
+          flashTrackRef.current = videoTrack;
+        } else {
+          setHasFlashlight(false);
+          flashTrackRef.current = null;
+        }
+      } catch (error) {
+        console.log('Flashlight capabilities not available');
+        setHasFlashlight(false);
+        flashTrackRef.current = null;
+      }
+    } else {
+      setHasFlashlight(false);
+      flashTrackRef.current = null;
     }
   };
 
@@ -125,14 +155,49 @@ const CameraScreen = ({
   };
 
   const toggleCamera = () => {
+    // Turn off flash when switching cameras
+    if (isFlashOn) {
+      turnOffFlash();
+    }
     setIsFrontCamera(!isFrontCamera);
     stopCamera();
     setTimeout(startCamera, 100);
   };
 
-  const toggleFlash = () => {
-    setIsFlashOn(!isFlashOn);
-    // In a real app, this would control the camera flash
+  const turnOffFlash = async () => {
+    if (hasFlashlight && flashTrackRef.current && !isFrontCamera) {
+      try {
+        await flashTrackRef.current.applyConstraints({
+          advanced: [{ torch: false }]
+        });
+      } catch (error) {
+        console.error('Failed to turn off flashlight:', error);
+      }
+    }
+    setIsFlashOn(false);
+  };
+
+  const toggleFlash = async () => {
+    if (isFrontCamera) {
+      // For front camera, just toggle the screen brightness overlay
+      setIsFlashOn(!isFlashOn);
+    } else if (hasFlashlight && flashTrackRef.current) {
+      // For back camera, control actual device flashlight
+      try {
+        const newFlashState = !isFlashOn;
+        await flashTrackRef.current.applyConstraints({
+          advanced: [{ torch: newFlashState }]
+        });
+        setIsFlashOn(newFlashState);
+      } catch (error) {
+        console.error('Failed to toggle flashlight:', error);
+        // Fallback to visual overlay if flashlight fails
+        setIsFlashOn(!isFlashOn);
+      }
+    } else {
+      // No flashlight support, just toggle visual overlay
+      setIsFlashOn(!isFlashOn);
+    }
   };
 
   const captureImage = () => {
@@ -217,7 +282,10 @@ const CameraScreen = ({
     setIsEditing(false);
     setCurrentEditTool(null);
     setIsFrontCamera(false);
-    setIsFlashOn(false);
+    // Turn off flash when resetting
+    if (isFlashOn) {
+      turnOffFlash();
+    }
   };
 
   if (!isOpen) return null;
@@ -238,7 +306,13 @@ const CameraScreen = ({
         
         {/* Flash overlay */}
         {isFlashOn && !capturedImage && (
-          <div className="absolute inset-0 bg-white opacity-30 pointer-events-none" />
+          <div 
+            className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
+              isFrontCamera 
+                ? 'bg-white opacity-80' // Brighter for front camera selfies
+                : 'bg-white opacity-30' // Subtle for back camera
+            }`} 
+          />
         )}
       </div>
 
@@ -268,18 +342,28 @@ const CameraScreen = ({
                 <RotateCcw size={20} />
               </Button>
               
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-10 w-10 backdrop-blur-sm text-white border border-white/20 ${
-                  isFlashOn 
-                    ? 'bg-yellow-500 hover:bg-yellow-600' 
-                    : 'bg-white/20 hover:bg-white/30'
-                }`}
-                onClick={toggleFlash}
-              >
-                <Zap size={20} />
-              </Button>
+                          <Button
+              variant="ghost"
+              size="icon"
+              className={`h-10 w-10 backdrop-blur-sm text-white border border-white/20 ${
+                isFlashOn 
+                  ? 'bg-yellow-500 hover:bg-yellow-600' 
+                  : hasFlashlight 
+                    ? 'bg-white/20 hover:bg-white/30' 
+                    : 'bg-gray-500/50 cursor-not-allowed'
+              }`}
+              onClick={toggleFlash}
+              disabled={!hasFlashlight && !isFrontCamera}
+              title={
+                isFrontCamera 
+                  ? 'Screen flash for selfies' 
+                  : hasFlashlight 
+                    ? 'Toggle flashlight' 
+                    : 'Flashlight not available'
+              }
+            >
+              <Zap size={20} />
+            </Button>
             </div>
           )}
 
