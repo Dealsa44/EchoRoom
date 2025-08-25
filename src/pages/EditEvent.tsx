@@ -383,12 +383,18 @@ const EditEvent = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update event in localStorage
-      const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-      const updatedEvents = existingEvents.map((event: any) => 
-        event.id === eventId ? { ...event, ...formData } : event
-      );
-      localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
+              // Update event in localStorage with safe fallback
+        try {
+          const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+          const updatedEvents = existingEvents.map((event: any) =>
+            event.id === eventId ? { ...event, ...formData } : event
+          );
+          localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
+        } catch (error) {
+          console.warn('Failed to update hostedEvents localStorage:', error);
+          // Fallback: create new array with updated event
+          localStorage.setItem('hostedEvents', JSON.stringify([{ id: eventId, ...formData }]));
+        }
       
       // Navigate back to my events page
       navigate('/my-events');

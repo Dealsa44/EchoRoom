@@ -333,14 +333,19 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Save photos to localStorage before registration
+      // Save photos to localStorage before registration with safe fallback
       const tempUserId = `temp-${Date.now()}`;
       if (photos.length > 0) {
-        const saveResult = photoStorage.savePhotos(tempUserId, photos);
-        if (!saveResult.success) {
-          setErrors({ photos: saveResult.error || 'Failed to save photos' });
-          setLoading(false);
-          return;
+        try {
+          const saveResult = photoStorage.savePhotos(tempUserId, photos);
+          if (!saveResult.success) {
+            setErrors({ photos: saveResult.error || 'Failed to save photos' });
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to save photos to localStorage:', error);
+          // Continue with registration even if photos fail to save
         }
       }
 
@@ -398,13 +403,18 @@ const Register = () => {
       const result = await registerUser(registerData);
 
       if (result.success && result.user) {
-        // Transfer photos from temp storage to actual user storage
+        // Transfer photos from temp storage to actual user storage with safe fallback
         if (photos.length > 0) {
-          const finalSaveResult = photoStorage.savePhotos(result.user.id, photos);
-          if (finalSaveResult.success) {
-            photoStorage.clearPhotos(tempUserId); // Clean up temp storage
-          } else {
-            console.warn('Failed to save photos to final user storage:', finalSaveResult.error);
+          try {
+            const finalSaveResult = photoStorage.savePhotos(result.user.id, photos);
+            if (finalSaveResult.success) {
+              photoStorage.clearPhotos(tempUserId); // Clean up temp storage
+            } else {
+              console.warn('Failed to save photos to final user storage:', finalSaveResult.error);
+            }
+          } catch (error) {
+            console.error('Failed to save photos to final user storage:', error);
+            // Continue with registration even if photos fail to save
           }
         }
         

@@ -71,8 +71,13 @@ const MyEvents = () => {
   const navigate = useNavigate();
   const { user } = useApp();
   const [activeTab, setActiveTab] = useState(() => {
-    // Get the last active tab from localStorage, default to 'hosting'
+      // Get the last active tab from localStorage, default to 'hosting'
+  try {
     return localStorage.getItem('myEventsActiveTab') || 'hosting';
+  } catch (error) {
+    console.warn('Failed to get myEventsActiveTab from localStorage:', error);
+    return 'hosting';
+  }
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,8 +90,24 @@ const MyEvents = () => {
 
   useEffect(() => {
     // Initialize with mock data if localStorage is empty
-    const existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-    const existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    let existingHostedEvents = [];
+    let existingJoinedEvents = [];
+    
+    try {
+      existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+    } catch (error) {
+      console.warn('Failed to parse hostedEvents from localStorage:', error);
+      localStorage.removeItem('hostedEvents');
+      existingHostedEvents = [];
+    }
+    
+    try {
+      existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    } catch (error) {
+      console.warn('Failed to parse joinedEvents from localStorage:', error);
+      localStorage.removeItem('joinedEvents');
+      existingJoinedEvents = [];
+    }
     
     if (existingHostedEvents.length === 0) {
       // Add initial mock events
@@ -336,8 +357,12 @@ const MyEvents = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Save the active tab to localStorage
-    localStorage.setItem('myEventsActiveTab', value);
+          // Save the active tab to localStorage
+      try {
+        localStorage.setItem('myEventsActiveTab', value);
+      } catch (error) {
+        console.warn('Failed to save myEventsActiveTab to localStorage:', error);
+      }
   };
 
   const handleLeaveEvent = (eventId: string) => {
@@ -356,8 +381,12 @@ const MyEvents = () => {
     const updatedJoinedEvents = joinedEvents.filter(e => e.id !== eventToLeave.id);
     setJoinedEvents(updatedJoinedEvents);
     
-    // Update localStorage
-    localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    // Update localStorage with safe fallback
+    try {
+      localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    } catch (error) {
+      console.warn('Failed to update joinedEvents localStorage:', error);
+    }
     
     // Close modal and reset state
     setShowLeaveConfirmation(false);

@@ -181,10 +181,33 @@ const ProfileEdit = () => {
   
   useEffect(() => {
     if (user?.id) {
-      const savedPhotos = photoStorage.loadPhotos(user.id);
-      if (savedPhotos.length > 0) {
-        setPhotos(savedPhotos);
-      } else {
+      try {
+        const savedPhotos = photoStorage.loadPhotos(user.id);
+        if (savedPhotos.length > 0) {
+          setPhotos(savedPhotos);
+        } else {
+          // Convert existing photos to new format if no localStorage data
+          const existingPhotos = user.photos || [];
+          const convertedPhotos = existingPhotos.map((url, index) => ({
+            id: `photo-${index}`,
+            url,
+            isVerified: index === 0,
+            isPrimary: index === 0,
+            uploadDate: new Date(),
+            verificationStatus: index === 0 ? 'approved' as const : 'not_submitted' as const
+          }));
+          setPhotos(convertedPhotos);
+        }
+      } catch (error) {
+        console.error('Error loading photos:', error);
+        
+        // Try to clear corrupted photo data
+        try {
+          localStorage.removeItem(`photos_${user.id}`);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up corrupted photo data:', cleanupError);
+        }
+        
         // Convert existing photos to new format if no localStorage data
         const existingPhotos = user.photos || [];
         const convertedPhotos = existingPhotos.map((url, index) => ({
@@ -307,12 +330,23 @@ const ProfileEdit = () => {
     setLoading(true);
 
     try {
-      // Save photos to localStorage
-      const saveResult = photoStorage.savePhotos(user.id, photos);
-      if (!saveResult.success) {
-        // Handle storage quota exceeded
-        console.error('Failed to save photos:', saveResult.error);
-        // Continue with profile update even if photos fail to save
+      // Save photos to localStorage with safe fallback
+      try {
+        const saveResult = photoStorage.savePhotos(user.id, photos);
+        if (!saveResult.success) {
+          // Handle storage quota exceeded
+          console.error('Failed to save photos:', saveResult.error);
+          // Continue with profile update even if photos fail to save
+        }
+      } catch (error) {
+        console.error('Failed to save photos to localStorage:', error);
+        // Try to clear corrupted data and save again
+        try {
+          localStorage.removeItem(`photos_${user.id}`);
+          photoStorage.savePhotos(user.id, photos);
+        } catch (retryError) {
+          console.error('Failed to save photos even after cleanup:', retryError);
+        }
       }
 
       // Convert photos back to URL array for storage

@@ -121,8 +121,16 @@ const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
-    // Load joined events from localStorage
-    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+            // Load joined events from localStorage with safe fallback
+        let joinedEvents = [];
+        try {
+          joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+        } catch (error) {
+          console.warn('Failed to parse joinedEvents from localStorage:', error);
+          // Clear corrupted data and start fresh
+          localStorage.removeItem('joinedEvents');
+          joinedEvents = [];
+        }
     
     // Base mock events with proper isJoined status from localStorage
     const baseMockEvents: Event[] = [
@@ -524,12 +532,22 @@ const Events = () => {
          )
        );
        
-       // Add to joinedEvents in localStorage
-       const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-       const eventToJoin = events.find(event => event.id === eventId);
-       if (eventToJoin && !joinedEvents.some((e: any) => e.id === eventId)) {
-         joinedEvents.push(eventToJoin);
-         localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+       // Add to joinedEvents in localStorage with safe fallback
+       try {
+         const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+         const eventToJoin = events.find(event => event.id === eventId);
+         if (eventToJoin && !joinedEvents.some((e: any) => e.id === eventId)) {
+           joinedEvents.push(eventToJoin);
+           localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+         }
+       } catch (error) {
+         console.warn('Failed to update joinedEvents localStorage:', error);
+         // Clear corrupted data and start fresh
+         localStorage.removeItem('joinedEvents');
+         const eventToJoin = events.find(event => event.id === eventId);
+         if (eventToJoin) {
+           localStorage.setItem('joinedEvents', JSON.stringify([eventToJoin]));
+         }
        }
      };
 

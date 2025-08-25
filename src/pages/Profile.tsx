@@ -215,6 +215,13 @@ const Profile = () => {
         console.error('Error loading photos:', photoError);
         // Don't fail the entire component if photos fail to load
         setUserPhotos([]);
+        
+        // Try to clear corrupted photo data
+        try {
+          localStorage.removeItem(`photos_${user.id}`);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up corrupted photo data:', cleanupError);
+        }
       }
     }
   }, [isOwnProfile, user?.id]);

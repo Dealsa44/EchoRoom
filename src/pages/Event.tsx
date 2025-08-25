@@ -172,9 +172,25 @@ const Event = () => {
   // Fetch event data based on ID
   useEffect(() => {
     if (id) {
-      // First try to get from localStorage (joined events)
-      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-      const hostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+              // First try to get from localStorage (joined events)
+        let joinedEvents = [];
+        let hostedEvents = [];
+        
+        try {
+          joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+        } catch (error) {
+          console.warn('Failed to parse joinedEvents from localStorage:', error);
+          localStorage.removeItem('joinedEvents');
+          joinedEvents = [];
+        }
+        
+        try {
+          hostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+        } catch (error) {
+          console.warn('Failed to parse hostedEvents from localStorage:', error);
+          localStorage.removeItem('hostedEvents');
+          hostedEvents = [];
+        }
       
       // Find the event in either joined or hosted events
       let foundEvent = joinedEvents.find((e: any) => e.id === id) || 
@@ -732,11 +748,18 @@ const Event = () => {
     // Update local state
     setEvent(prev => prev ? { ...prev, isJoined: true } : null);
     
-    // Add to joinedEvents in localStorage
-    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-    if (!joinedEvents.some((e: any) => e.id === event.id)) {
-      joinedEvents.push(event);
-      localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+    // Add to joinedEvents in localStorage with safe fallback
+    try {
+      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+      if (!joinedEvents.some((e: any) => e.id === event.id)) {
+        joinedEvents.push(event);
+        localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+      }
+    } catch (error) {
+      console.warn('Failed to update joinedEvents localStorage:', error);
+      // Clear corrupted data and start fresh
+      localStorage.removeItem('joinedEvents');
+      localStorage.setItem('joinedEvents', JSON.stringify([event]));
     }
     
     // Add user to participants
@@ -773,10 +796,17 @@ const Event = () => {
     // Update local state
     setEvent(prev => prev ? { ...prev, isJoined: false } : null);
     
-    // Remove from joinedEvents in localStorage
-    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-    const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
-    localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    // Remove from joinedEvents in localStorage with safe fallback
+    try {
+      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+      const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
+      localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    } catch (error) {
+      console.warn('Failed to update joinedEvents localStorage:', error);
+      // Clear corrupted data and start fresh
+      localStorage.removeItem('joinedEvents');
+      localStorage.setItem('joinedEvents', JSON.stringify([]));
+    }
     
     // Remove user from participants
     setParticipants(prev => prev.filter(p => p.id !== user?.id));

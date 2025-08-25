@@ -400,10 +400,16 @@ const CreateEvent = () => {
         isHosted: true
       };
       
-      // Save to localStorage
-      const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-      const updatedEvents = [...existingEvents, newEvent];
-      localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
+              // Save to localStorage with safe fallback
+        try {
+          const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+          const updatedEvents = [...existingEvents, newEvent];
+          localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
+        } catch (error) {
+          console.warn('Failed to save to hostedEvents localStorage:', error);
+          // Fallback: create new array
+          localStorage.setItem('hostedEvents', JSON.stringify([newEvent]));
+        }
       
       // Navigate to my events page
       navigate('/my-events');
