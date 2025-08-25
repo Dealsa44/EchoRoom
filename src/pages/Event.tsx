@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -99,6 +100,12 @@ interface Event {
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
+    socialMedia?: {
+      facebook?: string;
+      instagram?: string;
+      twitter?: string;
+      linkedin?: string;
+    };
   };
   tags: string[];
   isPrivate: boolean;
@@ -146,6 +153,8 @@ const Event = () => {
   const [showParticipantList, setShowParticipantList] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -160,113 +169,474 @@ const Event = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Mock event data - in real app this would come from API
+  // Fetch event data based on ID
   useEffect(() => {
     if (id) {
-      // Simulate fetching event data
-      const mockEvent: Event = {
-        id: id,
-        title: 'Georgian Language Exchange Meetup',
-        description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
-        longDescription: `Join us for an immersive Georgian language experience! This meetup is designed for both beginners and advanced learners who want to practice Georgian in a supportive, friendly environment.
-
-What to expect:
-• Conversation tables organized by skill level (Beginner, Intermediate, Advanced)
-• Cultural activities and traditional Georgian games
-• Free coffee and traditional Georgian snacks
-• Networking opportunities with fellow language enthusiasts
-• Optional cultural presentation about Georgian history and traditions
-
-The event will be held in a cozy café in the heart of Tbilisi, providing the perfect atmosphere for learning and cultural exchange. Whether you're just starting your Georgian journey or you're already fluent, there's something for everyone!
-
-Please bring your enthusiasm and willingness to learn. All materials will be provided, and native Georgian speakers will be available to help with pronunciation and grammar questions.`,
-        category: 'language',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Rustaveli Avenue 15, Tbilisi, Georgia',
-        coordinates: { lat: 41.7151, lng: 44.8271 },
-        date: '2024-01-15',
-        time: '18:00',
-        duration: 120,
-        maxParticipants: 25,
-        currentParticipants: 18,
-        price: 0,
-        currency: 'GEL',
-        organizer: {
-          id: 'user1',
-          name: 'Tbilisi Language Club',
-          avatar: '🌍',
-          isVerified: true,
-          bio: 'Dedicated to promoting Georgian language and culture through interactive learning experiences.',
-          contactEmail: 'info@tbilisilanguageclub.ge',
-          website: 'https://tbilisilanguageclub.ge'
-        },
-        tags: ['Georgian', 'Language Learning', 'Cultural Exchange', 'Networking', 'Free'],
-        isPrivate: false,
-        isFeatured: true,
-        image: 'https://picsum.photos/400/300?random=1',
-        photos: [
-          'https://picsum.photos/400/300?random=1',
-          'https://picsum.photos/400/300?random=2',
-          'https://picsum.photos/400/300?random=3',
-          'https://picsum.photos/400/300?random=4'
-        ],
-        language: 'Georgian',
-        skillLevel: 'all-levels',
-        ageRestriction: '18+',
-        highlights: ['Native speakers', 'Cultural activities', 'Free coffee', 'Interactive learning'],
-        requirements: ['Enthusiasm for learning', 'Basic English (for international participants)'],
-        agenda: [
-          '18:00 - Welcome and introductions',
-          '18:15 - Language level assessment',
-          '18:30 - Conversation tables by skill level',
-          '19:30 - Cultural activities and games',
-          '20:00 - Networking and cultural presentation',
-          '20:30 - Q&A and feedback session'
-        ],
-        rules: [
-          'Be respectful of all participants',
-          'Use Georgian as much as possible',
-          'Help others learn and grow',
-          'No discrimination or harassment',
-          'Follow the venue\'s rules and regulations'
-        ],
-        cancellationPolicy: 'Free cancellation up to 24 hours before the event. No-shows may affect future event registrations.',
-        refundPolicy: 'This is a free event, so no refunds apply.',
-        transportation: [
-          'Metro: Rustaveli Station (Red Line)',
-          'Bus: Routes 4, 10, 14, 37, 59',
-          'Marshrutka: Routes 31, 33, 37, 59',
-          'Taxi: Available throughout the city'
-        ],
-        parking: 'Limited street parking available. Recommended to use public transportation.',
-        accessibility: [
-          'Wheelchair accessible entrance',
-          'Elevator available',
-          'Accessible restrooms',
-          'Sign language interpreter available upon request (48h notice)'
-        ],
-        documents: [
-          {
-            name: 'Event Guidelines.pdf',
-            url: '#',
-            type: 'pdf',
-            size: '2.3 MB'
+      // First try to get from localStorage (joined events)
+      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+      const hostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+      
+      // Find the event in either joined or hosted events
+      let foundEvent = joinedEvents.find((e: any) => e.id === id) || 
+                      hostedEvents.find((e: any) => e.id === id);
+      
+      // If not found in joined/hosted events, check if it's a public event from Events page
+      if (!foundEvent) {
+        // This would typically come from an API, but for now we'll create a mock event
+        // based on the ID to simulate different events
+        const mockEvents = {
+          '1': {
+            id: '1',
+            title: 'Georgian Language Exchange Meetup',
+            description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
+            category: 'language',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Rustaveli Avenue 15, Tbilisi',
+            date: '2024-01-15',
+            time: '18:00',
+            duration: 120,
+            maxParticipants: 25,
+            currentParticipants: 18,
+            price: 0,
+            currency: 'GEL',
+            organizer: {
+              id: 'user1',
+              name: 'Tbilisi Language Club',
+              avatar: '🌍',
+              isVerified: true
+            },
+            tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
+            isPrivate: false,
+            isFeatured: true,
+            image: 'https://picsum.photos/400/300?random=1',
+            language: 'Georgian',
+            skillLevel: 'all-levels',
+            ageRestriction: '18+',
+            highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-10T10:00:00Z',
+            lastUpdated: '2024-01-10T10:00:00Z'
           },
-          {
-            name: 'Georgian Basics.pdf',
-            url: '#',
-            type: 'pdf',
-            size: '1.8 MB'
+          '2': {
+            id: '2',
+            title: 'Electronic Music Night at Bass Club',
+            description: 'Join us for an electrifying night of electronic music, featuring local DJs and international artists. Dress to impress!',
+            category: 'music',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Vake District, Tbilisi',
+            date: '2024-01-16',
+            time: '22:00',
+            duration: 300,
+            maxParticipants: 200,
+            currentParticipants: 156,
+            price: 50,
+            currency: 'GEL',
+            organizer: {
+              id: 'user2',
+              name: 'Bass Club Tbilisi',
+              avatar: '🎵',
+              isVerified: true
+            },
+            tags: ['Electronic Music', 'Nightlife', 'DJs'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=2',
+            language: 'English',
+            ageRestriction: '21+',
+            dressCode: 'Smart casual to formal',
+            highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-08T15:00:00Z',
+            lastUpdated: '2024-01-08T15:00:00Z'
+          },
+          '3': {
+            id: '3',
+            title: 'Philosophy & Coffee Discussion Group',
+            description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society". All perspectives welcome.',
+            category: 'education',
+            type: 'hybrid',
+            location: 'Tbilisi, Georgia',
+            address: 'Coffee Lab, Old Town, Tbilisi',
+            date: '2024-01-14',
+            time: '14:00',
+            duration: 90,
+            maxParticipants: 15,
+            currentParticipants: 8,
+            price: 15,
+            currency: 'GEL',
+            organizer: {
+              id: 'user3',
+              name: 'Philosophy Circle',
+              avatar: '🤔',
+              isVerified: false
+            },
+            tags: ['Philosophy', 'Discussion', 'Coffee'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=3',
+            language: 'English',
+            skillLevel: 'all-levels',
+            ageRestriction: '18+',
+            highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-12T09:00:00Z',
+            lastUpdated: '2024-01-12T09:00:00Z'
+          },
+          '4': {
+            id: '4',
+            title: 'Weekend Hiking Adventure',
+            description: 'Explore the beautiful trails around Tbilisi with experienced guides. Suitable for all fitness levels.',
+            category: 'outdoor',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Meeting point: Liberty Square',
+            date: '2024-01-20',
+            time: '08:00',
+            duration: 360,
+            maxParticipants: 20,
+            currentParticipants: 12,
+            price: 25,
+            currency: 'GEL',
+            organizer: {
+              id: 'user4',
+              name: 'Tbilisi Hiking Club',
+              avatar: '🏔️',
+              isVerified: true
+            },
+            tags: ['Hiking', 'Nature', 'Adventure'],
+            isPrivate: false,
+            isFeatured: true,
+            image: 'https://picsum.photos/400/300?random=4',
+            language: 'English',
+            ageRestriction: '18+',
+            requirements: ['Comfortable shoes', 'Water bottle', 'Weather-appropriate clothing'],
+            highlights: ['Professional guides', 'Beautiful scenery', 'Group bonding'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-04T16:00:00Z',
+            lastUpdated: '2024-01-05T10:00:00Z'
+          },
+          '5': {
+            id: '5',
+            title: 'Cooking Masterclass: Georgian Cuisine',
+            description: 'Learn to cook traditional Georgian dishes from a master chef. All ingredients and equipment provided.',
+            category: 'food',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Culinary Institute, Old Town',
+            date: '2024-01-18',
+            time: '16:00',
+            duration: 180,
+            maxParticipants: 15,
+            currentParticipants: 10,
+            price: 80,
+            currency: 'GEL',
+            organizer: {
+              id: 'user5',
+              name: 'Georgian Culinary Arts',
+              avatar: '👨‍🍳',
+              isVerified: true
+            },
+            tags: ['Cooking', 'Georgian Cuisine', 'Workshop'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=5',
+            language: 'Georgian',
+            skillLevel: 'beginner',
+            ageRestriction: '18+',
+            requirements: ['No experience needed', 'Comfortable clothing'],
+            highlights: ['Master chef instruction', 'All materials included', 'Take home your creations'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-03T14:00:00Z',
+            lastUpdated: '2024-01-03T14:00:00Z'
+          },
+          '6': {
+            id: '6',
+            title: 'Virtual Book Club: Modern Literature',
+            description: 'Join our online book club discussing contemporary literature. This month: "The Midnight Library" by Matt Haig. Connect with readers worldwide!',
+            category: 'education',
+            type: 'virtual',
+            location: 'Online',
+            date: '2024-01-18',
+            time: '19:00',
+            duration: 60,
+            maxParticipants: 50,
+            currentParticipants: 23,
+            price: 0,
+            currency: 'USD',
+            organizer: {
+              id: 'user5',
+              name: 'Global Book Club',
+              avatar: '📚',
+              isVerified: true
+            },
+            tags: ['Book Club', 'Literature', 'Online Discussion'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=6',
+            language: 'English',
+            skillLevel: 'all-levels',
+            ageRestriction: '18+',
+            highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-03T14:00:00Z',
+            lastUpdated: '2024-01-03T14:00:00Z'
+          },
+          '7': {
+            id: '7',
+            title: 'Weekend Photography Workshop',
+            description: 'Learn photography basics and advanced techniques from professional photographers. Bring your camera and enthusiasm!',
+            category: 'education',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Photography Studio, Vake District',
+            date: '2024-01-22',
+            time: '10:00',
+            duration: 240,
+            maxParticipants: 12,
+            currentParticipants: 8,
+            price: 120,
+            currency: 'GEL',
+            organizer: {
+              id: 'user6',
+              name: 'Tbilisi Photography School',
+              avatar: '📸',
+              isVerified: true
+            },
+            tags: ['Photography', 'Workshop', 'Creative'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=7',
+            language: 'English',
+            skillLevel: 'beginner',
+            ageRestriction: '18+',
+            requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
+            highlights: ['Professional instructors', 'Hands-on practice', 'Equipment provided'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-02T11:00:00Z',
+            lastUpdated: '2024-01-02T11:00:00Z'
+          },
+          '8': {
+            id: '8',
+            title: 'Tech Startup Networking Mixer',
+            description: 'Connect with fellow entrepreneurs, investors, and tech professionals. Share ideas and build meaningful connections.',
+            category: 'business',
+            type: 'hybrid',
+            location: 'Tbilisi, Georgia',
+            address: 'Innovation Hub, Saburtalo',
+            date: '2024-01-19',
+            time: '18:30',
+            duration: 150,
+            maxParticipants: 100,
+            currentParticipants: 67,
+            price: 25,
+            currency: 'GEL',
+            organizer: {
+              id: 'user8',
+              name: 'Tbilisi Tech Community',
+              avatar: '💻',
+              isVerified: true
+            },
+            tags: ['Networking', 'Startups', 'Technology'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=8',
+            language: 'English',
+            skillLevel: 'all-levels',
+            ageRestriction: '21+',
+            dressCode: 'Business casual',
+            highlights: ['Pitch competition', 'Free drinks', 'Investor meet & greet'],
+            isBookmarked: false,
+            isJoined: false,
+            createdAt: '2024-01-04T16:00:00Z',
+            lastUpdated: '2024-01-04T16:00:00Z'
+          },
+          'hosted-1': {
+            id: 'hosted-1',
+            title: 'Georgian Language Exchange Meetup',
+            description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
+            category: 'language',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Rustaveli Avenue 15, Tbilisi',
+            date: '2024-01-15',
+            time: '18:00',
+            duration: 120,
+            maxParticipants: 25,
+            currentParticipants: 18,
+            price: 0,
+            currency: 'GEL',
+            organizer: {
+              id: 'user1',
+              name: 'You',
+              avatar: '👤',
+              isVerified: true
+            },
+            tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
+            isPrivate: false,
+            isFeatured: true,
+            image: 'https://picsum.photos/400/300?random=1',
+            language: 'Georgian',
+            skillLevel: 'all-levels',
+            ageRestriction: '18+',
+            highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
+            isBookmarked: false,
+            isJoined: true,
+            createdAt: '2024-01-10T10:00:00Z',
+            lastUpdated: '2024-01-10T10:00:00Z'
+          },
+          'hosted-2': {
+            id: 'hosted-2',
+            title: 'Art & Wine Evening',
+            description: 'Unleash your creativity while enjoying fine wines. Professional artists will guide you through painting techniques in a relaxed atmosphere.',
+            category: 'culture',
+            type: 'in-person',
+            location: 'Tbilisi, Georgia',
+            address: 'Art Gallery, Old Town, Tbilisi',
+            date: '2024-01-25',
+            time: '19:00',
+            duration: 180,
+            maxParticipants: 20,
+            currentParticipants: 15,
+            price: 75,
+            currency: 'GEL',
+            organizer: {
+              id: 'user2',
+              name: 'You',
+              avatar: '👤',
+              isVerified: true
+            },
+            tags: ['Art', 'Wine', 'Creative', 'Social'],
+            isPrivate: false,
+            isFeatured: true,
+            image: 'https://picsum.photos/400/300?random=10',
+            language: 'English',
+            skillLevel: 'all-levels',
+            ageRestriction: '21+',
+            requirements: ['No experience needed', 'Comfortable clothing'],
+            highlights: ['Professional art instruction', 'Wine tasting included', 'Take home your artwork'],
+            isBookmarked: false,
+            isJoined: true,
+            createdAt: '2024-01-02T11:00:00Z',
+            lastUpdated: '2024-01-02T11:00:00Z'
+          },
+          'hosted-3': {
+            id: 'hosted-3',
+            title: 'Yoga & Meditation Retreat',
+            description: 'A peaceful weekend retreat combining yoga, meditation, and mindfulness practices in the beautiful Georgian countryside.',
+            category: 'wellness',
+            type: 'in-person',
+            location: 'Kakheti Region, Georgia',
+            address: 'Mountain Retreat Center, Kakheti',
+            date: '2024-01-28',
+            time: '09:00',
+            duration: 1440,
+            maxParticipants: 15,
+            currentParticipants: 12,
+            price: 200,
+            currency: 'GEL',
+            organizer: {
+              id: 'user3',
+              name: 'You',
+              avatar: '👤',
+              isVerified: true
+            },
+            tags: ['Yoga', 'Meditation', 'Wellness', 'Retreat'],
+            isPrivate: false,
+            isFeatured: false,
+            image: 'https://picsum.photos/400/300?random=11',
+            language: 'English',
+            skillLevel: 'all-levels',
+            ageRestriction: '18+',
+            requirements: ['Yoga mat (provided)', 'Comfortable clothing', 'Open mind'],
+            highlights: ['Certified instructors', 'Accommodation included', 'Organic meals', 'Scenic location'],
+            isBookmarked: false,
+            isJoined: true,
+            createdAt: '2024-01-01T08:00:00Z',
+            lastUpdated: '2024-01-01T08:00:00Z'
           }
-        ],
-        isBookmarked: false,
-        isJoined: false,
-        createdAt: '2024-01-10T10:00:00Z',
-        lastUpdated: '2024-01-10T10:00:00Z'
-      };
-
-      setEvent(mockEvent);
+        };
+        
+        foundEvent = mockEvents[id as keyof typeof mockEvents];
+      }
+      
+      if (foundEvent) {
+        // Convert the basic event to full event format
+        const fullEvent: Event = {
+          ...foundEvent,
+          longDescription: foundEvent.description + `\n\nThis is a detailed description of the ${foundEvent.title} event. Join us for an amazing experience!`,
+          address: foundEvent.address || foundEvent.location,
+          coordinates: { lat: 41.7151, lng: 44.8271 }, // Default Tbilisi coordinates
+          organizer: {
+            ...foundEvent.organizer,
+            bio: foundEvent.organizer?.bio || 'Event organizer with a passion for creating amazing experiences.',
+            contactEmail: foundEvent.organizer?.contactEmail || 'organizer@example.com',
+            website: foundEvent.organizer?.website || 'https://example.com',
+            socialMedia: foundEvent.organizer?.socialMedia || foundEvent.socialMedia
+          },
+          photos: foundEvent.image ? [foundEvent.image] : [],
+          // Use actual agenda from created event, or fallback to default
+          agenda: foundEvent.agenda && foundEvent.agenda.length > 0 ? 
+            foundEvent.agenda.map(item => `${item.time} - ${item.activity}${item.description ? `: ${item.description}` : ''}`) :
+            [
+              '18:00 - Welcome and introductions',
+              '18:15 - Event begins',
+              '19:00 - Main activities',
+              '20:00 - Networking and socializing',
+              '21:00 - Event concludes'
+            ],
+          // Use actual rules from created event, or fallback to default
+          rules: foundEvent.rules && foundEvent.rules.length > 0 ? foundEvent.rules : [
+            'Be respectful of all participants',
+            'Follow the venue\'s rules and regulations',
+            'No discrimination or harassment',
+            'Have fun and make connections!'
+          ],
+          // Use actual policies from created event, or fallback to default
+          cancellationPolicy: foundEvent.cancellationPolicy || 'Free cancellation up to 24 hours before the event.',
+          refundPolicy: foundEvent.refundPolicy || (foundEvent.price === 0 ? 'This is a free event, so no refunds apply.' : 'Standard refund policy applies.'),
+          // Use actual transportation from created event, or fallback to default
+          transportation: foundEvent.transportation && foundEvent.transportation.length > 0 ? foundEvent.transportation : [
+            'Metro: Various stations throughout the city',
+            'Bus: Multiple routes available',
+            'Taxi: Available throughout the city'
+          ],
+          // Use actual parking info from created event, or fallback to default
+          parking: foundEvent.parking || 'Limited street parking available. Recommended to use public transportation.',
+          // Use actual accessibility from created event, or fallback to default
+          accessibility: foundEvent.accessibility && foundEvent.accessibility.length > 0 ? foundEvent.accessibility : [
+            'Wheelchair accessible entrance',
+            'Elevator available',
+            'Accessible restrooms'
+          ],
+          // Use actual documents from created event, or fallback to default
+          documents: foundEvent.documents && foundEvent.documents.length > 0 ? foundEvent.documents : [
+            {
+              name: 'Event Guidelines.pdf',
+              url: '#',
+              type: 'pdf',
+              size: '2.3 MB'
+            }
+          ]
+        };
+        
+        setEvent(fullEvent);
+        
+        // Set isJoined status based on whether user is in joinedEvents
+        const isUserJoined = joinedEvents.some((e: any) => e.id === id);
+        setEvent(prev => prev ? { ...prev, isJoined: isUserJoined } : null);
+      } else {
+        // If event not found, show error
+        setEvent(null);
+      }
 
       // Mock participants
       const mockParticipants: EventParticipant[] = [
@@ -359,14 +729,24 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // Update local state
     setEvent(prev => prev ? { ...prev, isJoined: true } : null);
+    
+    // Add to joinedEvents in localStorage
+    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    if (!joinedEvents.some((e: any) => e.id === event.id)) {
+      joinedEvents.push(event);
+      localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+    }
+    
+    // Add user to participants
     setParticipants(prev => [
       ...prev,
       {
         id: user?.id || 'current-user',
         name: user?.username || 'You',
         avatar: user?.avatar || '👤',
-        isVerified: false, // Default to false since User type doesn't have isVerified
+        isVerified: false,
         joinedAt: new Date().toISOString(),
         status: 'confirmed',
         isOrganizer: false
@@ -374,24 +754,41 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
     ]);
     
     setIsJoining(false);
-    
-    
   };
 
-  const handleLeaveEvent = async () => {
+  const handleLeaveEvent = () => {
     if (!event) return;
+    setEventToLeave(event);
+    setShowLeaveConfirmation(true);
+  };
+
+  const confirmLeaveEvent = async () => {
+    if (!eventToLeave) return;
     
     setIsLeaving(true);
     
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // Update local state
     setEvent(prev => prev ? { ...prev, isJoined: false } : null);
+    
+    // Remove from joinedEvents in localStorage
+    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
+    localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    
+    // Remove user from participants
     setParticipants(prev => prev.filter(p => p.id !== user?.id));
     
     setIsLeaving(false);
     
+    // Close modal and reset state
+    setShowLeaveConfirmation(false);
+    setEventToLeave(null);
     
+    // Navigate back to MyEvents page
+    navigate('/my-events');
   };
 
   const handleBookmarkEvent = () => {
@@ -527,6 +924,30 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
     );
   }
 
+  // Ensure event object has all required properties
+  if (!event.organizer) {
+    return (
+      <div className="min-h-screen app-gradient-bg">
+        <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
+        <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="text-4xl mb-4">⚠️</div>
+              <h3 className="font-semibold mb-2">Invalid Event Data</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This event has incomplete or invalid data. Please try again later.
+              </p>
+              <Button onClick={() => navigate('/events')} variant="default">
+                Browse Events
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen app-gradient-bg relative">
       {/* Background Elements */}
@@ -643,10 +1064,12 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
                      <Globe size={16} className="mr-2" />
                      View Organizer Profile
                    </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => window.open(event.organizer.website, '_blank')}>
-                     <ExternalLink size={16} className="mr-2" />
-                     Visit Website
-                   </DropdownMenuItem>
+                   {event.organizer.website && (
+                     <DropdownMenuItem onClick={() => window.open(event.organizer.website, '_blank')}>
+                       <ExternalLink size={16} className="mr-2" />
+                       Visit Website
+                     </DropdownMenuItem>
+                   )}
                  </DropdownMenuContent>
                </DropdownMenu>
              </div>
@@ -741,22 +1164,7 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
               </CardContent>
             </Card>
 
-            {/* Primary Language */}
-            {event.language && (
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Globe size={18} className="text-primary" />
-                    Primary Language
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-sm">
-                      🌍 {event.language}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
 
             {/* Highlights */}
             {event.highlights && event.highlights.length > 0 && (
@@ -858,6 +1266,51 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
                     >
                       Visit website
                     </Button>
+                  </div>
+                )}
+                {/* Social Media Links */}
+                {event.organizer.socialMedia && (
+                  <div className="flex items-center gap-2 mt-2">
+                    {event.organizer.socialMedia.facebook && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(event.organizer.socialMedia.facebook, '_blank')}
+                      >
+                        <span className="text-blue-600">📘</span>
+                      </Button>
+                    )}
+                    {event.organizer.socialMedia.instagram && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(event.organizer.socialMedia.instagram, '_blank')}
+                      >
+                        <span className="text-pink-600">📷</span>
+                      </Button>
+                    )}
+                    {event.organizer.socialMedia.twitter && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(event.organizer.socialMedia.twitter, '_blank')}
+                      >
+                        <span className="text-blue-400">🐦</span>
+                      </Button>
+                    )}
+                    {event.organizer.socialMedia.linkedin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(event.organizer.socialMedia.linkedin, '_blank')}
+                      >
+                        <span className="text-blue-700">💼</span>
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -1160,6 +1613,37 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Leave Event Confirmation Modal */}
+      <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+        <DialogContent className="max-w-[320px] w-[calc(100vw-2rem)]">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-center">Leave Event?</DialogTitle>
+            <DialogDescription className="text-center">
+              Are you sure you want to leave "{eventToLeave?.title}"? You can always join again later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowLeaveConfirmation(false);
+                setEventToLeave(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmLeaveEvent}
+              className="flex-1"
+            >
+              Yes, Leave Event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>

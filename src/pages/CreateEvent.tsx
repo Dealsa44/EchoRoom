@@ -81,6 +81,7 @@ interface EventFormData {
   parking: 'yes' | 'no' | 'limited' | 'paid';
   accessibility: string[];
   photos: string[];
+  rules: string[];
   documents: Array<{
     name: string;
     url: string;
@@ -130,7 +131,8 @@ const CreateEvent = () => {
     parking: 'no',
     accessibility: [],
     photos: [],
-    documents: []
+    documents: [],
+    rules: []
   });
 
   const [newRequirement, setNewRequirement] = useState('');
@@ -141,6 +143,10 @@ const CreateEvent = () => {
   const [newAgendaDescription, setNewAgendaDescription] = useState('');
   const [newTransportation, setNewTransportation] = useState('');
   const [newAccessibility, setNewAccessibility] = useState('');
+  const [newRule, setNewRule] = useState('');
+  const [newDocumentName, setNewDocumentName] = useState('');
+  const [newDocumentUrl, setNewDocumentUrl] = useState('');
+  const [newDocumentType, setNewDocumentType] = useState<'pdf' | 'doc' | 'image'>('pdf');
 
   const categories = [
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
@@ -309,6 +315,59 @@ const CreateEvent = () => {
       ...prev,
       accessibility: prev.accessibility.filter((_, i) => i !== index)
     }));
+  };
+
+  const addRule = () => {
+    if (newRule.trim() && !formData.rules.includes(newRule.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        rules: [...prev.rules, newRule.trim()]
+      }));
+      setNewRule('');
+    }
+  };
+
+  const removeRule = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      rules: prev.rules.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addDocument = () => {
+    if (newDocumentName.trim() && newDocumentUrl.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        documents: [...prev.documents, {
+          name: newDocumentName.trim(),
+          url: newDocumentUrl.trim(),
+          type: newDocumentType,
+          size: 'Unknown'
+        }]
+      }));
+      setNewDocumentName('');
+      setNewDocumentUrl('');
+      setNewDocumentType('pdf');
+    }
+  };
+
+  const removeDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setFormData(prev => ({ ...prev, image: result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const nextStep = () => {
@@ -727,14 +786,47 @@ const CreateEvent = () => {
               <Label className="text-sm font-medium">Event Image</Label>
               <p className="text-xs text-muted-foreground mb-2">Upload a cover image for your event</p>
               <div className="border-2 border-dashed border-border-soft rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Click to upload or drag and drop
-                </p>
-                <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose Image
-                </Button>
+                {formData.image ? (
+                  <div className="space-y-3">
+                    <img 
+                      src={formData.image} 
+                      alt="Event cover" 
+                      className="mx-auto h-32 w-full object-cover rounded-lg"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Remove Image
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Click to upload or drag and drop
+                    </p>
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                      className="hover:scale-105 transition-transform"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Choose Image
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -979,7 +1071,7 @@ const CreateEvent = () => {
                     className="flex-1"
                   />
                   <Button type="button" onClick={addAccessibility} size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus size={16} />
                     Add
                   </Button>
                 </div>
@@ -994,7 +1086,93 @@ const CreateEvent = () => {
                         className="h-4 w-4 p-0 hover:bg-transparent shrink-0 ml-2"
                         onClick={() => removeAccessibility(index)}
                       >
-                        <X size={12} />
+                        <X size={14} />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="rules" className="text-sm font-medium">Event Rules</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add event rule (e.g., No smoking, Dress code required)"
+                    value={newRule}
+                    onChange={(e) => setNewRule(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addRule} size="sm">
+                    <Plus size={16} />
+                    Add
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {formData.rules.map((rule, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {rule}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent shrink-0 ml-2"
+                        onClick={() => removeRule(index)}
+                      >
+                        <X size={14} />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="documents" className="text-sm font-medium">Event Documents</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Document name (e.g., Event Guidelines.pdf)"
+                    value={newDocumentName}
+                    onChange={(e) => setNewDocumentName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    placeholder="Document URL"
+                    value={newDocumentUrl}
+                    onChange={(e) => setNewDocumentUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Select value={newDocumentType} onValueChange={(value: 'pdf' | 'doc' | 'image') => setNewDocumentType(value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="doc">Document</SelectItem>
+                      <SelectItem value="image">Image</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" onClick={addDocument} size="sm">
+                    <Plus size={16} />
+                    Add
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {formData.documents.map((doc, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {doc.name} ({doc.type})
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent shrink-0 ml-2"
+                        onClick={() => removeDocument(index)}
+                      >
+                        <X size={14} />
                       </Button>
                     </Badge>
                   ))}

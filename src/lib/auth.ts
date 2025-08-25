@@ -166,9 +166,51 @@ const saveUsers = (users: User[]): void => {
 
 const getCurrentUser = (): User | null => {
   try {
+    // Check if we're in a PWA environment
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                   (window.navigator as any).standalone === true;
+    
+    // Check if localStorage is available
+    if (typeof localStorage === 'undefined') {
+      console.warn('localStorage is not available');
+      return null;
+    }
+    
+    // Test localStorage access (iOS Safari can throw errors)
+    try {
+      localStorage.setItem('test', 'test');
+      localStorage.removeItem('test');
+    } catch (testError) {
+      console.warn('localStorage access test failed:', testError);
+      return null;
+    }
+    
     const user = localStorage.getItem(CURRENT_USER_KEY);
-    return user ? JSON.parse(user) : null;
-  } catch {
+    if (!user) {
+      return null;
+    }
+    
+    const parsedUser = JSON.parse(user);
+    
+    // Validate user structure
+    if (!parsedUser || typeof parsedUser !== 'object' || !parsedUser.id) {
+      console.warn('Invalid user data structure in localStorage');
+      // Clean up corrupted data
+      localStorage.removeItem(CURRENT_USER_KEY);
+      return null;
+    }
+    
+    return parsedUser;
+  } catch (error) {
+    console.error('Error getting current user from storage:', error);
+    
+    // If there's a parsing error, clean up the corrupted data
+    try {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    } catch (cleanupError) {
+      console.error('Failed to clean up corrupted user data:', cleanupError);
+    }
+    
     return null;
   }
 };

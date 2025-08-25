@@ -50,19 +50,71 @@ export const photoStorage = {
   // Load photos from localStorage
   loadPhotos: (userId: string): Photo[] => {
     try {
-      const storageKey = `${PHOTOS_STORAGE_KEY}_${userId}`;
-      const photosData = localStorage.getItem(storageKey);
-      if (photosData) {
-        const parsed = JSON.parse(photosData);
-        return parsed.map((photo: { uploadDate: string; [key: string]: unknown }) => ({
-          ...photo,
-          uploadDate: new Date(photo.uploadDate)
-        }));
+      // Validate userId
+      if (!userId || typeof userId !== 'string') {
+        console.warn('Invalid userId provided to loadPhotos:', userId);
+        return [];
       }
+
+      const storageKey = `${PHOTOS_STORAGE_KEY}_${userId}`;
+      
+      // Check if localStorage is available
+      if (typeof localStorage === 'undefined') {
+        console.warn('localStorage is not available');
+        return [];
+      }
+
+      const photosData = localStorage.getItem(storageKey);
+      if (!photosData) {
+        return [];
+      }
+
+      const parsed = JSON.parse(photosData);
+      
+      // Validate that parsed data is an array
+      if (!Array.isArray(parsed)) {
+        console.warn('Stored photos data is not an array:', parsed);
+        return [];
+      }
+
+      // Safely convert each photo with error handling for individual items
+      return parsed.map((photo: any, index: number) => {
+        try {
+          // Validate photo structure
+          if (!photo || typeof photo !== 'object') {
+            console.warn(`Invalid photo data at index ${index}:`, photo);
+            return null;
+          }
+
+          // Ensure required fields exist with fallbacks
+          const safePhoto = {
+            id: photo.id || `photo-${index}`,
+            url: photo.url || '',
+            isVerified: Boolean(photo.isVerified),
+            isPrimary: Boolean(photo.isPrimary),
+            uploadDate: photo.uploadDate ? new Date(photo.uploadDate) : new Date(),
+            verificationStatus: photo.verificationStatus || 'not_submitted'
+          };
+
+          // Validate URL
+          if (!safePhoto.url || typeof safePhoto.url !== 'string') {
+            console.warn(`Invalid photo URL at index ${index}:`, photo.url);
+            return null;
+          }
+
+          return safePhoto;
+        } catch (photoError) {
+          console.error(`Error processing photo at index ${index}:`, photoError, photo);
+          return null;
+        }
+      }).filter(Boolean) as Photo[]; // Remove null entries
+      
     } catch (error) {
       console.error('Failed to load photos from localStorage:', error);
+      
+      // Return empty array instead of throwing to prevent component crashes
+      return [];
     }
-    return [];
   },
 
   // Clear photos for a user

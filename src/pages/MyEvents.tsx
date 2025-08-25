@@ -20,7 +20,8 @@ import {
   MoreVertical,
   Search,
   Filter,
-  Eye
+  Eye,
+  Globe
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -89,9 +90,9 @@ const MyEvents = () => {
     
     if (existingHostedEvents.length === 0) {
       // Add initial mock events
-      const initialMockEvents = [
+      const initialMockEvents: Event[] = [
         {
-          id: '1',
+          id: 'hosted-1',
           title: 'Georgian Language Exchange Meetup',
           description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
           category: 'language',
@@ -126,19 +127,19 @@ const MyEvents = () => {
           status: 'upcoming'
         },
         {
-          id: '2',
-          title: 'Weekend Photography Workshop',
-          description: 'Learn photography basics and advanced techniques from professional photographers.',
-          category: 'education',
+          id: 'hosted-2',
+          title: 'Art & Wine Evening',
+          description: 'Unleash your creativity while enjoying fine wines. Professional artists will guide you through painting techniques in a relaxed atmosphere.',
+          category: 'culture',
           type: 'in-person',
           location: 'Tbilisi, Georgia',
-          address: 'Photography Studio, Vake District',
-          date: '2024-01-22',
-          time: '10:00',
-          duration: 240,
-          maxParticipants: 12,
-          currentParticipants: 8,
-          price: 120,
+          address: 'Art Gallery, Old Town, Tbilisi',
+          date: '2024-01-25',
+          time: '19:00',
+          duration: 180,
+          maxParticipants: 20,
+          currentParticipants: 15,
+          price: 75,
           currency: 'GEL',
           organizer: {
             id: user?.id || 'user2',
@@ -146,18 +147,55 @@ const MyEvents = () => {
             avatar: user?.avatar || '👤',
             isVerified: true
           },
-          tags: ['Photography', 'Workshop', 'Creative'],
+          tags: ['Art', 'Wine', 'Creative', 'Social'],
           isPrivate: false,
-          isFeatured: false,
-          image: 'https://picsum.photos/400/300?random=6',
-          skillLevel: 'beginner',
-          ageRestriction: '16+',
-          requirements: ['Camera (any type)', 'Comfortable walking shoes'],
-          highlights: ['Professional instructors', 'Hands-on practice'],
+          isFeatured: true,
+          image: 'https://picsum.photos/400/300?random=10',
+          language: 'English',
+          skillLevel: 'all-levels',
+          ageRestriction: '21+',
+          requirements: ['No experience needed', 'Comfortable clothing'],
+          highlights: ['Professional art instruction', 'Wine tasting included', 'Take home your artwork'],
           isBookmarked: false,
           isJoined: true,
           createdAt: '2024-01-02T11:00:00Z',
           lastUpdated: '2024-01-02T11:00:00Z',
+          status: 'upcoming'
+        },
+        {
+          id: 'hosted-3',
+          title: 'Yoga & Meditation Retreat',
+          description: 'A peaceful weekend retreat combining yoga, meditation, and mindfulness practices in the beautiful Georgian countryside.',
+          category: 'wellness',
+          type: 'in-person',
+          location: 'Kakheti Region, Georgia',
+          address: 'Mountain Retreat Center, Kakheti',
+          date: '2024-01-28',
+          time: '09:00',
+          duration: 1440,
+          maxParticipants: 15,
+          currentParticipants: 12,
+          price: 200,
+          currency: 'GEL',
+          organizer: {
+            id: user?.id || 'user3',
+            name: user?.username || 'You',
+            avatar: user?.avatar || '👤',
+            isVerified: true
+          },
+          tags: ['Yoga', 'Meditation', 'Wellness', 'Retreat'],
+          isPrivate: false,
+          isFeatured: false,
+          image: 'https://picsum.photos/400/300?random=11',
+          language: 'English',
+          skillLevel: 'all-levels',
+          ageRestriction: '18+',
+          requirements: ['Yoga mat (provided)', 'Comfortable clothing', 'Open mind'],
+          highlights: ['Certified instructors', 'Accommodation included', 'Organic meals', 'Scenic location'],
+          isBookmarked: false,
+          isJoined: true,
+          createdAt: '2024-01-01T08:00:00Z',
+          lastUpdated: '2024-01-01T08:00:00Z',
           status: 'upcoming'
         }
       ];
@@ -531,6 +569,12 @@ const MyEvents = () => {
                           <Users size={16} />
                           <span>{event.currentParticipants}/{event.maxParticipants}</span>
                         </div>
+                        {event.language && (
+                          <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                            <Globe size={16} />
+                            <span>Primary Language: <span className="font-medium">{event.language}</span></span>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Action Buttons */}
@@ -699,6 +743,12 @@ const MyEvents = () => {
                           <Users size={16} />
                           <span>{event.currentParticipants}/{event.maxParticipants}</span>
                         </div>
+                        {event.language && (
+                          <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                            <Globe size={16} />
+                            <span>Primary Language: <span className="font-medium">{event.language}</span></span>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Action Buttons */}

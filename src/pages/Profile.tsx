@@ -134,63 +134,130 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [userPhotos, setUserPhotos] = useState<Array<{ id: string; url: string; uploadDate: Date; [key: string]: unknown }>>([]);
   
+  // Add error state
+  const [error, setError] = useState<string | null>(null);
+  
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
-  const displayUser: DisplayUser | null = isOwnProfile ? (user as unknown as DisplayUser) : (profileData as unknown as DisplayUser);
+  
+  // Defensive check for user data
+  const displayUser: DisplayUser | null = isOwnProfile 
+    ? (user && user.id ? (user as unknown as DisplayUser) : null)
+    : (profileData as unknown as DisplayUser);
 
   // Load other user's profile if viewing someone else
   useEffect(() => {
     if (!isOwnProfile && userId) {
       setLoading(true);
-      // Simulate API call delay
-      const timer = setTimeout(() => {
-        const profile = getProfileById(parseInt(userId));
-        if (profile) {
-          // Convert Profile type to User-like structure for display
-          setProfileData({
-            ...profile,
-            username: profile.name,
-            email: `${profile.name.toLowerCase()}@example.com`, // Mock email
-            password: '', // Not needed for display
-            languages: profile.languages || [{ language: 'english', level: 'intermediate' }], // Use actual languages or default
-            safeMode: 'light' as const,
-            anonymousMode: false,
-            aiAssistant: true,
-            customGender: undefined,
-            customOrientation: undefined,
-            ethnicity: profile.ethnicity || 'prefer-not-to-say', // Add ethnicity
-            relationshipType: profile.relationshipType || undefined // Add relationship type
-          } as ProfileType & {
-            username: string;
-            email: string;
-            password: string;
-            languages: Array<{ language: string; level: string }>;
-            safeMode: 'light' | 'medium' | 'strict';
-            anonymousMode: boolean;
-            aiAssistant: boolean;
-            customGender?: string;
-            customOrientation?: string;
-            ethnicity: string;
-            relationshipType?: string;
-          });
-        } else {
-          // Profile not found - toast removed per user request
-          navigate('/match');
-        }
-        setLoading(false);
-      }, 800);
+      setError(null);
       
-      return () => clearTimeout(timer);
+      try {
+        // Simulate API call delay
+        const timer = setTimeout(() => {
+          try {
+            const profile = getProfileById(parseInt(userId));
+            if (profile) {
+              // Convert Profile type to User-like structure for display
+              setProfileData({
+                ...profile,
+                username: profile.name,
+                email: `${profile.name.toLowerCase()}@example.com`, // Mock email
+                password: '', // Not needed for display
+                languages: profile.languages || [{ language: 'english', level: 'intermediate' }], // Use actual languages or default
+                safeMode: 'light' as const,
+                anonymousMode: false,
+                aiAssistant: true,
+                customGender: undefined,
+                customOrientation: undefined,
+                ethnicity: profile.ethnicity || 'prefer-not-to-say', // Add ethnicity
+                relationshipType: profile.relationshipType || undefined // Add relationship type
+              } as ProfileType & {
+                username: string;
+                email: string;
+                password: string;
+                languages: Array<{ language: string; level: string }>;
+                safeMode: 'light' | 'medium' | 'strict';
+                anonymousMode: boolean;
+                aiAssistant: boolean;
+                customGender?: string;
+                customOrientation?: string;
+                ethnicity: string;
+                relationshipType?: string;
+              });
+            } else {
+              // Profile not found - toast removed per user request
+              navigate('/match');
+            }
+          } catch (profileError) {
+            console.error('Error loading profile:', profileError);
+            setError('Failed to load profile data');
+          } finally {
+            setLoading(false);
+          }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.error('Error in profile loading effect:', error);
+        setError('Failed to initialize profile loading');
+        setLoading(false);
+      }
     }
   }, [userId, isOwnProfile, navigate]);
 
   // Load user photos from localStorage for own profile
   useEffect(() => {
     if (isOwnProfile && user?.id) {
-      const photos = photoStorage.loadPhotos(user.id);
-      setUserPhotos(photos as any);
+      try {
+        const photos = photoStorage.loadPhotos(user.id);
+        setUserPhotos(photos as any);
+      } catch (photoError) {
+        console.error('Error loading photos:', photoError);
+        // Don't fail the entire component if photos fail to load
+        setUserPhotos([]);
+      }
     }
   }, [isOwnProfile, user?.id]);
+
+  // Early return if no user data and this is own profile
+  if (isOwnProfile && !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="Profile" />
+        <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-muted-foreground">Please log in to view your profile.</p>
+              <Button onClick={() => navigate('/login')} className="mt-4">
+                Go to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="Profile" />
+        <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-muted-foreground">{error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-4">
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   const handleSendMessage = () => {
     if (profileData) {

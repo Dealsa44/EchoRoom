@@ -185,6 +185,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=2',
+        language: 'English',
         ageRestriction: '21+',
         dressCode: 'Smart casual to formal',
         highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
@@ -218,6 +219,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=3',
+        language: 'English',
         skillLevel: 'all-levels',
         ageRestriction: '18+',
         highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
@@ -251,6 +253,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: true,
         image: 'https://picsum.photos/400/300?random=4',
+        language: 'English',
         ageRestriction: '18+',
         requirements: ['Comfortable shoes', 'Water bottle', 'Weather-appropriate clothing'],
         highlights: ['Professional guides', 'Beautiful scenery', 'Group bonding'],
@@ -284,6 +287,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=5',
+        language: 'Georgian',
         skillLevel: 'beginner',
         ageRestriction: '18+',
         requirements: ['No experience needed', 'Comfortable clothing'],
@@ -317,6 +321,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=6',
+        language: 'English',
         skillLevel: 'all-levels',
         ageRestriction: '18+',
         highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
@@ -350,6 +355,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=7',
+        language: 'English',
         skillLevel: 'beginner',
         ageRestriction: '18+',
         requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
@@ -384,6 +390,7 @@ const Events = () => {
         isPrivate: false,
         isFeatured: false,
         image: 'https://picsum.photos/400/300?random=8',
+        language: 'English',
         skillLevel: 'all-levels',
         ageRestriction: '21+',
         dressCode: 'Business casual',
@@ -986,6 +993,12 @@ const Events = () => {
                         <Users size={16} />
                         <span>{event.currentParticipants}/{event.maxParticipants}</span>
                       </div>
+                      {event.language && (
+                        <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                          <Globe size={16} />
+                          <span>Primary Language: <span className="font-medium">{event.language}</span></span>
+                        </div>
+                      )}
                     </div>
                     
 

@@ -84,25 +84,39 @@ export const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Initialize state with saved user if available
   const initializeState = (): AppState => {
-    const savedUser = getCurrentUserFromStorage();
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    
-    // Safely parse joined rooms from localStorage
+    let savedUser: User | null = null;
+    let savedDarkMode = false;
     let savedJoinedRooms: string[] = [];
+    
     try {
+      // Safely get user from storage
+      savedUser = getCurrentUserFromStorage();
+      
+      // Safely get dark mode preference
+      const darkModeData = localStorage.getItem('darkMode');
+      savedDarkMode = darkModeData === 'true';
+      
+      // Safely parse joined rooms from localStorage
       const joinedRoomsData = localStorage.getItem('joinedRooms');
       if (joinedRoomsData) {
-        savedJoinedRooms = JSON.parse(joinedRoomsData);
+        const parsed = JSON.parse(joinedRoomsData);
+        if (Array.isArray(parsed)) {
+          savedJoinedRooms = parsed;
+        } else {
+          console.warn('Invalid joined rooms data format, resetting to empty array');
+          localStorage.setItem('joinedRooms', JSON.stringify([]));
+        }
       }
     } catch (error) {
-      console.error('Failed to parse joined rooms from localStorage:', error);
-      // Reset to empty array if parsing fails
-      localStorage.setItem('joinedRooms', JSON.stringify([]));
-    }
-    
-    // Apply dark mode class if saved
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
+      console.error('Failed to initialize app state from localStorage:', error);
+      // Reset corrupted data
+      try {
+        localStorage.removeItem('echoroom_current_user');
+        localStorage.setItem('joinedRooms', JSON.stringify([]));
+        localStorage.setItem('darkMode', 'false');
+      } catch (resetError) {
+        console.error('Failed to reset corrupted localStorage data:', resetError);
+      }
     }
     
     return {
@@ -110,8 +124,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated: !!savedUser,
       language: 'en',
       isDarkMode: savedDarkMode,
-      safeMode: 'light',
-      joinedRooms: savedJoinedRooms,
+      safeMode: savedUser?.safeMode || 'light',
+      joinedRooms: savedJoinedRooms
     };
   };
 
