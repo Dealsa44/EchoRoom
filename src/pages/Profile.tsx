@@ -140,10 +140,22 @@ const Profile = () => {
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
   
-  // Defensive check for user data
+  // Defensive check for user data with safe fallbacks
   const displayUser: DisplayUser | null = isOwnProfile 
-    ? (user && user.id ? (user as unknown as DisplayUser) : null)
-    : (profileData as unknown as DisplayUser);
+    ? (user && user.id ? {
+        ...user,
+        // Ensure languages array is safe
+        languages: Array.isArray(user.languages) 
+          ? user.languages.filter(lang => lang && typeof lang === 'object' && lang.language)
+          : []
+      } as unknown as DisplayUser : null)
+    : (profileData ? {
+        ...profileData,
+        // Ensure languages array is safe
+        languages: Array.isArray(profileData.languages) 
+          ? profileData.languages.filter(lang => lang && typeof lang === 'object' && lang.language)
+          : []
+      } as unknown as DisplayUser : null);
 
   // Load other user's profile if viewing someone else
   useEffect(() => {
@@ -673,7 +685,9 @@ const Profile = () => {
                         <div className="flex flex-wrap gap-1">
                           {user.languages.map((lang, index: number) => (
                             <Badge key={index} variant="outline" className="text-xs">
-                              {(lang as any).language.charAt(0).toUpperCase() + (lang as any).language.slice(1)} ({(lang as any).level})
+                              {lang && (lang as any).language && typeof (lang as any).language === 'string'
+                                ? (lang as any).language.charAt(0).toUpperCase() + (lang as any).language.slice(1)
+                                : 'Unknown'} ({(lang as any).level || 'Unknown'})
                             </Badge>
                           ))}
                         </div>
@@ -685,7 +699,9 @@ const Profile = () => {
                         <div className="flex flex-wrap gap-1">
                           {profileData.languages.map((lang, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
-                              {lang.language.charAt(0).toUpperCase() + lang.language.slice(1)} ({lang.level})
+                              {lang && lang.language && typeof lang.language === 'string' 
+                                ? lang.language.charAt(0).toUpperCase() + lang.language.slice(1)
+                                : 'Unknown'} ({lang && lang.level ? lang.level : 'Unknown'})
                             </Badge>
                           ))}
                         </div>
