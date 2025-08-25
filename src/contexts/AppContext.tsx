@@ -89,29 +89,74 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     let savedJoinedRooms: string[] = [];
     
     try {
-      // Safely get user from storage
-      savedUser = getCurrentUserFromStorage();
+      // Enhanced PWA environment detection
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                     (window.navigator as any).standalone === true;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      // Safely get user from storage with enhanced error handling
+      try {
+        savedUser = getCurrentUserFromStorage();
+      } catch (userError) {
+        console.warn('Failed to get user from storage, trying fallback methods:', userError);
+        
+        // Try sessionStorage fallback for iOS PWA
+        if (isPWA && isIOS) {
+          try {
+            const sessionUser = sessionStorage.getItem('echoroom_current_user');
+            if (sessionUser) {
+              const parsedUser = JSON.parse(sessionUser);
+              if (parsedUser && typeof parsedUser === 'object' && parsedUser.id) {
+                console.log('Using sessionStorage fallback for iOS PWA');
+                savedUser = parsedUser;
+              }
+            }
+          } catch (sessionError) {
+            console.warn('SessionStorage fallback also failed:', sessionError);
+          }
+        }
+      }
       
       // Safely get dark mode preference
-      const darkModeData = localStorage.getItem('darkMode');
-      savedDarkMode = darkModeData === 'true';
+      try {
+        const darkModeData = localStorage.getItem('darkMode');
+        savedDarkMode = darkModeData === 'true';
+      } catch (darkModeError) {
+        console.warn('Failed to get dark mode preference:', darkModeError);
+        savedDarkMode = false;
+      }
       
       // Safely parse joined rooms from localStorage
-      const joinedRoomsData = localStorage.getItem('joinedRooms');
-      if (joinedRoomsData) {
-        const parsed = JSON.parse(joinedRoomsData);
-        if (Array.isArray(parsed)) {
-          savedJoinedRooms = parsed;
-        } else {
-          console.warn('Invalid joined rooms data format, resetting to empty array');
-          localStorage.setItem('joinedRooms', JSON.stringify([]));
+      try {
+        const joinedRoomsData = localStorage.getItem('joinedRooms');
+        if (joinedRoomsData) {
+          const parsed = JSON.parse(joinedRoomsData);
+          if (Array.isArray(parsed)) {
+            savedJoinedRooms = parsed;
+          } else {
+            console.warn('Invalid joined rooms data format, resetting to empty array');
+            try {
+              localStorage.setItem('joinedRooms', JSON.stringify([]));
+            } catch (setError) {
+              console.warn('Failed to reset joined rooms:', setError);
+            }
+          }
+        }
+      } catch (joinedRoomsError) {
+        console.warn('Failed to parse joined rooms:', joinedRoomsError);
+        savedJoinedRooms = [];
+        try {
+          localStorage.removeItem('joinedRooms');
+        } catch (cleanupError) {
+          console.warn('Failed to clean up joined rooms:', cleanupError);
         }
       }
     } catch (error) {
       console.error('Failed to initialize app state from localStorage:', error);
-      // Reset corrupted data
+      // Reset corrupted data with enhanced error handling
       try {
         localStorage.removeItem('echoroom_current_user');
+        sessionStorage.removeItem('echoroom_current_user');
         localStorage.setItem('joinedRooms', JSON.stringify([]));
         localStorage.setItem('darkMode', 'false');
       } catch (resetError) {
@@ -167,8 +212,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newDarkMode = !state.isDarkMode;
     setState(prev => ({ ...prev, isDarkMode: newDarkMode }));
     
-    // Save to localStorage
-    localStorage.setItem('darkMode', newDarkMode.toString());
+    // Save to localStorage with safe fallback
+    try {
+      localStorage.setItem('darkMode', newDarkMode.toString());
+    } catch (error) {
+      console.warn('Failed to save dark mode preference to localStorage:', error);
+    }
     
     // Toggle dark class
     if (newDarkMode) {
@@ -189,8 +238,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       ? currentJoinedRooms 
       : [...currentJoinedRooms, roomId];
     
-    // Persist to localStorage BEFORE updating state
-    localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+    // Persist to localStorage BEFORE updating state with safe fallback
+    try {
+      localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+    } catch (error) {
+      console.warn('Failed to save joined rooms to localStorage:', error);
+      // Try to clear corrupted data and save again
+      try {
+        localStorage.removeItem('joinedRooms');
+        localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+      } catch (retryError) {
+        console.error('Failed to save joined rooms even after cleanup:', retryError);
+      }
+    }
     
     // Update state
     setState(prev => ({ 
@@ -204,8 +264,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const currentJoinedRooms = state.joinedRooms;
     const newJoinedRooms = currentJoinedRooms.filter(id => id !== roomId);
     
-    // Persist to localStorage BEFORE updating state
-    localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+    // Persist to localStorage BEFORE updating state with safe fallback
+    try {
+      localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+    } catch (error) {
+      console.warn('Failed to save joined rooms to localStorage:', error);
+      // Try to clear corrupted data and save again
+      try {
+        localStorage.removeItem('joinedRooms');
+        localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
+      } catch (retryError) {
+        console.error('Failed to save joined rooms even after cleanup:', retryError);
+      }
+    }
     
     // Update state
     setState(prev => ({ 
@@ -215,13 +286,33 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    logoutUser();
+    // Clear user data with safe fallback
+    try {
+      logoutUser();
+    } catch (error) {
+      console.warn('Failed to logout user from storage:', error);
+      // Try to clear manually
+      try {
+        localStorage.removeItem('echoroom_current_user');
+        sessionStorage.removeItem('echoroom_current_user');
+      } catch (cleanupError) {
+        console.warn('Failed to manually clear user data:', cleanupError);
+      }
+    }
     
-    // Clear joined rooms from localStorage
-    localStorage.setItem('joinedRooms', JSON.stringify([]));
+    // Clear joined rooms from localStorage with safe fallback
+    try {
+      localStorage.setItem('joinedRooms', JSON.stringify([]));
+    } catch (error) {
+      console.warn('Failed to clear joined rooms from localStorage:', error);
+    }
     
     // Clear conversation states
-    clearConversationStates();
+    try {
+      clearConversationStates();
+    } catch (error) {
+      console.warn('Failed to clear conversation states:', error);
+    }
     
     setState(prev => ({ 
       ...prev, 
