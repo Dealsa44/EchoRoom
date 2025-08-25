@@ -672,7 +672,15 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
             </div>
           </div>
 
-                     {/* Action Buttons */}
+          {/* Primary Language */}
+          {event.language && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Globe size={16} />
+              <span>Primary Language: <span className="font-medium">{event.language}</span></span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
            <div className="flex gap-2">
              {event.isJoined ? (
                <Button
@@ -732,6 +740,23 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
                 </div>
               </CardContent>
             </Card>
+
+            {/* Primary Language */}
+            {event.language && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Globe size={18} className="text-primary" />
+                    Primary Language
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-sm">
+                      🌍 {event.language}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Highlights */}
             {event.highlights && event.highlights.length > 0 && (
@@ -814,6 +839,12 @@ Please bring your enthusiasm and willingness to learn. All materials will be pro
                   <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
                     <Mail size={16} />
                     <span>{event.organizer.contactEmail}</span>
+                  </div>
+                )}
+                {event.organizer.contactPhone && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <Phone size={16} />
+                    <span>{event.organizer.contactPhone}</span>
                   </div>
                 )}
                 {event.organizer.website && (

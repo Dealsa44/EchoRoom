@@ -20,15 +20,21 @@ const BottomNavigation = () => {
              location.pathname === '/chat-rooms' || 
              location.pathname === '/forum' ||
              location.pathname === '/events' ||
+             location.pathname === '/create-event' ||
+             location.pathname === '/my-events' ||
              location.pathname.startsWith('/forum/thread/') ||
              location.pathname.startsWith('/event/');
     }
     if (path === '/profile') {
-      // Profile is active for profile and its sub-pages
+      // Profile is active for own profile, profile-related settings, and all settings sub-pages, but not for other people's profiles
       return location.pathname === '/profile' || 
-             location.pathname.startsWith('/profile/') ||
+             location.pathname === '/profile/stats' ||
+             location.pathname === '/profile/edit' ||
              location.pathname === '/settings' ||
-             location.pathname === '/safety-center';
+             location.pathname === '/appearance-experience' ||
+             location.pathname === '/safety-center' ||
+             location.pathname === '/notifications-communication' ||
+             location.pathname === '/device-data';
     }
     return location.pathname === path;
   };

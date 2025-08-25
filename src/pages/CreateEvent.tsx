@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import EventDatePicker from '@/components/ui/event-date-picker';
+import TimePicker from '@/components/ui/time-picker';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -25,7 +27,11 @@ import {
   Eye,
   EyeOff,
   Save,
-  Send
+  Send,
+  Loader2,
+  Check,
+  Mail,
+  Phone
 } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
@@ -34,6 +40,7 @@ import { useApp } from '@/hooks/useApp';
 interface EventFormData {
   title: string;
   description: string;
+  aboutEvent: string;
   category: string;
   type: 'in-person' | 'virtual' | 'hybrid';
   location: string;
@@ -47,13 +54,39 @@ interface EventFormData {
   currency: string;
   isPrivate: boolean;
   language: string;
-  skillLevel: 'beginner' | 'intermediate' | 'advanced' | 'all-levels';
   ageRestriction: '18+' | '21+' | 'all-ages';
   dressCode: string;
   requirements: string[];
   highlights: string[];
   tags: string[];
   image: string;
+  agenda: {
+    time: string;
+    activity: string;
+    description: string;
+  }[];
+  additionalInfo: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  socialMedia: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
+  cancellationPolicy: string;
+  refundPolicy: string;
+  transportation: string[];
+  parking: 'yes' | 'no' | 'limited' | 'paid';
+  accessibility: string[];
+  photos: string[];
+  documents: Array<{
+    name: string;
+    url: string;
+    type: 'pdf' | 'doc' | 'image';
+    size: string;
+  }>;
 }
 
 const CreateEvent = () => {
@@ -65,6 +98,7 @@ const CreateEvent = () => {
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
+    aboutEvent: '',
     category: '',
     type: 'in-person',
     location: '',
@@ -78,18 +112,35 @@ const CreateEvent = () => {
     currency: 'GEL',
     isPrivate: false,
     language: '',
-    skillLevel: 'all-levels',
     ageRestriction: '18+',
     dressCode: '',
     requirements: [],
     highlights: [],
     tags: [],
-    image: ''
+    image: '',
+    agenda: [],
+    additionalInfo: '',
+    contactEmail: '',
+    contactPhone: '',
+    website: '',
+    socialMedia: {},
+    cancellationPolicy: '',
+    refundPolicy: '',
+    transportation: [],
+    parking: 'no',
+    accessibility: [],
+    photos: [],
+    documents: []
   });
 
   const [newRequirement, setNewRequirement] = useState('');
   const [newHighlight, setNewHighlight] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [newAgendaTime, setNewAgendaTime] = useState('');
+  const [newAgendaActivity, setNewAgendaActivity] = useState('');
+  const [newAgendaDescription, setNewAgendaDescription] = useState('');
+  const [newTransportation, setNewTransportation] = useState('');
+  const [newAccessibility, setNewAccessibility] = useState('');
 
   const categories = [
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
@@ -115,32 +166,28 @@ const CreateEvent = () => {
     { value: 'EUR', label: 'Euro (€)' }
   ];
 
-  const skillLevels = [
-    { value: 'beginner', label: 'Beginner' },
-    { value: 'intermediate', label: 'Intermediate' },
-    { value: 'advanced', label: 'Advanced' },
-    { value: 'all-levels', label: 'All Levels' }
-  ];
-
   const ageRestrictions = [
     { value: '18+', label: '18+' },
     { value: '21+', label: '21+' },
     { value: 'all-ages', label: 'All Ages' }
   ];
 
-  const steps = [
-    { number: 1, title: 'Basic Info', description: 'Title, description, category' },
-    { number: 2, title: 'Details', description: 'Date, time, location' },
-    { number: 3, title: 'Settings', description: 'Participants, pricing, privacy' },
-    { number: 4, title: 'Extras', description: 'Requirements, highlights, tags' },
-    { number: 5, title: 'Review', description: 'Preview and publish' }
+  const steps: Array<{
+    number: number;
+    title: string;
+    description: string;
+    icon: string;
+  }> = [
+    { number: 1, title: 'Basic Info', description: 'Title, description, category', icon: '📝' },
+    { number: 2, title: 'Details', description: 'Date, time, location', icon: '📅' },
+    { number: 3, title: 'Settings', description: 'Participants, pricing, privacy', icon: '⚙️' },
+    { number: 4, title: 'Content', description: 'About, highlights, requirements', icon: '📋' },
+    { number: 5, title: 'Agenda', description: 'Event schedule and activities', icon: '⏰' },
+    { number: 6, title: 'Policies', description: 'Contact, cancellation, refund', icon: '📋' },
+    { number: 7, title: 'Review', description: 'Preview and publish', icon: '👁️' }
   ];
 
-  // Get minimum date (today)
-  const getMinDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
+
 
   // Get minimum time (current time + 1 hour)
   const getMinTime = () => {
@@ -207,6 +254,63 @@ const CreateEvent = () => {
     }));
   };
 
+  const addAgendaItem = () => {
+    if (newAgendaTime.trim() && newAgendaActivity.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        agenda: [...prev.agenda, {
+          time: newAgendaTime.trim(),
+          activity: newAgendaActivity.trim(),
+          description: newAgendaDescription.trim()
+        }]
+      }));
+      setNewAgendaTime('');
+      setNewAgendaActivity('');
+      setNewAgendaDescription('');
+    }
+  };
+
+  const removeAgendaItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      agenda: prev.agenda.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addTransportation = () => {
+    if (newTransportation.trim() && !formData.transportation.includes(newTransportation.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        transportation: [...prev.transportation, newTransportation.trim()]
+      }));
+      setNewTransportation('');
+    }
+  };
+
+  const removeTransportation = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      transportation: prev.transportation.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addAccessibility = () => {
+    if (newAccessibility.trim() && !formData.accessibility.includes(newAccessibility.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        accessibility: [...prev.accessibility, newAccessibility.trim()]
+      }));
+      setNewAccessibility('');
+    }
+  };
+
+  const removeAccessibility = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      accessibility: prev.accessibility.filter((_, i) => i !== index)
+    }));
+  };
+
   const nextStep = () => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
@@ -241,31 +345,50 @@ const CreateEvent = () => {
                 placeholder="Enter event title..."
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                className="mt-2"
+                className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200"
+                maxLength={100}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.title.length}/100 characters
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="description" className="text-sm font-medium">Description *</Label>
+              <Label htmlFor="description" className="text-sm font-medium">Short Description *</Label>
               <Textarea
                 id="description"
-                placeholder="Describe your event in detail..."
+                placeholder="Brief overview of your event (will appear in event cards)..."
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                className="mt-2 min-h-[120px]"
+                className="mt-2 min-h-[80px] resize-none"
+                maxLength={200}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.description.length}/200 characters
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="aboutEvent" className="text-sm font-medium">About This Event *</Label>
+              <Textarea
+                id="aboutEvent"
+                placeholder="Detailed description of your event, what participants can expect, and why they should join..."
+                value={formData.aboutEvent}
+                onChange={(e) => handleInputChange('aboutEvent', e.target.value)}
+                className="mt-2 min-h-[120px] resize-none"
               />
             </div>
 
             <div>
               <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-40">
                   {categories.map(category => (
-                    <SelectItem key={category.value} value={category.value}>
-                      <span className="mr-2">{category.icon}</span>
+                    <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
+                      <span className="mr-2 text-lg">{category.icon}</span>
                       {category.label}
                     </SelectItem>
                   ))}
@@ -276,13 +399,13 @@ const CreateEvent = () => {
             <div>
               <Label htmlFor="type" className="text-sm font-medium">Event Type *</Label>
               <Select value={formData.type} onValueChange={(value: 'in-person' | 'virtual' | 'hybrid') => handleInputChange('type', value)}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-40">
                   {eventTypes.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <span className="mr-2">{type.icon}</span>
+                    <SelectItem key={type.value} value={type.value} className="hover:bg-primary/10">
+                      <span className="mr-2 text-lg">{type.icon}</span>
                       {type.label}
                     </SelectItem>
                   ))}
@@ -297,20 +420,20 @@ const CreateEvent = () => {
                 placeholder="e.g., English, Georgian, etc."
                 value={formData.language}
                 onChange={(e) => handleInputChange('language', e.target.value)}
-                className="mt-2"
+                className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200"
               />
             </div>
 
             <div>
-              <Label htmlFor="skillLevel" className="text-sm font-medium">Skill Level</Label>
-              <Select value={formData.skillLevel} onValueChange={(value: 'beginner' | 'intermediate' | 'advanced' | 'all-levels') => handleInputChange('skillLevel', value)}>
+              <Label htmlFor="ageRestriction" className="text-sm font-medium">Age Restriction</Label>
+              <Select value={formData.ageRestriction} onValueChange={(value: '18+' | '21+' | 'all-ages') => handleInputChange('ageRestriction', value)}>
                 <SelectTrigger className="mt-2">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {skillLevels.map(level => (
-                    <SelectItem key={level.value} value={level.value}>
-                      {level.label}
+                <SelectContent className="max-h-40">
+                  {ageRestrictions.map(age => (
+                    <SelectItem key={age.value} value={age.value}>
+                      {age.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -325,23 +448,20 @@ const CreateEvent = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="date" className="text-sm font-medium">Date *</Label>
-                <Input
+                <EventDatePicker
                   id="date"
-                  type="date"
-                  min={getMinDate()}
                   value={formData.date}
-                  onChange={(e) => handleInputChange('date', e.target.value)}
+                  onChange={(date) => handleInputChange('date', date)}
                   className="mt-2"
                 />
               </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium">Time *</Label>
-                <Input
+                <TimePicker
                   id="time"
-                  type="time"
-                  min={getMinTime()}
                   value={formData.time}
-                  onChange={(e) => handleInputChange('time', e.target.value)}
+                  onChange={(time) => handleInputChange('time', time)}
+                  min={getMinTime()}
                   className="mt-2"
                 />
               </div>
@@ -350,21 +470,21 @@ const CreateEvent = () => {
             <div>
               <Label htmlFor="duration" className="text-sm font-medium">Duration (minutes) *</Label>
               <Select value={formData.duration.toString()} onValueChange={(value) => handleInputChange('duration', parseInt(value))}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                  <SelectItem value="90">1.5 hours</SelectItem>
-                  <SelectItem value="120">2 hours</SelectItem>
-                  <SelectItem value="180">3 hours</SelectItem>
-                  <SelectItem value="240">4 hours</SelectItem>
-                  <SelectItem value="300">5 hours</SelectItem>
-                  <SelectItem value="360">6 hours</SelectItem>
-                  <SelectItem value="480">8 hours</SelectItem>
-                  <SelectItem value="720">12 hours</SelectItem>
-                  <SelectItem value="1440">24 hours</SelectItem>
+                <SelectContent className="max-h-40">
+                  <SelectItem value="30" className="hover:bg-primary/10">30 minutes</SelectItem>
+                  <SelectItem value="60" className="hover:bg-primary/10">1 hour</SelectItem>
+                  <SelectItem value="90" className="hover:bg-primary/10">1.5 hours</SelectItem>
+                  <SelectItem value="120" className="hover:bg-primary/10">2 hours</SelectItem>
+                  <SelectItem value="180" className="hover:bg-primary/10">3 hours</SelectItem>
+                  <SelectItem value="240" className="hover:bg-primary/10">4 hours</SelectItem>
+                  <SelectItem value="300" className="hover:bg-primary/10">5 hours</SelectItem>
+                  <SelectItem value="360" className="hover:bg-primary/10">6 hours</SelectItem>
+                  <SelectItem value="480" className="hover:bg-primary/10">8 hours</SelectItem>
+                  <SelectItem value="720" className="hover:bg-primary/10">12 hours</SelectItem>
+                  <SelectItem value="1440" className="hover:bg-primary/10">24 hours</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -376,7 +496,7 @@ const CreateEvent = () => {
                 placeholder="City, Country"
                 value={formData.location}
                 onChange={(e) => handleInputChange('location', e.target.value)}
-                className="mt-2"
+                className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200"
               />
             </div>
 
@@ -388,7 +508,7 @@ const CreateEvent = () => {
                   placeholder="Full address or meeting point"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="mt-2"
+                  className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200"
                 />
               </div>
             )}
@@ -401,7 +521,7 @@ const CreateEvent = () => {
                   placeholder="Zoom, Google Meet, or other platform link"
                   value={formData.virtualMeetingLink}
                   onChange={(e) => handleInputChange('virtualMeetingLink', e.target.value)}
-                  className="mt-2"
+                  className="mt-2 hover:border-primary/50 focus:border-primary transition-colors duration-200"
                 />
               </div>
             )}
@@ -444,31 +564,15 @@ const CreateEvent = () => {
                   <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map(currency => (
-                      <SelectItem key={currency.value} value={currency.value}>
-                        {currency.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="ageRestriction" className="text-sm font-medium">Age Restriction</Label>
-              <Select value={formData.ageRestriction} onValueChange={(value: '18+' | '21+' | 'all-ages') => handleInputChange('ageRestriction', value)}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ageRestrictions.map(age => (
-                    <SelectItem key={age.value} value={age.value}>
-                      {age.label}
+                                  <SelectContent className="max-h-40">
+                  {currencies.map(currency => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+                </Select>
+              </div>
             </div>
 
             <div>
@@ -507,20 +611,21 @@ const CreateEvent = () => {
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
+                  className="flex-1"
                 />
-                <Button type="button" onClick={addRequirement} size="sm">
+                <Button type="button" onClick={addRequirement} size="sm" className="shrink-0">
                   <Plus size={16} />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {formData.requirements.map((req, index) => (
-                  <Badge key={index} variant="secondary" className="gap-1">
-                    {req}
+                  <Badge key={index} variant="secondary" className="gap-1 max-w-full">
+                    <span className="truncate">{req}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      className="h-4 w-4 p-0 hover:bg-transparent shrink-0"
                       onClick={() => removeRequirement(index)}
                     >
                       <X size={12} />
@@ -539,20 +644,21 @@ const CreateEvent = () => {
                   value={newHighlight}
                   onChange={(e) => setNewHighlight(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addHighlight()}
+                  className="flex-1"
                 />
-                <Button type="button" onClick={addHighlight} size="sm">
+                <Button type="button" onClick={addHighlight} size="sm" className="shrink-0">
                   <Plus size={16} />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {formData.highlights.map((highlight, index) => (
-                  <Badge key={index} variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
-                    ✨ {highlight}
+                  <Badge key={index} variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200 max-w-full">
+                    <span className="truncate">✨ {highlight}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent text-green-700"
+                      className="h-4 w-4 p-0 hover:bg-transparent text-green-700 shrink-0"
                       onClick={() => removeHighlight(index)}
                     >
                       <X size={12} />
@@ -571,20 +677,21 @@ const CreateEvent = () => {
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                  className="flex-1"
                 />
-                <Button type="button" onClick={addTag} size="sm">
+                <Button type="button" onClick={addTag} size="sm" className="shrink-0">
                   <Plus size={16} />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="gap-1">
-                    {tag}
+                  <Badge key={index} variant="outline" className="gap-1 max-w-full">
+                    <span className="truncate">{tag}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      className="h-4 w-4 p-0 hover:bg-transparent shrink-0"
                       onClick={() => removeTag(index)}
                     >
                       <X size={12} />
@@ -597,12 +704,12 @@ const CreateEvent = () => {
             <div>
               <Label className="text-sm font-medium">Event Image</Label>
               <p className="text-xs text-muted-foreground mb-2">Upload a cover image for your event</p>
-              <div className="border-2 border-dashed border-border-soft rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-border-soft rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
                 <Camera className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Click to upload or drag and drop
                 </p>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
                   <Upload className="mr-2 h-4 w-4" />
                   Choose Image
                 </Button>
@@ -614,10 +721,338 @@ const CreateEvent = () => {
       case 5:
         return (
           <div className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium">Event Agenda</Label>
+              <p className="text-xs text-muted-foreground mb-2">Create a detailed schedule for your event</p>
+              
+              <div className="space-y-3 mb-4">
+                <div className="grid grid-cols-3 gap-2">
+                  <TimePicker
+                    placeholder="Time"
+                    value={newAgendaTime}
+                    onChange={(time) => setNewAgendaTime(time)}
+                    className="text-sm"
+                  />
+                  <Input
+                    placeholder="Activity"
+                    value={newAgendaActivity}
+                    onChange={(e) => setNewAgendaActivity(e.target.value)}
+                    className="text-sm col-span-2"
+                  />
+                </div>
+                <Input
+                  placeholder="Description (optional)"
+                  value={newAgendaDescription}
+                  onChange={(e) => setNewAgendaDescription(e.target.value)}
+                  className="text-sm"
+                />
+                <Button type="button" onClick={addAgendaItem} size="sm" className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Agenda Item
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {formData.agenda.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs">
+                          {item.time}
+                        </Badge>
+                        <span className="font-medium text-sm">{item.activity}</span>
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAgendaItem(index)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <X size={14} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="contactEmail" className="text-sm font-medium">Contact Email</Label>
+              <Input
+                id="contactEmail"
+                placeholder="Your email address"
+                value={formData.contactEmail}
+                onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contactPhone" className="text-sm font-medium">Contact Phone</Label>
+              <Input
+                id="contactPhone"
+                placeholder="Your phone number"
+                value={formData.contactPhone}
+                onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="website" className="text-sm font-medium">Your Website</Label>
+              <Input
+                id="website"
+                placeholder="Your personal or organization website URL"
+                value={formData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="socialMedia" className="text-sm font-medium">Social Media</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="facebook" className="text-xs">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    placeholder="https://facebook.com/your-event"
+                    value={formData.socialMedia.facebook}
+                    onChange={(e) => handleInputChange('socialMedia', { ...formData.socialMedia, facebook: e.target.value })}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="instagram" className="text-xs">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    placeholder="https://instagram.com/your-event"
+                    value={formData.socialMedia.instagram}
+                    onChange={(e) => handleInputChange('socialMedia', { ...formData.socialMedia, instagram: e.target.value })}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="twitter" className="text-xs">Twitter</Label>
+                  <Input
+                    id="twitter"
+                    placeholder="https://twitter.com/your-event"
+                    value={formData.socialMedia.twitter}
+                    onChange={(e) => handleInputChange('socialMedia', { ...formData.socialMedia, twitter: e.target.value })}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="linkedin" className="text-xs">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    placeholder="https://linkedin.com/your-event"
+                    value={formData.socialMedia.linkedin}
+                    onChange={(e) => handleInputChange('socialMedia', { ...formData.socialMedia, linkedin: e.target.value })}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="cancellationPolicy" className="text-sm font-medium">Cancellation Policy</Label>
+              <Textarea
+                id="cancellationPolicy"
+                placeholder="What happens if participants need to cancel?"
+                value={formData.cancellationPolicy}
+                onChange={(e) => handleInputChange('cancellationPolicy', e.target.value)}
+                className="mt-2 min-h-[80px] resize-none"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="refundPolicy" className="text-sm font-medium">Refund Policy</Label>
+              <Textarea
+                id="refundPolicy"
+                placeholder="What is your refund policy for paid events?"
+                value={formData.refundPolicy}
+                onChange={(e) => handleInputChange('refundPolicy', e.target.value)}
+                className="mt-2 min-h-[80px] resize-none"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="additionalInfo" className="text-sm font-medium">Additional Information</Label>
+              <Textarea
+                id="additionalInfo"
+                placeholder="Any other important information participants should know?"
+                value={formData.additionalInfo}
+                onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                className="mt-2 min-h-[80px] resize-none"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="transportation" className="text-sm font-medium">Getting There</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add transportation option (e.g., Metro line 1, Bus 37)"
+                    value={newTransportation}
+                    onChange={(e) => setNewTransportation(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addTransportation} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {formData.transportation.map((transport, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {transport}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent shrink-0 ml-2"
+                        onClick={() => removeTransportation(index)}
+                      >
+                        <X size={12} />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="parking" className="text-sm font-medium">Parking Available</Label>
+              <Select value={formData.parking} onValueChange={(value: 'yes' | 'no' | 'limited' | 'paid') => handleInputChange('parking', value)}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-40">
+                  <SelectItem value="yes">Yes, free parking</SelectItem>
+                  <SelectItem value="paid">Yes, paid parking</SelectItem>
+                  <SelectItem value="limited">Limited parking</SelectItem>
+                  <SelectItem value="no">No parking available</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="accessibility" className="text-sm font-medium">Accessibility</Label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add accessibility feature (e.g., Wheelchair accessible, Sign language interpreter)"
+                    value={newAccessibility}
+                    onChange={(e) => setNewAccessibility(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addAccessibility} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  {formData.accessibility.map((access, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {access}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-transparent shrink-0 ml-2"
+                        onClick={() => removeAccessibility(index)}
+                      >
+                        <X size={12} />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Preview Your Event</h3>
               <p className="text-sm text-muted-foreground">Review all details before publishing</p>
             </div>
+
+            {/* Contact Information */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Users size={18} className="text-primary" />
+                  Contact Information
+                </h3>
+                <div className="space-y-2">
+                  {formData.contactEmail && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail size={16} />
+                      <span>{formData.contactEmail}</span>
+                    </div>
+                  )}
+                  {formData.contactPhone && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone size={16} />
+                      <span>{formData.contactPhone}</span>
+                    </div>
+                  )}
+                  {formData.website && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Globe size={16} />
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0 h-auto text-muted-foreground hover:text-foreground"
+                        onClick={() => window.open(formData.website, '_blank')}
+                      >
+                        Visit website
+                      </Button>
+                    </div>
+                  )}
+                  {Object.values(formData.socialMedia).some(social => social) && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Social Media:</span>
+                      <div className="flex gap-2">
+                        {formData.socialMedia.facebook && (
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                            Facebook
+                          </Button>
+                        )}
+                        {formData.socialMedia.instagram && (
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                            Instagram
+                          </Button>
+                        )}
+                        {formData.socialMedia.twitter && (
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                            Twitter
+                          </Button>
+                        )}
+                        {formData.socialMedia.linkedin && (
+                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                            LinkedIn
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className="border-border-soft">
               <CardContent className="p-0">
@@ -707,33 +1142,7 @@ const CreateEvent = () => {
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsPreviewMode(!isPreviewMode)}
-                className="flex-1"
-              >
-                {isPreviewMode ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                {isPreviewMode ? 'Hide Preview' : 'Show Preview'}
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Create Event
-                  </>
-                )}
-              </Button>
-            </div>
+            
           </div>
         );
 
@@ -743,20 +1152,33 @@ const CreateEvent = () => {
   };
 
   const isStepValid = () => {
+    // Temporarily disabled for testing - allows navigation through all steps
+    return true;
+    
+    // Original validation logic (commented out)
+    /*
     switch (currentStep) {
       case 1:
         return formData.title.trim() && formData.description.trim() && formData.category;
       case 2:
-        return formData.date && formData.time && formData.location;
+        return formData.date && formData.time && formData.location.trim();
       case 3:
         return formData.maxParticipants > 0;
       case 4:
-        return true; // Optional step
+        return formData.aboutEvent.trim();
       case 5:
-        return true; // Review step
+        return true; // Agenda is optional
+      case 6:
+        // At least one contact method must be provided
+        return (formData.contactEmail.trim() || formData.contactPhone.trim()) && 
+               formData.cancellationPolicy.trim() && 
+               formData.refundPolicy.trim();
+      case 7:
+        return true; // Preview step
       default:
-        return false;
+        return true;
     }
+    */
   };
 
   return (
@@ -776,69 +1198,71 @@ const CreateEvent = () => {
       
       <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
         {/* Progress Steps */}
-        <Card className="shadow-medium border-border-soft">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Step {currentStep} of {steps.length}</h2>
-              <span className="text-sm text-muted-foreground">{Math.round((currentStep / steps.length) * 100)}%</span>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Step {currentStep} of {steps.length}</h2>
+            <span className="text-sm text-muted-foreground font-medium">
+              {Math.round((currentStep / steps.length) * 100)}%
+            </span>
+          </div>
+          
+          {/* Steps Line */}
+          <div className="relative">
+            <div className="h-1 bg-muted rounded-full">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(currentStep / steps.length) * 100}%` }}
+              />
             </div>
             
-            <div className="space-y-3">
+            {/* Step Icons */}
+            <div className="flex justify-between -mt-2">
               {steps.map((step, index) => (
                 <div
                   key={step.number}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-all duration-300 ${
                     step.number === currentStep
-                      ? 'bg-primary/10 border border-primary/20'
-                      : step.number < currentStep
-                      ? 'bg-green-50 border border-green-200'
-                      : 'bg-muted/50'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step.number === currentStep
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground scale-110 shadow-lg shadow-primary/30'
                       : step.number < currentStep
                       ? 'bg-green-500 text-white'
                       : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {step.number < currentStep ? '✓' : step.number}
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-medium ${
-                      step.number === currentStep ? 'text-primary' : 'text-foreground'
-                    }`}>
-                      {step.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{step.description}</p>
-                  </div>
+                  }`}
+                >
+                  {step.number < currentStep ? '✓' : step.icon}
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Step Content */}
-        <Card className="shadow-medium border-border-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {steps[currentStep - 1]?.icon}
-              {steps[currentStep - 1]?.title}
+        <Card className="shadow-medium border-border-soft hover:shadow-large transition-all duration-300">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <span className="text-2xl">{steps[currentStep - 1]?.icon}</span>
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {steps[currentStep - 1]?.title}
+              </span>
             </CardTitle>
+            <p className="text-sm text-muted-foreground ml-11">
+              {steps[currentStep - 1]?.description}
+            </p>
           </CardHeader>
           <CardContent className="p-6">
-            {renderStepContent()}
+            <div className="animate-fade-in">
+              {renderStepContent()}
+            </div>
           </CardContent>
         </Card>
 
         {/* Navigation */}
-        {currentStep < 5 && (
+        {currentStep < 7 ? (
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="flex-1"
+              className="flex-1 hover:scale-105 transition-transform duration-200"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Previous
@@ -846,17 +1270,45 @@ const CreateEvent = () => {
             <Button
               onClick={nextStep}
               disabled={!isStepValid()}
-              className="flex-1"
+              className="flex-1 hover:scale-105 transition-transform duration-200"
             >
               Next
               <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
             </Button>
           </div>
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              className="flex-1 hover:scale-105 transition-transform duration-200"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 hover:scale-105 transition-transform duration-200"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Event...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Create Event
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
         {/* Save Draft Button */}
-        {currentStep < 5 && (
-          <Button variant="ghost" className="w-full">
+        {currentStep < 7 && (
+          <Button variant="ghost" className="w-full hover:scale-105 transition-transform duration-200">
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>

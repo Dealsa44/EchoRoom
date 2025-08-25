@@ -333,38 +333,7 @@ const MyEvents = () => {
     event.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen app-gradient-bg relative">
-        <TopBar 
-          title="My Events" 
-          showBack={true}
-          onBack={() => navigate('/events')}
-        />
-        
-        <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
-          {/* Loading skeletons */}
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="shadow-medium border-border-soft">
-              <CardContent className="p-4">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                  <div className="flex gap-2">
-                    <div className="h-6 bg-muted rounded w-16"></div>
-                    <div className="h-6 bg-muted rounded w-20"></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        <BottomNavigation />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen app-gradient-bg relative">
@@ -379,16 +348,6 @@ const MyEvents = () => {
         title="My Events" 
         showBack={true}
         onBack={() => navigate('/events')}
-        rightAction={
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/create-event')}
-            className="hover:scale-110 transition-spring hover:bg-primary/10"
-          >
-            <Plus size={20} className="hover:text-primary transition-smooth" />
-          </Button>
-        }
       />
       
       <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
@@ -424,7 +383,24 @@ const MyEvents = () => {
           </TabsList>
 
           <TabsContent value="hosting" className="space-y-4 mt-4">
-            {filteredHostedEvents.length === 0 ? (
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="shadow-medium border-border-soft">
+                  <CardContent className="p-4">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-muted rounded w-16"></div>
+                        <div className="h-6 bg-muted rounded w-20"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : filteredHostedEvents.length === 0 ? (
               <Card className="shadow-medium border-border-soft">
                 <CardContent className="p-8 text-center">
                   <div className="text-4xl mb-4">🎯</div>
@@ -581,7 +557,24 @@ const MyEvents = () => {
           </TabsContent>
 
           <TabsContent value="joined" className="space-y-4 mt-4">
-            {filteredJoinedEvents.length === 0 ? (
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="shadow-medium border-border-soft">
+                  <CardContent className="p-4">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-muted rounded w-16"></div>
+                        <div className="h-6 bg-muted rounded w-20"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : filteredJoinedEvents.length === 0 ? (
               <Card className="shadow-medium border-border-soft">
                 <CardContent className="p-8 text-center">
                   <div className="text-4xl mb-4">👥</div>

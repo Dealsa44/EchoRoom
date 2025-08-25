@@ -573,15 +573,7 @@ const Events = () => {
       <TopBar 
         title="Events" 
         showBack={true}
-        onBack={() => {
-          const urlParams = new URLSearchParams(window.location.search);
-          const from = urlParams.get('from');
-          if (from === 'community') {
-            navigate('/community');
-          } else {
-            navigate(-1);
-          }
-        }}
+        onBack={() => navigate('/community')}
         rightAction={
           <div className="flex items-center gap-1">
             <Button
@@ -923,6 +915,8 @@ const Events = () => {
                       </div>
                     </div>
                     
+
+
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1.5">
                       {event.tags.slice(0, 3).map((tag, index) => (

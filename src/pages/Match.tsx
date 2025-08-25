@@ -126,6 +126,16 @@ const Match = () => {
 
   // Use centralized mock profiles
   const profiles = mockProfiles;
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter profiles based on current filters (memoized to prevent infinite re-renders)
   const filteredProfiles = useMemo(() => {
@@ -558,8 +568,57 @@ const Match = () => {
         </>
       )}
 
+      {/* Loading State */}
+      {loading && (
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
+          <div className="space-y-4 pb-20">
+            {/* Loading skeleton for profile card */}
+            <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6">
+              <div className="w-full h-full bg-muted/50 rounded-2xl animate-pulse overflow-hidden">
+                {/* Photo skeleton */}
+                <div className="w-full h-full bg-gradient-to-br from-muted/70 to-muted/50"></div>
+                
+                {/* Gradient overlay skeleton */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                
+                {/* Photo indicators skeleton */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+                  <div className="h-1.5 w-8 bg-white/90 rounded-full"></div>
+                  <div className="h-1.5 w-8 bg-white/40 rounded-full"></div>
+                  <div className="h-1.5 w-8 bg-white/40 rounded-full"></div>
+                </div>
+                
+                {/* Info button skeleton */}
+                <div className="absolute top-4 right-4 h-9 w-20 bg-white/20 rounded-lg"></div>
+                
+                {/* Profile info skeleton at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white z-20">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-6 bg-white/20 rounded w-24"></div>
+                      <div className="h-5 bg-white/20 rounded w-16"></div>
+                    </div>
+                    <div className="h-6 bg-white/20 rounded w-20"></div>
+                  </div>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="h-5 bg-white/20 rounded w-3/4"></div>
+                    <div className="h-4 bg-white/20 rounded w-1/2"></div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-white/20 rounded-full w-20"></div>
+                    <div className="h-8 bg-white/20 rounded-full w-24"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Normal Content - Header scrollable inside */}
-      {!(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
+      {!loading && !(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
         <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
 
           <div className="space-y-4 pb-20">
