@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Plus, MapPin, Calendar, Clock, Users, Star, Filter, Heart, Share2, MoreVertical, Globe, Lock, Music, BookOpen, Languages, Coffee, Camera, Gamepad2, Palette, Dumbbell, Utensils } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
@@ -60,6 +61,8 @@ const Events = () => {
   const [sortBy, setSortBy] = useState('upcoming');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
 
   // Simulate loading delay
   useEffect(() => {
@@ -114,280 +117,304 @@ const Events = () => {
     { value: 'distance', label: 'Nearest First' }
   ];
 
-  // Mock events data
-  const events: Event[] = [
-    {
-      id: '1',
-      title: 'Georgian Language Exchange Meetup',
-      description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
-      category: 'language',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Rustaveli Avenue 15, Tbilisi',
-      date: '2024-01-15',
-      time: '18:00',
-      duration: 120,
-      maxParticipants: 25,
-      currentParticipants: 18,
-      price: 0,
-      currency: 'GEL',
-      organizer: {
-        id: 'user1',
-        name: 'Tbilisi Language Club',
-        avatar: '🌍',
-        isVerified: true
+  // Load events from localStorage and add more mock events
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    // Load joined events from localStorage
+    const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    
+    // Base mock events with proper isJoined status from localStorage
+    const baseMockEvents: Event[] = [
+      {
+        id: '1',
+        title: 'Georgian Language Exchange Meetup',
+        description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
+        category: 'language',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Rustaveli Avenue 15, Tbilisi',
+        date: '2024-01-15',
+        time: '18:00',
+        duration: 120,
+        maxParticipants: 25,
+        currentParticipants: 18,
+        price: 0,
+        currency: 'GEL',
+        organizer: {
+          id: 'user1',
+          name: 'Tbilisi Language Club',
+          avatar: '🌍',
+          isVerified: true
+        },
+        tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
+        isPrivate: false,
+        isFeatured: true,
+        image: 'https://picsum.photos/400/300?random=1',
+        language: 'Georgian',
+        skillLevel: 'all-levels',
+        ageRestriction: '18+',
+        highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '1'),
+        createdAt: '2024-01-10T10:00:00Z',
+        lastUpdated: '2024-01-10T10:00:00Z'
       },
-      tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-      isPrivate: false,
-      isFeatured: true,
-      image: 'https://picsum.photos/400/300?random=1',
-      language: 'Georgian',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-10T10:00:00Z',
-      lastUpdated: '2024-01-10T10:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Electronic Music Night at Bass Club',
-      description: 'Join us for an electrifying night of electronic music, featuring local DJs and international artists. Dress to impress!',
-      category: 'music',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Vake District, Tbilisi',
-      date: '2024-01-16',
-      time: '22:00',
-      duration: 300,
-      maxParticipants: 200,
-      currentParticipants: 156,
-      price: 50,
-      currency: 'GEL',
-      organizer: {
-        id: 'user2',
-        name: 'Bass Club Tbilisi',
-        avatar: '🎵',
-        isVerified: true
+      {
+        id: '2',
+        title: 'Electronic Music Night at Bass Club',
+        description: 'Join us for an electrifying night of electronic music, featuring local DJs and international artists. Dress to impress!',
+        category: 'music',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Vake District, Tbilisi',
+        date: '2024-01-16',
+        time: '22:00',
+        duration: 300,
+        maxParticipants: 200,
+        currentParticipants: 156,
+        price: 50,
+        currency: 'GEL',
+        organizer: {
+          id: 'user2',
+          name: 'Bass Club Tbilisi',
+          avatar: '🎵',
+          isVerified: true
+        },
+        tags: ['Electronic Music', 'Nightlife', 'DJs'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=2',
+        ageRestriction: '21+',
+        dressCode: 'Smart casual to formal',
+        highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
+        isBookmarked: true,
+        isJoined: joinedEvents.some((e: any) => e.id === '2'),
+        createdAt: '2024-01-08T15:00:00Z',
+        lastUpdated: '2024-01-08T15:00:00Z'
       },
-      tags: ['Electronic Music', 'Nightlife', 'DJs'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=2',
-      ageRestriction: '21+',
-      dressCode: 'Smart casual to formal',
-      highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
-      isBookmarked: true,
-      isJoined: false,
-      createdAt: '2024-01-08T15:00:00Z',
-      lastUpdated: '2024-01-08T15:00:00Z'
-    },
-    {
-      id: '3',
-      title: 'Philosophy & Coffee Discussion Group',
-      description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society". All perspectives welcome.',
-      category: 'education',
-      type: 'hybrid',
-      location: 'Tbilisi, Georgia',
-      address: 'Coffee Lab, Old Town, Tbilisi',
-      date: '2024-01-14',
-      time: '14:00',
-      duration: 90,
-      maxParticipants: 15,
-      currentParticipants: 8,
-      price: 15,
-      currency: 'GEL',
-      organizer: {
-        id: 'user3',
-        name: 'Philosophy Circle',
-        avatar: '🤔',
-        isVerified: false
+      {
+        id: '3',
+        title: 'Philosophy & Coffee Discussion Group',
+        description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society". All perspectives welcome.',
+        category: 'education',
+        type: 'hybrid',
+        location: 'Tbilisi, Georgia',
+        address: 'Coffee Lab, Old Town, Tbilisi',
+        date: '2024-01-14',
+        time: '14:00',
+        duration: 90,
+        maxParticipants: 15,
+        currentParticipants: 8,
+        price: 15,
+        currency: 'GEL',
+        organizer: {
+          id: 'user3',
+          name: 'Philosophy Circle',
+          avatar: '🤔',
+          isVerified: false
+        },
+        tags: ['Philosophy', 'Discussion', 'Coffee'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=3',
+        skillLevel: 'all-levels',
+        ageRestriction: '18+',
+        highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '3'),
+        createdAt: '2024-01-12T09:00:00Z',
+        lastUpdated: '2024-01-12T09:00:00Z'
       },
-      tags: ['Philosophy', 'Discussion', 'Coffee'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=3',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
-      isBookmarked: false,
-      isJoined: true,
-      createdAt: '2024-01-05T12:00:00Z',
-      lastUpdated: '2024-01-05T12:00:00Z'
-    },
-    {
-      id: '4',
-      title: 'Weekend Hiking Adventure',
-      description: 'Explore the beautiful trails around Tbilisi with fellow nature lovers. Moderate difficulty, stunning views, and picnic lunch included.',
-      category: 'outdoor',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Meet at Freedom Square, Tbilisi',
-      date: '2024-01-20',
-      time: '09:00',
-      duration: 360,
-      maxParticipants: 20,
-      currentParticipants: 12,
-      price: 35,
-      currency: 'GEL',
-      organizer: {
-        id: 'user4',
-        name: 'Tbilisi Hikers',
-        avatar: '🏃',
-        isVerified: true
+      {
+        id: '4',
+        title: 'Weekend Hiking Adventure',
+        description: 'Explore the beautiful trails around Tbilisi with experienced guides. Suitable for all fitness levels.',
+        category: 'outdoor',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Meeting point: Liberty Square',
+        date: '2024-01-20',
+        time: '08:00',
+        duration: 360,
+        maxParticipants: 20,
+        currentParticipants: 12,
+        price: 25,
+        currency: 'GEL',
+        organizer: {
+          id: 'user4',
+          name: 'Tbilisi Hiking Club',
+          avatar: '🏔️',
+          isVerified: true
+        },
+        tags: ['Hiking', 'Nature', 'Adventure'],
+        isPrivate: false,
+        isFeatured: true,
+        image: 'https://picsum.photos/400/300?random=4',
+        ageRestriction: '18+',
+        requirements: ['Comfortable shoes', 'Water bottle', 'Weather-appropriate clothing'],
+        highlights: ['Professional guides', 'Beautiful scenery', 'Group bonding'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '4'),
+        createdAt: '2024-01-05T10:00:00Z',
+        lastUpdated: '2024-01-05T10:00:00Z'
       },
-      tags: ['Hiking', 'Nature', 'Adventure'],
-      isPrivate: false,
-      isFeatured: true,
-      image: 'https://picsum.photos/400/300?random=4',
-      skillLevel: 'intermediate',
-      ageRestriction: '16+',
-      requirements: ['Comfortable hiking shoes', 'Water bottle', 'Weather-appropriate clothing'],
-      highlights: ['Guided tour', 'Lunch included', 'Transportation provided'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-01T09:00:00Z',
-      lastUpdated: '2024-01-01T09:00:00Z'
-    },
-    {
-      id: '5',
-      title: 'Virtual Book Club: Modern Literature',
-      description: 'Join our online book club discussing contemporary literature. This month: "The Midnight Library" by Matt Haig. Connect with readers worldwide!',
-      category: 'education',
-      type: 'virtual',
-      location: 'Online',
-      date: '2024-01-18',
-      time: '19:00',
-      duration: 60,
-      maxParticipants: 50,
-      currentParticipants: 23,
-      price: 0,
-      currency: 'USD',
-      organizer: {
-        id: 'user5',
-        name: 'Global Book Club',
-        avatar: '📚',
-        isVerified: true
+      {
+        id: '5',
+        title: 'Cooking Masterclass: Georgian Cuisine',
+        description: 'Learn to cook traditional Georgian dishes from a master chef. All ingredients and equipment provided.',
+        category: 'food',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Culinary Institute, Old Town',
+        date: '2024-01-18',
+        time: '16:00',
+        duration: 180,
+        maxParticipants: 15,
+        currentParticipants: 10,
+        price: 80,
+        currency: 'GEL',
+        organizer: {
+          id: 'user5',
+          name: 'Georgian Culinary Arts',
+          avatar: '👨‍🍳',
+          isVerified: true
+        },
+        tags: ['Cooking', 'Georgian Cuisine', 'Workshop'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=5',
+        skillLevel: 'beginner',
+        ageRestriction: '18+',
+        requirements: ['No experience needed', 'Comfortable clothing'],
+        highlights: ['Master chef instruction', 'All materials included', 'Take home your creations'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '5'),
+        createdAt: '2024-01-03T14:00:00Z',
+        lastUpdated: '2024-01-03T14:00:00Z'
       },
-      tags: ['Book Club', 'Literature', 'Online Discussion'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=5',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-03T14:00:00Z',
-      lastUpdated: '2024-01-03T14:00:00Z'
-    },
-    {
-      id: '6',
-      title: 'Weekend Photography Workshop',
-      description: 'Learn photography basics and advanced techniques from professional photographers. Bring your camera and enthusiasm!',
-      category: 'education',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Photography Studio, Vake District',
-      date: '2024-01-22',
-      time: '10:00',
-      duration: 240,
-      maxParticipants: 12,
-      currentParticipants: 8,
-      price: 120,
-      currency: 'GEL',
-      organizer: {
-        id: 'user6',
-        name: 'Tbilisi Photography School',
-        avatar: '📸',
-        isVerified: true
+      {
+        id: '6',
+        title: 'Virtual Book Club: Modern Literature',
+        description: 'Join our online book club discussing contemporary literature. This month: "The Midnight Library" by Matt Haig. Connect with readers worldwide!',
+        category: 'education',
+        type: 'virtual',
+        location: 'Online',
+        date: '2024-01-18',
+        time: '19:00',
+        duration: 60,
+        maxParticipants: 50,
+        currentParticipants: 23,
+        price: 0,
+        currency: 'USD',
+        organizer: {
+          id: 'user5',
+          name: 'Global Book Club',
+          avatar: '📚',
+          isVerified: true
+        },
+        tags: ['Book Club', 'Literature', 'Online Discussion'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=6',
+        skillLevel: 'all-levels',
+        ageRestriction: '18+',
+        highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '6'),
+        createdAt: '2024-01-03T14:00:00Z',
+        lastUpdated: '2024-01-03T14:00:00Z'
       },
-      tags: ['Photography', 'Workshop', 'Creative'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=6',
-      skillLevel: 'beginner',
-      ageRestriction: '16+',
-      requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
-      highlights: ['Professional instructors', 'Hands-on practice', 'Equipment provided'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-02T11:00:00Z',
-      lastUpdated: '2024-01-02T11:00:00Z'
-    },
-    {
-      id: '7',
-      title: 'Cooking Class: Traditional Georgian Cuisine',
-      description: 'Master the art of Georgian cooking with our expert chef. Learn to make khachapuri, khinkali, and more!',
-      category: 'food',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Culinary Institute, Old Town',
-      date: '2024-01-25',
-      time: '14:00',
-      duration: 180,
-      maxParticipants: 15,
-      currentParticipants: 12,
-      price: 85,
-      currency: 'GEL',
-      organizer: {
-        id: 'user7',
-        name: 'Georgian Cuisine Master',
-        avatar: '👨‍🍳',
-        isVerified: true
+      {
+        id: '7',
+        title: 'Weekend Photography Workshop',
+        description: 'Learn photography basics and advanced techniques from professional photographers. Bring your camera and enthusiasm!',
+        category: 'education',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Photography Studio, Vake District',
+        date: '2024-01-22',
+        time: '10:00',
+        duration: 240,
+        maxParticipants: 12,
+        currentParticipants: 8,
+        price: 120,
+        currency: 'GEL',
+        organizer: {
+          id: 'user6',
+          name: 'Tbilisi Photography School',
+          avatar: '📸',
+          isVerified: true
+        },
+        tags: ['Photography', 'Workshop', 'Creative'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=7',
+        skillLevel: 'beginner',
+        ageRestriction: '18+',
+        requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
+        highlights: ['Professional instructors', 'Hands-on practice', 'Equipment provided'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '7'),
+        createdAt: '2024-01-02T11:00:00Z',
+        lastUpdated: '2024-01-02T11:00:00Z'
       },
-      tags: ['Cooking', 'Georgian Cuisine', 'Cultural'],
-      isPrivate: false,
-      isFeatured: true,
-      image: 'https://picsum.photos/400/300?random=7',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      requirements: ['Apron', 'Closed-toe shoes', 'Hunger for learning'],
-      highlights: ['Take home your creations', 'Recipe booklet', 'Wine tasting included'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-01T08:00:00Z',
-      lastUpdated: '2024-01-01T08:00:00Z'
-    },
-    {
-      id: '8',
-      title: 'Tech Startup Networking Mixer',
-      description: 'Connect with fellow entrepreneurs, investors, and tech professionals. Share ideas and build meaningful connections.',
-      category: 'business',
-      type: 'hybrid',
-      location: 'Tbilisi, Georgia',
-      address: 'Innovation Hub, Saburtalo',
-      date: '2024-01-19',
-      time: '18:30',
-      duration: 150,
-      maxParticipants: 100,
-      currentParticipants: 67,
-      price: 25,
-      currency: 'GEL',
-      organizer: {
-        id: 'user8',
-        name: 'Tbilisi Tech Community',
-        avatar: '💻',
-        isVerified: true
-      },
-      tags: ['Networking', 'Startups', 'Technology'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=8',
-      skillLevel: 'all-levels',
-      ageRestriction: '21+',
-      dressCode: 'Business casual',
-      highlights: ['Pitch competition', 'Free drinks', 'Investor meet & greet'],
-      isBookmarked: false,
-      isJoined: false,
-      createdAt: '2024-01-04T16:00:00Z',
-      lastUpdated: '2024-01-04T16:00:00Z'
-    }
-  ];
+      {
+        id: '8',
+        title: 'Tech Startup Networking Mixer',
+        description: 'Connect with fellow entrepreneurs, investors, and tech professionals. Share ideas and build meaningful connections.',
+        category: 'business',
+        type: 'hybrid',
+        location: 'Tbilisi, Georgia',
+        address: 'Innovation Hub, Saburtalo',
+        date: '2024-01-19',
+        time: '18:30',
+        duration: 150,
+        maxParticipants: 100,
+        currentParticipants: 67,
+        price: 25,
+        currency: 'GEL',
+        organizer: {
+          id: 'user8',
+          name: 'Tbilisi Tech Community',
+          avatar: '💻',
+          isVerified: true
+        },
+        tags: ['Networking', 'Startups', 'Technology'],
+        isPrivate: false,
+        isFeatured: false,
+        image: 'https://picsum.photos/400/300?random=8',
+        skillLevel: 'all-levels',
+        ageRestriction: '21+',
+        dressCode: 'Business casual',
+        highlights: ['Pitch competition', 'Free drinks', 'Investor meet & greet'],
+        isBookmarked: false,
+        isJoined: joinedEvents.some((e: any) => e.id === '8'),
+        createdAt: '2024-01-04T16:00:00Z',
+        lastUpdated: '2024-01-04T16:00:00Z'
+      }
+    ];
+    
+    // Update isJoined status based on localStorage
+    const eventsWithJoinedStatus = baseMockEvents.map(event => ({
+      ...event,
+      isJoined: joinedEvents.some((e: any) => e.id === event.id)
+    }));
+    
+    setEvents(eventsWithJoinedStatus);
+    setLoading(false);
+  }, []);
+
+
+
 
   // Filter events based on selected criteria
   const filteredEvents = events.filter(event => {
+    // Filter out joined events - they should not appear on the Events page
+    if (event.isJoined) {
+      return false;
+    }
+    
     // Search filter - check title, description, tags, and organizer name
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || 
@@ -481,8 +508,54 @@ const Events = () => {
   });
 
      const handleJoinEvent = (eventId: string) => {
-     // Simulate joining event
-   };
+       // Update the event's isJoined status
+       setEvents(prevEvents => 
+         prevEvents.map(event => 
+           event.id === eventId 
+             ? { ...event, isJoined: true }
+             : event
+         )
+       );
+       
+       // Add to joinedEvents in localStorage
+       const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+       const eventToJoin = events.find(event => event.id === eventId);
+       if (eventToJoin && !joinedEvents.some((e: any) => e.id === eventId)) {
+         joinedEvents.push(eventToJoin);
+         localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
+       }
+     };
+
+     const handleLeaveEvent = (eventId: string) => {
+       // Find the event to leave
+       const event = events.find(e => e.id === eventId);
+       if (event) {
+         setEventToLeave(event);
+         setShowLeaveConfirmation(true);
+       }
+     };
+
+     const confirmLeaveEvent = () => {
+       if (!eventToLeave) return;
+       
+       // Update the event's isJoined status
+       setEvents(prevEvents => 
+         prevEvents.map(event => 
+           event.id === eventToLeave.id 
+             ? { ...event, isJoined: false }
+             : event
+         )
+       );
+       
+       // Remove from joinedEvents in localStorage
+       const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+       const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
+       localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+       
+       // Close modal and reset state
+       setShowLeaveConfirmation(false);
+       setEventToLeave(null);
+     };
 
      const handleBookmarkEvent = (eventId: string) => {
      // Simulate bookmarking event
@@ -743,7 +816,7 @@ const Events = () => {
           {/* Results Counter */}
           {!loading && sortedEvents.length > 0 && (
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{sortedEvents.length} event{sortedEvents.length !== 1 ? 's' : ''} found</span>
+              <span>{sortedEvents.length} available event{sortedEvents.length !== 1 ? 's' : ''} found</span>
               {getActiveFiltersCount() > 0 && (
                 <Button
                   variant="ghost"
@@ -783,7 +856,7 @@ const Events = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   {getActiveFiltersCount() > 0 
                     ? `No events match your current filters. Try adjusting them or clear all filters to see all events.`
-                    : 'Check back later for new events or try creating one yourself!'
+                    : 'All events have been joined! Check back later for new events or try creating one yourself!'
                   }
                 </p>
                 {getActiveFiltersCount() > 0 && (
@@ -962,7 +1035,7 @@ const Events = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                                                      if (event.isJoined) {
-                             // Handle leaving event
+                             handleLeaveEvent(event.id);
                            } else {
                              handleJoinEvent(event.id);
                            }
@@ -979,6 +1052,37 @@ const Events = () => {
           )}
         </div>
       </div>
+
+      {/* Leave Event Confirmation Modal */}
+      <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+        <DialogContent className="max-w-[320px] w-[calc(100vw-2rem)]">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-center">Leave Event?</DialogTitle>
+            <DialogDescription className="text-center">
+              Are you sure you want to leave "{eventToLeave?.title}"? You can always join again later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowLeaveConfirmation(false);
+                setEventToLeave(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmLeaveEvent}
+              className="flex-1"
+            >
+              Yes, Leave Event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>

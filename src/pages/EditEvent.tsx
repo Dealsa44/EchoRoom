@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -89,12 +89,14 @@ interface EventFormData {
   }>;
 }
 
-const CreateEvent = () => {
+const EditEvent = () => {
   const navigate = useNavigate();
+  const { eventId } = useParams();
   const { user } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
@@ -184,10 +186,61 @@ const CreateEvent = () => {
     { number: 4, title: 'Content', description: 'About, highlights, requirements', icon: '📋' },
     { number: 5, title: 'Agenda', description: 'Event schedule and activities', icon: '⏰' },
     { number: 6, title: 'Policies', description: 'Contact, cancellation, refund', icon: '📋' },
-    { number: 7, title: 'Review', description: 'Preview and publish', icon: '👁️' }
+    { number: 7, title: 'Review', description: 'Preview and save changes', icon: '👁️' }
   ];
 
+  // Load existing event data immediately
+  useEffect(() => {
+    if (eventId) {
+      // TODO: Replace with actual API call
+      // For now, use mock data immediately
+      const mockEventData: EventFormData = {
+        title: 'Sample Event Title',
+        description: 'This is a sample event description',
+        aboutEvent: 'This is a detailed description of the sample event',
+        category: 'language',
+        type: 'in-person',
+        location: 'Tbilisi, Georgia',
+        address: 'Sample Address 123',
+        virtualMeetingLink: '',
+        date: '2024-02-15',
+        time: '18:00',
+        duration: 120,
+        maxParticipants: 25,
+        price: 0,
+        currency: 'GEL',
+        isPrivate: false,
+        language: 'English',
+        ageRestriction: '18+',
+        dressCode: 'Casual',
+        requirements: ['Bring enthusiasm', 'Basic knowledge'],
+        highlights: ['Great networking', 'Free coffee'],
+        tags: ['networking', 'learning'],
+        image: '',
+        agenda: [
+          { time: '18:00', activity: 'Welcome', description: 'Introduction and welcome' },
+          { time: '18:30', activity: 'Main Activity', description: 'Main event activities' }
+        ],
+        additionalInfo: 'Additional information about the event',
+        contactEmail: 'organizer@example.com',
+        contactPhone: '+995 123 456 789',
+        website: 'https://example.com',
+        socialMedia: {
+          facebook: 'https://facebook.com/example',
+          instagram: 'https://instagram.com/example'
+        },
+        cancellationPolicy: 'Free cancellation up to 24 hours before',
+        refundPolicy: 'Full refund available',
+        transportation: ['Metro line 1', 'Bus 37'],
+        parking: 'limited',
+        accessibility: ['Wheelchair accessible'],
+        photos: [],
+        documents: []
+      };
 
+      setFormData(mockEventData);
+    }
+  }, [eventId]);
 
   // Get minimum time (current time + 1 hour)
   const getMinTime = () => {
@@ -330,28 +383,43 @@ const CreateEvent = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Create new event with unique ID
-      const newEvent = {
-        ...formData,
-        id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        hostId: user?.id || 'user_1',
-        hostName: user?.username || 'You',
-        participants: [],
-        isHosted: true
-      };
-      
-      // Save to localStorage
+      // Update event in localStorage
       const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-      const updatedEvents = [...existingEvents, newEvent];
+      const updatedEvents = existingEvents.map((event: any) => 
+        event.id === eventId ? { ...event, ...formData } : event
+      );
       localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
       
-      // Navigate to my events page
+      // Navigate back to my events page
       navigate('/my-events');
     } catch (error) {
-      console.error('Failed to create event:', error);
+      console.error('Failed to update event:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.title.trim() && formData.description.trim() && formData.category;
+      case 2:
+        return formData.date && formData.time && formData.location.trim();
+      case 3:
+        return formData.maxParticipants > 0;
+      case 4:
+        return formData.aboutEvent.trim();
+      case 5:
+        return true; // Agenda is optional
+      case 6:
+        // At least one contact method must be provided
+        return (formData.contactEmail.trim() || formData.contactPhone.trim()) && 
+               formData.cancellationPolicy.trim() && 
+               formData.refundPolicy.trim();
+      case 7:
+        return true; // Preview step
+      default:
+        return true;
     }
   };
 
@@ -586,13 +654,13 @@ const CreateEvent = () => {
                   <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
-                                  <SelectContent className="max-h-40">
-                  {currencies.map(currency => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectContent className="max-h-40">
+                    {currencies.map(currency => (
+                      <SelectItem key={currency.value} value={currency.value}>
+                        {currency.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             </div>
@@ -1009,7 +1077,7 @@ const CreateEvent = () => {
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Preview Your Event</h3>
-              <p className="text-sm text-muted-foreground">Review all details before publishing</p>
+              <p className="text-sm text-muted-foreground">Review all details before saving changes</p>
             </div>
 
             {/* Contact Information */}
@@ -1163,8 +1231,6 @@ const CreateEvent = () => {
                 </div>
               </CardContent>
             </Card>
-
-            
           </div>
         );
 
@@ -1173,43 +1239,21 @@ const CreateEvent = () => {
     }
   };
 
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 1:
-        return formData.title.trim() && formData.description.trim() && formData.category;
-      case 2:
-        return formData.date && formData.time && formData.location.trim();
-      case 3:
-        return formData.maxParticipants > 0;
-      case 4:
-        return formData.aboutEvent.trim();
-      case 5:
-        return true; // Agenda is optional
-      case 6:
-        // At least one contact method must be provided
-        return (formData.contactEmail.trim() || formData.contactPhone.trim()) && 
-               formData.cancellationPolicy.trim() && 
-               formData.refundPolicy.trim();
-      case 7:
-        return true; // Preview step
-      default:
-        return true;
-    }
-  };
+
 
   return (
     <div className="min-h-screen app-gradient-bg relative">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
-        <div className="absolute bottom-32 left-8 w-20 h-20 bg-gradient-secondary rounded-xl blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-32 left-8 w-20 w-20 bg-gradient-secondary rounded-xl blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
         <div className="absolute top-1/2 right-6 w-16 h-16 bg-gradient-accent rounded-full blur-lg animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
       <TopBar 
-        title="Create Event" 
+        title="Edit Event" 
         showBack={true}
-        onBack={() => navigate('/events')}
+        onBack={() => navigate(-1)}
       />
       
       <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
@@ -1272,63 +1316,44 @@ const CreateEvent = () => {
         </Card>
 
         {/* Navigation */}
-        {currentStep < 7 ? (
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Previous
-            </Button>
-            <Button
-              onClick={nextStep}
-              disabled={!isStepValid()}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              Next
-              <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Event...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Create Event
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Save Draft Button */}
-        {currentStep < 7 && (
-          <Button variant="ghost" className="w-full hover:scale-105 transition-transform duration-200">
-            <Save className="mr-2 h-4 w-4" />
-            Save Draft
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className="flex-1 hover:scale-105 transition-transform duration-200"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
           </Button>
-        )}
+          <Button
+            onClick={nextStep}
+            disabled={currentStep === steps.length}
+            className="flex-1 hover:scale-105 transition-transform duration-200"
+          >
+            Next
+            <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+          </Button>
+        </div>
+
+        {/* Save Button - Always Visible */}
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !isStepValid()}
+          className="w-full hover:scale-105 transition-transform duration-200"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving Changes...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
       </div>
 
       <BottomNavigation />
@@ -1336,4 +1361,4 @@ const CreateEvent = () => {
   );
 };
 
-export default CreateEvent;
+export default EditEvent;

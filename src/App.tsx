@@ -28,6 +28,7 @@ import ForumThread from "./pages/ForumThread";
 import Events from "./pages/Events";
 import Event from "./pages/Event";
 import CreateEvent from "./pages/CreateEvent";
+import EditEvent from "./pages/EditEvent";
 import MyEvents from "./pages/MyEvents";
 import Community from "./pages/Community";
 import Profile from "./pages/Profile";
@@ -153,6 +154,11 @@ const App = () => {
         <Route path="/create-event" element={
           <AuthGuard>
             <CreateEvent />
+          </AuthGuard>
+        } />
+        <Route path="/edit-event/:eventId" element={
+          <AuthGuard>
+            <EditEvent />
           </AuthGuard>
         } />
         <Route path="/my-events" element={

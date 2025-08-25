@@ -23,6 +23,7 @@ import {
   Eye
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
@@ -68,156 +69,137 @@ interface Event {
 const MyEvents = () => {
   const navigate = useNavigate();
   const { user } = useApp();
-  const [activeTab, setActiveTab] = useState('hosting');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Get the last active tab from localStorage, default to 'hosting'
+    return localStorage.getItem('myEventsActiveTab') || 'hosting';
+  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
 
-  // Mock data for events the user is hosting
-  const hostedEvents: Event[] = [
-    {
-      id: '1',
-      title: 'Georgian Language Exchange Meetup',
-      description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
-      category: 'language',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Rustaveli Avenue 15, Tbilisi',
-      date: '2024-01-15',
-      time: '18:00',
-      duration: 120,
-      maxParticipants: 25,
-      currentParticipants: 18,
-      price: 0,
-      currency: 'GEL',
-      organizer: {
-        id: user?.id || 'user1',
-        name: user?.name || 'You',
-        avatar: user?.avatar || '👤',
-        isVerified: true
-      },
-      tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-      isPrivate: false,
-      isFeatured: true,
-      image: 'https://picsum.photos/400/300?random=1',
-      language: 'Georgian',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-      isBookmarked: false,
-      isJoined: true,
-      createdAt: '2024-01-10T10:00:00Z',
-      lastUpdated: '2024-01-10T10:00:00Z',
-      status: 'upcoming'
-    },
-    {
-      id: '2',
-      title: 'Weekend Photography Workshop',
-      description: 'Learn photography basics and advanced techniques from professional photographers.',
-      category: 'education',
-      type: 'in-person',
-      location: 'Tbilisi, Georgia',
-      address: 'Photography Studio, Vake District',
-      date: '2024-01-22',
-      time: '10:00',
-      duration: 240,
-      maxParticipants: 12,
-      currentParticipants: 8,
-      price: 120,
-      currency: 'GEL',
-      organizer: {
-        id: user?.id || 'user2',
-        name: user?.name || 'You',
-        avatar: user?.avatar || '👤',
-        isVerified: true
-      },
-      tags: ['Photography', 'Workshop', 'Creative'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=6',
-      skillLevel: 'beginner',
-      ageRestriction: '16+',
-      requirements: ['Camera (any type)', 'Comfortable walking shoes'],
-      highlights: ['Professional instructors', 'Hands-on practice'],
-      isBookmarked: false,
-      isJoined: true,
-      createdAt: '2024-01-02T11:00:00Z',
-      lastUpdated: '2024-01-02T11:00:00Z',
-      status: 'upcoming'
-    }
-  ];
+  // Load events from localStorage
+  const [hostedEvents, setHostedEvents] = useState<Event[]>([]);
+  const [joinedEvents, setJoinedEvents] = useState<Event[]>([]);
 
-  // Mock data for events the user has joined
-  const joinedEvents: Event[] = [
-    {
-      id: '3',
-      title: 'Philosophy & Coffee Discussion Group',
-      description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society".',
-      category: 'education',
-      type: 'hybrid',
-      location: 'Tbilisi, Georgia',
-      address: 'Coffee Lab, Old Town, Tbilisi',
-      date: '2024-01-14',
-      time: '14:00',
-      duration: 90,
-      maxParticipants: 15,
-      currentParticipants: 8,
-      price: 15,
-      currency: 'GEL',
-      organizer: {
-        id: 'user3',
-        name: 'Philosophy Circle',
-        avatar: '🤔',
-        isVerified: false
-      },
-      tags: ['Philosophy', 'Discussion', 'Coffee'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=3',
-      skillLevel: 'all-levels',
-      ageRestriction: '18+',
-      highlights: ['Intellectual discussion', 'Coffee included'],
-      isBookmarked: false,
-      isJoined: true,
-      createdAt: '2024-01-05T12:00:00Z',
-      lastUpdated: '2024-01-05T12:00:00Z',
-      status: 'upcoming'
-    },
-    {
-      id: '4',
-      title: 'Tech Startup Networking Mixer',
-      description: 'Connect with fellow entrepreneurs, investors, and tech professionals.',
-      category: 'business',
-      type: 'hybrid',
-      location: 'Tbilisi, Georgia',
-      address: 'Innovation Hub, Saburtalo',
-      date: '2024-01-19',
-      time: '18:30',
-      duration: 150,
-      maxParticipants: 100,
-      currentParticipants: 67,
-      price: 25,
-      currency: 'GEL',
-      organizer: {
-        id: 'user8',
-        name: 'Tbilisi Tech Community',
-        avatar: '💻',
-        isVerified: true
-      },
-      tags: ['Networking', 'Startups', 'Technology'],
-      isPrivate: false,
-      isFeatured: false,
-      image: 'https://picsum.photos/400/300?random=8',
-      skillLevel: 'all-levels',
-      ageRestriction: '21+',
-      dressCode: 'Business casual',
-      highlights: ['Pitch competition', 'Free drinks'],
-      isBookmarked: false,
-      isJoined: true,
-      createdAt: '2024-01-04T16:00:00Z',
-      lastUpdated: '2024-01-04T16:00:00Z',
-      status: 'upcoming'
+  useEffect(() => {
+    // Initialize with mock data if localStorage is empty
+    const existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+    const existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    
+    if (existingHostedEvents.length === 0) {
+      // Add initial mock events
+      const initialMockEvents = [
+        {
+          id: '1',
+          title: 'Georgian Language Exchange Meetup',
+          description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
+          category: 'language',
+          type: 'in-person',
+          location: 'Tbilisi, Georgia',
+          address: 'Rustaveli Avenue 15, Tbilisi',
+          date: '2024-01-15',
+          time: '18:00',
+          duration: 120,
+          maxParticipants: 25,
+          currentParticipants: 18,
+          price: 0,
+          currency: 'GEL',
+          organizer: {
+            id: user?.id || 'user1',
+            name: user?.username || 'You',
+            avatar: user?.avatar || '👤',
+            isVerified: true
+          },
+          tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
+          isPrivate: false,
+          isFeatured: true,
+          image: 'https://picsum.photos/400/300?random=1',
+          language: 'Georgian',
+          skillLevel: 'all-levels',
+          ageRestriction: '18+',
+          highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
+          isBookmarked: false,
+          isJoined: true,
+          createdAt: '2024-01-10T10:00:00Z',
+          lastUpdated: '2024-01-10T10:00:00Z',
+          status: 'upcoming'
+        },
+        {
+          id: '2',
+          title: 'Weekend Photography Workshop',
+          description: 'Learn photography basics and advanced techniques from professional photographers.',
+          category: 'education',
+          type: 'in-person',
+          location: 'Tbilisi, Georgia',
+          address: 'Photography Studio, Vake District',
+          date: '2024-01-22',
+          time: '10:00',
+          duration: 240,
+          maxParticipants: 12,
+          currentParticipants: 8,
+          price: 120,
+          currency: 'GEL',
+          organizer: {
+            id: user?.id || 'user2',
+            name: user?.username || 'You',
+            avatar: user?.avatar || '👤',
+            isVerified: true
+          },
+          tags: ['Photography', 'Workshop', 'Creative'],
+          isPrivate: false,
+          isFeatured: false,
+          image: 'https://picsum.photos/400/300?random=6',
+          skillLevel: 'beginner',
+          ageRestriction: '16+',
+          requirements: ['Camera (any type)', 'Comfortable walking shoes'],
+          highlights: ['Professional instructors', 'Hands-on practice'],
+          isBookmarked: false,
+          isJoined: true,
+          createdAt: '2024-01-02T11:00:00Z',
+          lastUpdated: '2024-01-02T11:00:00Z',
+          status: 'upcoming'
+        }
+      ];
+      
+      localStorage.setItem('hostedEvents', JSON.stringify(initialMockEvents));
+      setHostedEvents(initialMockEvents);
+    } else {
+      setHostedEvents(existingHostedEvents);
     }
-  ];
+    
+    setJoinedEvents(existingJoinedEvents);
+    setLoading(false);
+  }, [user]);
+
+  // Refresh events when component becomes visible (e.g., returning from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshEvents();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshEvents();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  // Function to refresh events from localStorage
+  const refreshEvents = () => {
+    const existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+    const existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    setHostedEvents(existingHostedEvents);
+    setJoinedEvents(existingJoinedEvents);
+  };
 
   // Simulate loading delay
   useEffect(() => {
@@ -314,11 +296,34 @@ const MyEvents = () => {
     console.log('Send announcement for event:', eventId);
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Save the active tab to localStorage
+    localStorage.setItem('myEventsActiveTab', value);
+  };
+
   const handleLeaveEvent = (eventId: string) => {
-    // Leave event logic here
-    if (confirm('Are you sure you want to leave this event?')) {
-      console.log('Leaving event:', eventId);
+    // Find the event to leave
+    const event = joinedEvents.find(e => e.id === eventId);
+    if (event) {
+      setEventToLeave(event);
+      setShowLeaveConfirmation(true);
     }
+  };
+
+  const confirmLeaveEvent = () => {
+    if (!eventToLeave) return;
+    
+    // Remove from joinedEvents
+    const updatedJoinedEvents = joinedEvents.filter(e => e.id !== eventToLeave.id);
+    setJoinedEvents(updatedJoinedEvents);
+    
+    // Update localStorage
+    localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
+    
+    // Close modal and reset state
+    setShowLeaveConfirmation(false);
+    setEventToLeave(null);
   };
 
   const filteredHostedEvents = hostedEvents.filter(event =>
@@ -370,7 +375,7 @@ const MyEvents = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="hosting" className="text-sm">
               <Star className="w-4 h-4 mr-2" />
@@ -725,6 +730,37 @@ const MyEvents = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Leave Event Confirmation Modal */}
+      <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>
+        <DialogContent className="max-w-[320px] w-[calc(100vw-2rem)]">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-center">Leave Event?</DialogTitle>
+            <DialogDescription className="text-center">
+              Are you sure you want to leave "{eventToLeave?.title}"? You can always join again later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowLeaveConfirmation(false);
+                setEventToLeave(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmLeaveEvent}
+              className="flex-1"
+            >
+              Yes, Leave Event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>
