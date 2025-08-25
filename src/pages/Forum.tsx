@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,16 @@ const Forum = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const categories = [
     { value: 'all', label: 'All Topics', icon: '💬' },
@@ -215,7 +225,57 @@ const Forum = () => {
 
         {/* Threads List */}
         <div className="space-y-4">
-          {sortedThreads.map((thread, index) => (
+          {loading ? (
+            // Loading skeletons
+            Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="shadow-large animate-pulse">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {/* Header skeleton */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="h-6 bg-muted rounded w-20"></div>
+                          <div className="h-6 bg-muted rounded w-24"></div>
+                        </div>
+                        <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-muted rounded w-1/2"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Excerpt skeleton */}
+                    <div className="space-y-2">
+                      <div className="h-4 bg-muted rounded w-full"></div>
+                      <div className="h-4 bg-muted rounded w-2/3"></div>
+                    </div>
+                    
+                    {/* Tags skeleton */}
+                    <div className="flex gap-2 pt-3">
+                      <div className="h-6 bg-muted rounded w-16"></div>
+                      <div className="h-6 bg-muted rounded w-20"></div>
+                      <div className="h-6 bg-muted rounded w-18"></div>
+                    </div>
+                    
+                    {/* Footer skeleton */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-muted rounded-xl"></div>
+                        <div className="space-y-1">
+                          <div className="h-4 bg-muted rounded w-24"></div>
+                          <div className="h-3 bg-muted rounded w-32"></div>
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="h-3 bg-muted rounded w-16"></div>
+                        <div className="h-3 bg-muted rounded w-20"></div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            sortedThreads.map((thread, index) => (
             <Card 
               key={thread.id} 
               className="cursor-pointer shadow-large animate-breathe-slow animate-slide-up animate-fade-in active:scale-[0.98] overflow-hidden"
@@ -302,10 +362,11 @@ const Forum = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          )}
         </div>
 
-        {sortedThreads.length === 0 && (
+        {!loading && sortedThreads.length === 0 && (
           <div className="text-center py-8">
             <div className="text-4xl mb-2">🔍</div>
             <p className="text-muted-foreground mb-3">No discussions found</p>

@@ -15,11 +15,13 @@ const BottomNavigation = () => {
 
   const isActive = (path: string) => {
     if (path === '/community') {
-      // Community is active for community, chat-rooms, forum, and their sub-pages
+      // Community is active for community, chat-rooms, forum, events, and their sub-pages
       return location.pathname === '/community' || 
              location.pathname === '/chat-rooms' || 
              location.pathname === '/forum' ||
-             location.pathname.startsWith('/forum/thread/');
+             location.pathname === '/events' ||
+             location.pathname.startsWith('/forum/thread/') ||
+             location.pathname.startsWith('/event/');
     }
     if (path === '/profile') {
       // Profile is active for profile and its sub-pages

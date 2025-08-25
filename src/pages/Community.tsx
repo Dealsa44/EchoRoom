@@ -178,6 +178,50 @@ const Community = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Events Card */}
+          <Card className="cursor-pointer shadow-medium animate-fade-in transition-all duration-300 active:scale-[0.98] border-2 border-transparent overflow-hidden"
+                onClick={() => navigate('/events?from=community')}>
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-amber-500/5 opacity-100 transition-smooth"></div>
+            <CardContent className="p-5 sm:p-6 relative z-10 animate-slide-up">
+              <div className="flex items-start gap-4">
+                <div className="flex-none w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 grid place-items-center shadow-inner-soft">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 mb-1">
+                    <h3 className="relative text-heading-2 font-semibold transition-smooth pb-1">
+                      Events
+                      <span className="absolute left-0 -bottom-0.5 h-0.5 w-16 bg-orange-500/70 rounded-full" />
+                    </h3>
+                    <Badge variant="glass" size="sm" className="bg-orange-500/20 text-orange-700 w-fit">
+                      {communityStats.newToday} upcoming
+                    </Badge>
+                  </div>
+                  <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">
+                    Join exciting events, meetups, and activities. From language exchanges to concerts, 
+                    parties to workshops - discover real-world connections and experiences.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground border-t border-border-soft pt-3">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-sm">🎉</span>
+                      <span>Parties & concerts</span>
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-sm">🌍</span>
+                      <span>Language exchanges</span>
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-sm">🤝</span>
+                      <span>Meetups & workshops</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

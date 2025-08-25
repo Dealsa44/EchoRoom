@@ -25,6 +25,10 @@ import ChatInbox from "./pages/ChatInbox";
 import PrivateChat from "./pages/PrivateChat";
 import Forum from "./pages/Forum";
 import ForumThread from "./pages/ForumThread";
+import Events from "./pages/Events";
+import Event from "./pages/Event";
+import CreateEvent from "./pages/CreateEvent";
+import MyEvents from "./pages/MyEvents";
 import Community from "./pages/Community";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
@@ -136,6 +140,26 @@ const App = () => {
                 <ForumThread />
               </AuthGuard>
             } />
+                    <Route path="/events" element={
+          <AuthGuard>
+            <Events />
+          </AuthGuard>
+        } />
+        <Route path="/event/:id" element={
+          <AuthGuard>
+            <Event />
+          </AuthGuard>
+        } />
+        <Route path="/create-event" element={
+          <AuthGuard>
+            <CreateEvent />
+          </AuthGuard>
+        } />
+        <Route path="/my-events" element={
+          <AuthGuard>
+            <MyEvents />
+          </AuthGuard>
+        } />
             <Route path="/profile" element={
               <AuthGuard>
                 <Profile />
