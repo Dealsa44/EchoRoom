@@ -27,6 +27,27 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Enhanced iOS PWA handling
+if (isIOS) {
+  // Listen for storage errors and provide fallback
+  self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'STORAGE_ERROR') {
+      console.log('Storage error detected, attempting recovery...');
+      
+      // Try to clear potentially corrupted cache
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      });
+    }
+  });
+}
+
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
   const { request } = event;

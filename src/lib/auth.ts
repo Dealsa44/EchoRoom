@@ -166,7 +166,7 @@ const saveUsers = (users: User[]): void => {
 
 const getCurrentUser = (): User | null => {
   try {
-    // Check if we're in a PWA environment
+    // Enhanced PWA environment detection
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                    (window.navigator as any).standalone === true;
     
@@ -176,12 +176,41 @@ const getCurrentUser = (): User | null => {
       return null;
     }
     
-    // Test localStorage access (iOS Safari can throw errors)
+    // Enhanced localStorage access test for iOS PWA
+    let localStorageTestPassed = false;
     try {
-      localStorage.setItem('test', 'test');
-      localStorage.removeItem('test');
+      const testKey = `pwa_test_${Date.now()}`;
+      localStorage.setItem(testKey, 'test');
+      const testValue = localStorage.getItem(testKey);
+      localStorage.removeItem(testKey);
+      localStorageTestPassed = testValue === 'test';
     } catch (testError) {
       console.warn('localStorage access test failed:', testError);
+      localStorageTestPassed = false;
+    }
+    
+    if (!localStorageTestPassed) {
+      console.warn('localStorage access test failed - possible iOS PWA restriction');
+      
+      // Try alternative storage methods for iOS PWA
+      if (isPWA && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        console.log('Attempting iOS PWA fallback storage methods...');
+        
+        // Try sessionStorage as fallback
+        try {
+          const sessionUser = sessionStorage.getItem(CURRENT_USER_KEY);
+          if (sessionUser) {
+            const parsedUser = JSON.parse(sessionUser);
+            if (parsedUser && typeof parsedUser === 'object' && parsedUser.id) {
+              console.log('Using sessionStorage fallback for iOS PWA');
+              return parsedUser;
+            }
+          }
+        } catch (sessionError) {
+          console.warn('sessionStorage fallback also failed:', sessionError);
+        }
+      }
+      
       return null;
     }
     
@@ -216,10 +245,42 @@ const getCurrentUser = (): User | null => {
 };
 
 const saveCurrentUser = (user: User | null): void => {
-  if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
+  try {
+    // Enhanced PWA environment detection
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                   (window.navigator as any).standalone === true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (user) {
+      // Primary storage method
+      try {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+        console.log('User saved to localStorage successfully');
+      } catch (localStorageError) {
+        console.warn('localStorage save failed, trying fallback methods:', localStorageError);
+        
+        // Fallback to sessionStorage for iOS PWA
+        if (isPWA && isIOS) {
+          try {
+            sessionStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+            console.log('User saved to sessionStorage fallback for iOS PWA');
+          } catch (sessionStorageError) {
+            console.error('Both localStorage and sessionStorage failed:', sessionStorageError);
+            // Could implement IndexedDB fallback here if needed
+          }
+        }
+      }
+    } else {
+      // Clean up user data
+      try {
+        localStorage.removeItem(CURRENT_USER_KEY);
+        sessionStorage.removeItem(CURRENT_USER_KEY);
+      } catch (cleanupError) {
+        console.warn('Failed to clean up user data:', cleanupError);
+      }
+    }
+  } catch (error) {
+    console.error('Error in saveCurrentUser:', error);
   }
 };
 

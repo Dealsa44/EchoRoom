@@ -221,16 +221,47 @@ const Profile = () => {
 
   // Early return if no user data and this is own profile
   if (isOwnProfile && !user) {
+    // Check if this might be a PWA storage issue
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                   (window.navigator as any).standalone === true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
     return (
       <div className="min-h-screen bg-background">
         <TopBar title="Profile" />
         <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
           <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">Please log in to view your profile.</p>
-              <Button onClick={() => navigate('/login')} className="mt-4">
-                Go to Login
-              </Button>
+            <CardContent className="p-6 text-center space-y-4">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-4">Please log in to view your profile.</p>
+                
+                {isPWA && isIOS && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
+                    <p className="text-amber-800 mb-2">
+                      <strong>iOS PWA Issue Detected</strong>
+                    </p>
+                    <p className="text-amber-700 text-xs">
+                      If you're experiencing login problems, try opening the app in Safari browser instead of from the home screen.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Button onClick={() => navigate('/login')} className="w-full">
+                    Go to Login
+                  </Button>
+                  
+                  {isPWA && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => window.open(window.location.href, '_blank')}
+                      className="w-full"
+                    >
+                      Open in Browser
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

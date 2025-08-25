@@ -12,6 +12,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import PublicGuard from "@/components/auth/PublicGuard";
 import ScrollToTop from "@/components/ScrollToTop";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import PWAErrorBoundary from "@/components/PWAErrorBoundary";
 import { UpdateNotification } from "@/components/UpdateNotification";
 
 // Pages
@@ -70,23 +71,24 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AppProvider>
-          <NotificationProvider>
-            <LanguageAIProvider>
-              <CallProvider>
-                <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                  }}
-                >
-                  <ScrollToTop />
-                  <UpdateNotification />
-            <Routes>
+      <PWAErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AppProvider>
+            <NotificationProvider>
+              <LanguageAIProvider>
+                <CallProvider>
+                  <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  >
+                    <ScrollToTop />
+                    <UpdateNotification />
+              <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={
               <PublicGuard>
@@ -210,13 +212,14 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
                 </BrowserRouter>
-              </TooltipProvider>
-            </CallProvider>
-          </LanguageAIProvider>
-        </NotificationProvider>
-      </AppProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+                  </TooltipProvider>
+                </CallProvider>
+              </LanguageAIProvider>
+            </NotificationProvider>
+          </AppProvider>
+        </QueryClientProvider>
+      </PWAErrorBoundary>
+    </ErrorBoundary>
   );
 };
 
