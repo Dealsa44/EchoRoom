@@ -979,20 +979,20 @@ const Event = () => {
   }
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="min-h-screen app-gradient-bg relative flex flex-col">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
         <div className="absolute bottom-32 left-8 w-20 h-20 bg-gradient-secondary rounded-full blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
       </div>
 
-             <TopBar 
-         title="Event" 
-         showBack={true}
-         onBack={() => navigate(-1)}
-       />
+      <TopBar 
+        title="Event" 
+        showBack={true}
+        onBack={() => navigate(-1)}
+      />
       
-      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
+      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24 flex flex-col overflow-x-hidden">
         {/* Event Header Image */}
         <div className="relative h-64 rounded-2xl overflow-hidden">
           <img
@@ -1108,28 +1108,28 @@ const Event = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar size={16} />
-              <span>{formatDate(event.date)}</span>
+              <Calendar size={16} className="flex-shrink-0" />
+              <span className="truncate">{formatDate(event.date)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock size={16} />
-              <span>{formatTime(event.time)} ({formatDuration(event.duration)})</span>
+              <Clock size={16} className="flex-shrink-0" />
+              <span className="truncate">{formatTime(event.time)} ({formatDuration(event.duration)})</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin size={16} />
+              <MapPin size={16} className="flex-shrink-0" />
               <span className="truncate">{event.location}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users size={16} />
-              <span>{event.currentParticipants}/{event.maxParticipants}</span>
+              <Users size={16} className="flex-shrink-0" />
+              <span className="truncate">{event.currentParticipants}/{event.maxParticipants}</span>
             </div>
           </div>
 
           {/* Primary Language */}
           {event.language && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Globe size={16} />
-              <span>Primary Language: <span className="font-medium">{event.language}</span></span>
+              <Globe size={16} className="flex-shrink-0" />
+              <span className="truncate">Primary Language: <span className="font-medium">{event.language}</span></span>
             </div>
           )}
 
@@ -1160,11 +1160,31 @@ const Event = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="participants">People</TabsTrigger>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 gap-1 p-1 bg-muted/30 rounded-lg">
+            <TabsTrigger 
+              value="overview" 
+              className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="details" 
+              className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Details
+            </TabsTrigger>
+            <TabsTrigger 
+              value="participants" 
+              className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              People
+            </TabsTrigger>
+            <TabsTrigger 
+              value="chat" 
+              className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              Chat
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -1493,60 +1513,58 @@ const Event = () => {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Users size={18} className="text-primary" />
-                    Participants ({participants.length})
+                  <h3 className="font-semibold flex items-center gap-2 text-base">
+                    <Users size={18} className="text-primary flex-shrink-0" />
+                    <span className="truncate">Participants ({participants.length})</span>
                   </h3>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowParticipantList(true)}
-                    className="text-primary"
+                    className="text-primary flex-shrink-0 ml-2"
                   >
                     View all
                   </Button>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
                   {participants.slice(0, 5).map((participant) => (
-                    <div key={participant.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>{participant.avatar}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{participant.name}</p>
-                            {participant.isVerified && (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                ✓
-                              </Badge>
-                            )}
-                            {participant.isOrganizer && (
-                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                                Organizer
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Joined {new Date(participant.joinedAt).toLocaleDateString()}
-                          </p>
+                    <div key={participant.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarFallback className="text-sm font-medium">{participant.avatar}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-medium text-sm truncate">{participant.name}</p>
+                          {participant.isVerified && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0">
+                              ✓
+                            </Badge>
+                          )}
+                          {participant.isOrganizer && (
+                            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 flex-shrink-0">
+                              Organizer
+                            </Badge>
+                          )}
                         </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Joined {new Date(participant.joinedAt).toLocaleDateString()}
+                        </p>
+                        <Badge variant="outline" className={`text-xs ${getStatusColor(participant.status)} flex-shrink-0`}>
+                          {getStatusIcon(participant.status)}
+                          <span className="ml-1 capitalize">{participant.status}</span>
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className={getStatusColor(participant.status)}>
-                        {getStatusIcon(participant.status)}
-                        <span className="ml-1 capitalize">{participant.status}</span>
-                      </Badge>
                     </div>
                   ))}
                   
                   {participants.length > 5 && (
-                    <div className="text-center pt-2">
+                    <div className="text-center pt-3 border-t border-border-soft">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowParticipantList(true)}
-                        className="text-primary"
+                        className="text-primary w-full"
                       >
                         Show {participants.length - 5} more participants
                       </Button>
@@ -1559,7 +1577,7 @@ const Event = () => {
 
           {/* Chat Tab */}
           <TabsContent value="chat" className="space-y-4 mt-4">
-            <Card className="h-96">
+            <Card className="min-h-96 max-h-96">
               <CardContent className="p-4 h-full flex flex-col">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <MessageCircle size={18} className="text-primary" />
@@ -1618,20 +1636,20 @@ const Event = () => {
                     </div>
                     
                     {/* Message Input */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-auto">
                       <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Ask a question or share something about the event..."
-                        className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                       />
                       <Button
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
                         size="sm"
-                        className="px-4"
+                        className="px-4 flex-shrink-0"
                       >
                         Send
                       </Button>

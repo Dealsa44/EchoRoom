@@ -148,6 +148,24 @@ const CreateEvent = () => {
   const [newDocumentUrl, setNewDocumentUrl] = useState('');
   const [newDocumentType, setNewDocumentType] = useState<'pdf' | 'doc' | 'image'>('pdf');
 
+  // Debug: Log initial form data
+  useEffect(() => {
+    console.log('Initial form data:', formData);
+    console.log('User data:', user);
+    
+    // Check if there's any sample data in localStorage
+    const sampleData = localStorage.getItem('sampleEventData');
+    if (sampleData) {
+      console.log('Found sample data in localStorage:', sampleData);
+    }
+    
+    // Check if there are any hosted events that might have sample data
+    const hostedEvents = localStorage.getItem('hostedEvents');
+    if (hostedEvents) {
+      console.log('Found hosted events in localStorage:', hostedEvents);
+    }
+  }, []);
+
   const categories = [
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
     { value: 'language', label: 'Language Exchange', icon: '🌍' },
@@ -203,10 +221,18 @@ const CreateEvent = () => {
   };
 
   const handleInputChange = (field: keyof EventFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      // Debug: Log form data changes
+      if (field === 'aboutEvent') {
+        console.log('About Event changed:', value);
+        console.log('Current form data:', newData);
+      }
+      return newData;
+    });
   };
 
   const addRequirement = () => {
@@ -464,6 +490,11 @@ const CreateEvent = () => {
                 onChange={(e) => handleInputChange('aboutEvent', e.target.value)}
                 className="mt-2 min-h-[120px] resize-none"
               />
+              {formData.aboutEvent && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Preview: {formData.aboutEvent.substring(0, 100)}{formData.aboutEvent.length > 100 ? '...' : ''}
+                </p>
+              )}
             </div>
 
             <div>
@@ -1196,6 +1227,33 @@ const CreateEvent = () => {
               <p className="text-sm text-muted-foreground">Review all details before publishing</p>
             </div>
 
+            {/* Organized By */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Users size={18} className="text-primary" />
+                  Organized By
+                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-lg">
+                    {user?.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        alt={user.username} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>{user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{user?.username || 'You'}</p>
+                    <p className="text-sm text-muted-foreground">Event Organizer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Contact Information */}
             <Card>
               <CardContent className="p-4">
@@ -1203,19 +1261,22 @@ const CreateEvent = () => {
                   <Users size={18} className="text-primary" />
                   Contact Information
                 </h3>
-                <div className="space-y-2">
-                  {formData.contactEmail && (
+                                <div className="space-y-2">
+                  {/* Show user's registration email if available */}
+                  {user?.email && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Mail size={16} />
-                      <span>{formData.contactEmail}</span>
+                      <span>{user.email}</span>
                     </div>
                   )}
+                  {/* Show event contact phone if provided */}
                   {formData.contactPhone && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone size={16} />
                       <span>{formData.contactPhone}</span>
                     </div>
                   )}
+                  {/* Show event website if provided */}
                   {formData.website && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Globe size={16} />
@@ -1229,27 +1290,48 @@ const CreateEvent = () => {
                       </Button>
                     </div>
                   )}
+                  {/* Show social media only if provided */}
                   {Object.values(formData.socialMedia).some(social => social) && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Social Media:</span>
-                      <div className="flex gap-2">
+                    <div className="space-y-2">
+                      <span className="text-sm text-muted-foreground">Social Media:</span>
+                      <div className="flex flex-wrap gap-2">
                         {formData.socialMedia.facebook && (
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-3 text-xs"
+                            onClick={() => window.open(formData.socialMedia.facebook, '_blank')}
+                          >
                             Facebook
                           </Button>
                         )}
                         {formData.socialMedia.instagram && (
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-3 text-xs"
+                            onClick={() => window.open(formData.socialMedia.instagram, '_blank')}
+                          >
                             Instagram
                           </Button>
                         )}
                         {formData.socialMedia.twitter && (
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-3 text-xs"
+                            onClick={() => window.open(formData.socialMedia.twitter, '_blank')}
+                          >
                             Twitter
                           </Button>
                         )}
                         {formData.socialMedia.linkedin && (
-                          <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-3 text-xs"
+                            onClick={() => window.open(formData.socialMedia.linkedin, '_blank')}
+                          >
                             LinkedIn
                           </Button>
                         )}
@@ -1382,7 +1464,7 @@ const CreateEvent = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient-bg relative">
+    <div className="min-h-screen app-gradient-bg relative flex flex-col">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-24 right-12 w-24 h-24 bg-gradient-primary rounded-full blur-2xl animate-float" />
@@ -1396,7 +1478,7 @@ const CreateEvent = () => {
         onBack={() => navigate('/events')}
       />
       
-      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
+      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24 flex flex-col overflow-x-hidden">
         {/* Progress Steps */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -1435,84 +1517,92 @@ const CreateEvent = () => {
           </div>
         </div>
 
-        {/* Step Content */}
-        <Card className="shadow-medium border-border-soft hover:shadow-large transition-all duration-300">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-xl">
-              <span className="text-2xl">{steps[currentStep - 1]?.icon}</span>
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {steps[currentStep - 1]?.title}
-              </span>
-            </CardTitle>
-            <p className="text-sm text-muted-foreground ml-11">
-              {steps[currentStep - 1]?.description}
-            </p>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="animate-fade-in">
-              {renderStepContent()}
+        {/* Step Content - Fixed height container */}
+        <div className="flex-1 min-h-0">
+          <Card className="shadow-medium border-border-soft hover:shadow-large transition-all duration-300 h-full flex flex-col">
+            <CardHeader className="pb-4 flex-shrink-0">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <span className="text-2xl">{steps[currentStep - 1]?.icon}</span>
+                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  {steps[currentStep - 1]?.title}
+                </span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground ml-11">
+                {steps[currentStep - 1]?.description}
+              </p>
+            </CardHeader>
+            <CardContent className="p-6 flex-1 min-h-0">
+              <div className="animate-fade-in h-full overflow-y-auto pr-2 custom-scrollbar" style={{
+                maxHeight: 'calc(100vh - 400px)',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+              }}>
+                {renderStepContent()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Navigation - Fixed at bottom */}
+        <div className="flex-shrink-0 bg-app-gradient-bg pt-2 pb-2">
+          {currentStep < 7 ? (
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex-1 hover:scale-105 transition-transform duration-200"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                onClick={nextStep}
+                disabled={!isStepValid()}
+                className="flex-1 hover:scale-105 transition-transform duration-200"
+              >
+                Next
+                <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                className="flex-1 hover:scale-105 transition-transform duration-200"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="flex-1 hover:scale-105 transition-transform duration-200"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Event...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Create Event
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
 
-        {/* Navigation */}
-        {currentStep < 7 ? (
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Previous
+          {/* Save Draft Button */}
+          {currentStep < 7 && (
+            <Button variant="ghost" className="w-full hover:scale-105 transition-transform duration-200 mt-3">
+              <Save className="mr-2 h-4 w-4" />
+              Save Draft
             </Button>
-            <Button
-              onClick={nextStep}
-              disabled={!isStepValid()}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              Next
-              <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex-1 hover:scale-105 transition-transform duration-200"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Event...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Create Event
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* Save Draft Button */}
-        {currentStep < 7 && (
-          <Button variant="ghost" className="w-full hover:scale-105 transition-transform duration-200">
-            <Save className="mr-2 h-4 w-4" />
-            Save Draft
-          </Button>
-        )}
+          )}
+        </div>
       </div>
 
       <BottomNavigation />
