@@ -18,7 +18,11 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Database,
+  AlertTriangle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
@@ -226,6 +230,308 @@ const Settings = () => {
           >
             Change Password
           </Button>
+        </CollapsibleSection>
+
+        {/* Local Storage Management */}
+        <CollapsibleSection title="Local Storage Management" icon={<Database className="h-4 w-4" />} defaultOpen={false}>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Manage your app's local data. Clear specific data types without losing everything.
+            </div>
+            
+            {/* User Data */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">User Data</h4>
+                  <p className="text-xs text-muted-foreground">Profile, settings, and preferences</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('echoroom_current_user');
+                      localStorage.removeItem('darkMode');
+                      localStorage.removeItem('joinedRooms');
+                      toast({
+                        title: "User data cleared",
+                        description: "Your profile and preferences have been reset.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear user data.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Event Data */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Event Data</h4>
+                  <p className="text-xs text-muted-foreground">Created and joined events</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('hostedEvents');
+                      localStorage.removeItem('joinedEvents');
+                      toast({
+                        title: "Event data cleared",
+                        description: "All event data has been removed.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear event data.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Chat & Conversation Data */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Chat Data</h4>
+                  <p className="text-xs text-muted-foreground">Conversations and messages</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('conversationStates');
+                      localStorage.removeItem('offlineQueue');
+                      toast({
+                        title: "Chat data cleared",
+                        description: "All conversation data has been removed.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear chat data.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Call History */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Call History</h4>
+                  <p className="text-xs text-muted-foreground">Voice and video call logs</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('callHistory');
+                      localStorage.removeItem('callSettings');
+                      toast({
+                        title: "Call history cleared",
+                        description: "All call data has been removed.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear call history.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Photos & Media */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Photos & Media</h4>
+                  <p className="text-xs text-muted-foreground">Uploaded images and files</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      // Clear photo storage keys (they start with 'photo_')
+                      const keysToRemove = [];
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('photo_')) {
+                          keysToRemove.push(key);
+                        }
+                      }
+                      keysToRemove.forEach(key => localStorage.removeItem(key));
+                      toast({
+                        title: "Media cleared",
+                        description: "All uploaded photos and files have been removed.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear media data.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Cache & Offline Data */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Cache & Offline Data</h4>
+                  <p className="text-xs text-muted-foreground">App cache and offline content</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      // Clear cache-related keys
+                      const keysToRemove = [];
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.includes('cache') || key.includes('offline'))) {
+                          keysToRemove.push(key);
+                        }
+                      }
+                      keysToRemove.forEach(key => localStorage.removeItem(key));
+                      toast({
+                        title: "Cache cleared",
+                        description: "All cached and offline data has been removed.",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to clear cache data.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Storage Info */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Storage Information</h4>
+                  <p className="text-xs text-muted-foreground">Current storage usage</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      const totalSize = new Blob([JSON.stringify(localStorage)]).size;
+                      const sizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
+                      toast({
+                        title: "Storage Usage",
+                        description: `Current localStorage usage: ${sizeInMB} MB`,
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to calculate storage usage.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  <Database className="h-4 w-4 mr-1" />
+                  Check Usage
+                </Button>
+              </div>
+            </div>
+
+            {/* Clear All Data (Danger Zone) */}
+            <div className="space-y-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <h4 className="font-medium text-sm text-red-800">Danger Zone</h4>
+              </div>
+              <p className="text-xs text-red-700 mb-3">
+                This will clear ALL data and reset the app completely. This action cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  try {
+                    localStorage.clear();
+                    toast({
+                      title: "All data cleared",
+                      description: "The app has been completely reset. Please refresh the page.",
+                      variant: "destructive",
+                    });
+                    // Reload the page after clearing all data
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 2000);
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to clear all data.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="w-full"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All Data & Reset App
+              </Button>
+            </div>
+          </div>
         </CollapsibleSection>
 
         {/* Help & Support */}
