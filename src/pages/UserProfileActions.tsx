@@ -47,7 +47,6 @@ import {
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
-import { toast } from '@/hooks/use-toast';
 import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 
@@ -162,17 +161,11 @@ const UserProfileActions = () => {
   };
 
   const handleLike = () => {
-    toast({
-      title: "Profile Liked",
-      description: `You liked ${userInfo.name}'s profile`,
-    });
+    // Profile liked - no notification
   };
 
   const handleSuperLike = () => {
-    toast({
-      title: "Super Like Sent",
-      description: `You super liked ${userInfo.name}!`,
-    });
+    // Super like sent - no notification
   };
 
   const handleShare = () => {
@@ -185,10 +178,6 @@ const UserProfileActions = () => {
     } else {
       // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.origin + `/profile/${userId}`);
-      toast({
-        title: "Link Copied",
-        description: "Profile link copied to clipboard",
-      });
     }
   };
 
@@ -204,21 +193,11 @@ const UserProfileActions = () => {
 
   const handleSubmitReport = () => {
     if (!reportReason) {
-      toast({
-        title: "Report Reason Required",
-        description: "Please select a reason for reporting",
-        variant: "destructive"
-      });
       return;
     }
     
     // Simulate API call
     console.log('Reporting user:', { userId, reason: reportReason, details: reportDetails });
-    
-    toast({
-      title: "Report Submitted",
-      description: `Report submitted for ${userInfo.name}`,
-    });
     
     setShowReportForm(false);
     setReportReason('');
@@ -227,11 +206,6 @@ const UserProfileActions = () => {
 
   const handleSubmitBlock = () => {
     if (!blockReason) {
-      toast({
-        title: "Block Reason Required",
-        description: "Please select a reason for blocking",
-        variant: "destructive"
-      });
       return;
     }
     
@@ -239,52 +213,27 @@ const UserProfileActions = () => {
     console.log('Blocking user:', { userId, reason: blockReason });
     
     setIsBlocked(true);
-    toast({
-      title: "User Blocked",
-      description: `${userInfo.name} has been blocked`,
-    });
-    
     setShowBlockForm(false);
     setBlockReason('');
   };
 
   const handleUnblock = () => {
     setIsBlocked(false);
-    toast({
-      title: "User Unblocked",
-      description: `${userInfo.name} has been unblocked`,
-    });
   };
 
   const handleMute = () => {
     setIsMuted(!isMuted);
-    toast({
-      title: isMuted ? "Conversation Unmuted" : "Conversation Muted",
-      description: isMuted ? `You will receive notifications from ${userInfo.name}` : `You won't receive notifications from ${userInfo.name}`,
-    });
   };
 
   const handlePin = () => {
     setIsPinned(!isPinned);
-    toast({
-      title: isPinned ? "Conversation Unpinned" : "Conversation Pinned",
-      description: isPinned ? "Conversation removed from top" : "Conversation pinned to top",
-    });
   };
 
   const handleArchive = () => {
     setIsArchived(!isArchived);
-    toast({
-      title: isArchived ? "Conversation Unarchived" : "Conversation Archived",
-      description: isArchived ? "Conversation restored" : "Conversation archived",
-    });
   };
 
   const handleUnmatch = () => {
-    toast({
-      title: "Unmatched",
-      description: `You unmatched with ${userInfo.name}`,
-    });
     // Navigate back to messages
     navigate('/chat-inbox');
   };
