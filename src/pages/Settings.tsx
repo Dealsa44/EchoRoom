@@ -30,6 +30,7 @@ import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
 import { UpdateBanner } from '@/components/UpdateBanner';
 import { serviceWorkerManager } from '@/lib/serviceWorkerManager';
+import { safeLocalStorage } from '@/lib/utils';
 
 // CollapsibleSection Component
 interface CollapsibleSectionProps {
@@ -75,6 +76,47 @@ const Settings = () => {
     currentPassword: '',
     newPassword: ''
   });
+
+  // Helper function to clear all app-specific localStorage keys
+  const clearAllAppKeys = () => {
+    const appKeys = [
+      'echoroom_current_user',
+      'echoroom_users', 
+      'echoroom_call_history',
+      'echoroom_call_settings',
+      'darkMode',
+      'joinedRooms',
+      'hostedEvents',
+      'joinedEvents',
+      'myEventsActiveTab',
+      'sampleEventData',
+      'conversationStates',
+      'offlineQueue'
+    ];
+
+    // Clear known app keys
+    appKeys.forEach(key => safeLocalStorage.removeItem(key));
+
+    // Clear photo keys (they start with 'photos_')
+    const photoKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('photos_')) {
+        photoKeys.push(key);
+      }
+    }
+    photoKeys.forEach(key => safeLocalStorage.removeItem(key));
+
+    // Clear cache-related keys
+    const cacheKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('cache') || key.includes('offline') || key.includes('sw_'))) {
+        cacheKeys.push(key);
+      }
+    }
+    cacheKeys.forEach(key => safeLocalStorage.removeItem(key));
+  };
 
   const handlePasswordChange = async () => {
     if (!user) return;
@@ -251,14 +293,21 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      localStorage.removeItem('echoroom_current_user');
-                      localStorage.removeItem('darkMode');
-                      localStorage.removeItem('joinedRooms');
+                      // Clear user-related data
+                      safeLocalStorage.removeItem('echoroom_current_user');
+                      safeLocalStorage.removeItem('echoroom_users');
+                      safeLocalStorage.removeItem('darkMode');
+                      safeLocalStorage.removeItem('joinedRooms');
+                      
+                      // Also clear from sessionStorage
+                      sessionStorage.removeItem('echoroom_current_user');
+                      
                       toast({
                         title: "User data cleared",
                         description: "Your profile and preferences have been reset.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear user data:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear user data.",
@@ -286,13 +335,17 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      localStorage.removeItem('hostedEvents');
-                      localStorage.removeItem('joinedEvents');
+                      safeLocalStorage.removeItem('hostedEvents');
+                      safeLocalStorage.removeItem('joinedEvents');
+                      safeLocalStorage.removeItem('myEventsActiveTab');
+                      safeLocalStorage.removeItem('sampleEventData');
+                      
                       toast({
                         title: "Event data cleared",
                         description: "All event data has been removed.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear event data:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear event data.",
@@ -320,13 +373,15 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      localStorage.removeItem('conversationStates');
-                      localStorage.removeItem('offlineQueue');
+                      safeLocalStorage.removeItem('conversationStates');
+                      safeLocalStorage.removeItem('offlineQueue');
+                      
                       toast({
                         title: "Chat data cleared",
                         description: "All conversation data has been removed.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear chat data:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear chat data.",
@@ -354,13 +409,15 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      localStorage.removeItem('callHistory');
-                      localStorage.removeItem('callSettings');
+                      safeLocalStorage.removeItem('echoroom_call_history');
+                      safeLocalStorage.removeItem('echoroom_call_settings');
+                      
                       toast({
                         title: "Call history cleared",
                         description: "All call data has been removed.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear call history:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear call history.",
@@ -388,20 +445,22 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      // Clear photo storage keys (they start with 'photo_')
+                      // Clear photo storage keys (they start with 'photos_')
                       const keysToRemove = [];
                       for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
-                        if (key && key.startsWith('photo_')) {
+                        if (key && key.startsWith('photos_')) {
                           keysToRemove.push(key);
                         }
                       }
-                      keysToRemove.forEach(key => localStorage.removeItem(key));
+                      keysToRemove.forEach(key => safeLocalStorage.removeItem(key));
+                      
                       toast({
                         title: "Media cleared",
                         description: "All uploaded photos and files have been removed.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear media data:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear media data.",
@@ -433,16 +492,27 @@ const Settings = () => {
                       const keysToRemove = [];
                       for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
-                        if (key && (key.includes('cache') || key.includes('offline'))) {
+                        if (key && (key.includes('cache') || key.includes('offline') || key.includes('sw_'))) {
                           keysToRemove.push(key);
                         }
                       }
-                      keysToRemove.forEach(key => localStorage.removeItem(key));
+                      keysToRemove.forEach(key => safeLocalStorage.removeItem(key));
+                      
+                      // Also clear service worker cache if available
+                      if ('caches' in window) {
+                        caches.keys().then(cacheNames => {
+                          cacheNames.forEach(cacheName => {
+                            caches.delete(cacheName);
+                          });
+                        });
+                      }
+                      
                       toast({
                         title: "Cache cleared",
                         description: "All cached and offline data has been removed.",
                       });
                     } catch (error) {
+                      console.error('Failed to clear cache data:', error);
                       toast({
                         title: "Error",
                         description: "Failed to clear cache data.",
@@ -507,7 +577,21 @@ const Settings = () => {
                 size="sm"
                 onClick={() => {
                   try {
-                    localStorage.clear();
+                    // Clear all app-specific keys first
+                    clearAllAppKeys();
+                    
+                    // Also clear sessionStorage
+                    sessionStorage.clear();
+                    
+                    // Clear service worker cache if available
+                    if ('caches' in window) {
+                      caches.keys().then(cacheNames => {
+                        cacheNames.forEach(cacheName => {
+                          caches.delete(cacheName);
+                        });
+                      });
+                    }
+                    
                     toast({
                       title: "All data cleared",
                       description: "The app has been completely reset. Please refresh the page.",
@@ -518,9 +602,10 @@ const Settings = () => {
                       window.location.reload();
                     }, 2000);
                   } catch (error) {
+                    console.error('Failed to clear all data:', error);
                     toast({
                       title: "Error",
-                      description: "Failed to clear all data.",
+                      description: "Failed to clear all data. Please try again.",
                       variant: "destructive",
                     });
                   }
