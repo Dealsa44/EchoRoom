@@ -76,7 +76,7 @@ const ChatRooms = () => {
     // Navigate directly to the chat room with source parameter
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get('from') || 'community';
-    navigate(`/chat-room/${roomId}?from=chat-rooms`);
+    navigate(`/chat-room/${roomId}`, { state: { from: 'chat-rooms' } });
   };
 
 

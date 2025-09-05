@@ -1,17 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, MoreVertical, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Send, Bot, UserX, Flag, Users, Eye, EyeOff, Languages, MessageCircle, Lightbulb, Mic, Headphones, PenTool, Eye as EyeIcon, Brain, Star, Zap, Award, BookOpen, Hash, Reply, Pin, Trash2, Shield, Volume, VolumeX, Crown, Settings, BarChart3, Paperclip, Square, X, Play, Pause, File, Download, Heart, Smile, ThumbsUp, Camera, Image, Edit3, CheckCircle, CheckCheck, Lock, HelpCircle, Moon, Sun } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
 import { useLanguageAI } from '@/hooks/useLanguageAI';
 import { LanguageCode } from '@/types/languageAI';
@@ -22,11 +16,13 @@ import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CameraScreen from '@/components/calls/CameraScreen';
+import CallButtons from '@/components/calls/CallButtons';
 
 const ChatRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, safeMode, leaveRoom } = useApp();
+  const location = useLocation();
+  const { user, safeMode, leaveRoom, isDarkMode, toggleDarkMode } = useApp();
   const {
     learningLanguage,
     languageLevel,
@@ -224,6 +220,7 @@ const ChatRoom = () => {
     members: room.members,
     activeNow: room.activeNow,
     icon: room.icon,
+    emoji: room.icon, // Map icon to emoji for display
     category: room.category,
     tags: room.tags,
     isPrivate: room.isPrivate,
@@ -1062,37 +1059,21 @@ const ChatRoom = () => {
       endLearningSession();
     }
     
-    // Smart navigation: check where user came from
-    const urlParams = new URLSearchParams(window.location.search);
-    const from = urlParams.get('from');
+    // Function to handle back navigation based on source (like PrivateChat)
+    const state = location.state as { from?: string } | null;
     
-    if (from === 'chat-inbox' || from === 'messages') {
+    if (state?.from === 'chat-inbox') {
       navigate('/chat-inbox');
-    } else if (from === 'chat-rooms') {
-      // When going back to chat-rooms, check if there was an original source
-      // This handles the case: Community → Chat Rooms → Join Room → Back
-      navigate('/chat-rooms?from=community');
-    } else if (from === 'community') {
+    } else if (state?.from === 'chat-rooms') {
+      navigate('/chat-rooms');
+    } else if (state?.from === 'community') {
       navigate('/community');
     } else {
-      // Default fallback: try to go back in history, or go to community
+      // Default fallback - try to go back in history
       navigate(-1);
     }
   };
 
-  const handleLeaveRoom = () => {
-    if (currentSession) {
-      endLearningSession();
-    }
-    
-    // Remove from joined rooms
-    if (id) {
-      leaveRoom(id);
-    }
-    
-    // After leaving, navigate back
-    handleBackNavigation();
-  };
 
   const sendSuggestedMessage = (suggestion: string) => {
     setMessage(suggestion);
@@ -1124,28 +1105,45 @@ const ChatRoom = () => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <div className="min-w-0 flex-1">
-              <h1 className="font-semibold truncate">{roomData.title}</h1>
-            </div>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto bg-transparent hover:bg-transparent active:bg-transparent"
+              onClick={() => {
+                const currentState = location.state as { from?: string } | null;
+                navigate(`/room-actions/${id}`, { state: { originalFrom: currentState?.from } });
+              }}
+            >
+              <div className="text-2xl flex-shrink-0">{roomData.emoji}</div>
+              <div className="min-w-0 flex-1 text-left">
+                <h1 className="font-semibold truncate">{roomData.title}</h1>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs text-muted-foreground truncate">{roomData.memberCount} members</span>
+                </div>
+              </div>
+            </Button>
           </div>
           
-          {/* Room Settings Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="flex-shrink-0">
-                <MoreVertical size={20} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem 
-                onClick={handleLeaveRoom}
-                className="text-destructive"
-              >
-                <ArrowLeft size={14} className="mr-2" />
-                Leave Room
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <CallButtons
+              participantId={roomData?.id || '1'}
+              participantName={roomData?.title || 'Chat Room'}
+              participantAvatar={roomData?.emoji || '💬'}
+              variant="full"
+              callType="group"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+              className="bg-transparent hover:scale-110 transition-spring hover:bg-transparent active:bg-transparent"
+            >
+              {isDarkMode ? 
+                <Sun size={20} className="text-warning hover:text-warning transition-smooth" /> : 
+                <Moon size={20} className="text-secondary hover:text-secondary transition-smooth" />
+              }
+            </Button>
+          </div>
         </div>
       </div>
 

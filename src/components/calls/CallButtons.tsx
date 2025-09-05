@@ -20,6 +20,7 @@ interface CallButtonsProps {
   participantAvatar: string;
   variant?: 'compact' | 'full';
   className?: string;
+  callType?: 'private' | 'group'; // Add call type to distinguish private vs group calls
 }
 
 const CallButtons = ({ 
@@ -27,7 +28,8 @@ const CallButtons = ({
   participantName, 
   participantAvatar, 
   variant = 'full',
-  className = ''
+  className = '',
+  callType: callTypeProp = 'private' // Default to private
 }: CallButtonsProps) => {
   const [showCallScreen, setShowCallScreen] = useState(false);
   const [callType, setCallType] = useState<CallType>('voice');
@@ -46,7 +48,7 @@ const CallButtons = ({
       <>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" size="icon" className={`h-8 w-8 ${className}`}>
+                         <Button variant="ghost" size="icon" className={`h-8 w-8 bg-transparent hover:bg-transparent active:bg-transparent ${className}`}>
                <MoreVertical size={16} />
              </Button>
           </DropdownMenuTrigger>
@@ -69,6 +71,7 @@ const CallButtons = ({
           participantName={participantName}
           participantAvatar={participantAvatar}
           callType={callType}
+          callTypeProp={callTypeProp}
         />
       </>
     );
@@ -80,7 +83,7 @@ const CallButtons = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+          className="h-8 w-8 text-green-600 hover:text-green-700 bg-transparent hover:bg-transparent active:bg-transparent"
           onClick={() => handleStartCall('voice')}
         >
           <Phone size={16} />
@@ -89,7 +92,7 @@ const CallButtons = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          className="h-8 w-8 text-purple-600 hover:text-purple-700 bg-transparent hover:bg-transparent active:bg-transparent"
           onClick={() => handleStartCall('video')}
         >
           <Video size={16} />
@@ -103,6 +106,7 @@ const CallButtons = ({
         participantName={participantName}
         participantAvatar={participantAvatar}
         callType={callType}
+        callTypeProp={callTypeProp}
       />
     </>
   );

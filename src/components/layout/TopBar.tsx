@@ -74,7 +74,7 @@ const TopBar = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowAIModal(true)}
-                className="group hover:scale-110 transition-spring hover:bg-primary/10"
+                className="group hover:scale-110 transition-spring hover:bg-transparent"
               >
                 <Bot size={20} className="group-hover:text-primary transition-smooth" />
               </Button>
@@ -85,7 +85,7 @@ const TopBar = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowNotificationModal(true)}
-                className="relative hover:scale-110 transition-spring hover:bg-accent/10"
+                className="relative hover:scale-110 transition-spring hover:bg-transparent"
               >
                 <Bell size={20} className="hover:text-accent transition-smooth" />
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white/20"></span>
@@ -97,7 +97,7 @@ const TopBar = ({
                 variant="ghost"
                 size="icon"
                 onClick={toggleDarkMode}
-                className="hover:scale-110 transition-spring hover:bg-secondary/10"
+                className="hover:scale-110 transition-spring hover:bg-transparent"
               >
                 {isDarkMode ? 
                   <Sun size={20} className="text-warning hover:text-warning transition-smooth" /> : 

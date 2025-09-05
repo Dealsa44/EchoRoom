@@ -483,6 +483,7 @@ const Profile = () => {
                     participantName={profileData?.name || 'User'}
                     participantAvatar={profileData?.avatar || '🌟'}
                     variant="full"
+                    callType="private"
                   />
                   <Button variant="outline" onClick={handleSendMessage}>
                     <MessageCircle size={16} />

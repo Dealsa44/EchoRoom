@@ -29,6 +29,7 @@ interface CallScreenProps {
   participantName: string;
   participantAvatar: string;
   callType: CallType;
+  callTypeProp?: 'private' | 'group'; // Add call type prop
 }
 
 const CallScreen = ({ 
@@ -37,7 +38,8 @@ const CallScreen = ({
   participantId, 
   participantName, 
   participantAvatar, 
-  callType 
+  callType,
+  callTypeProp = 'private'
 }: CallScreenProps) => {
   const { 
     callState, 
@@ -60,7 +62,7 @@ const CallScreen = ({
   // Start call when component mounts
   useEffect(() => {
     if (isOpen && !callState.isInCall) {
-      startCall(participantId, participantName, participantAvatar, callType);
+      startCall(participantId, participantName, participantAvatar, callType, callTypeProp);
     }
   }, [isOpen, participantId, participantName, participantAvatar, callType, startCall, callState.isInCall]);
 
@@ -281,9 +283,9 @@ const CallScreen = ({
 
         {/* Center Content (for voice calls or when video is off) */}
         {callType === 'voice' || !callState.isVideoEnabled ? (
-          <div className="absolute top-24 bottom-32 left-0 right-0 flex items-center justify-center z-10">
+          <div className="absolute inset-0 flex items-center justify-center z-10" style={{ paddingTop: '6rem', paddingBottom: '8rem' }}>
             <div className="text-center">
-              <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-white/20">
+              <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-white/20 mx-auto">
                 <div className="text-6xl">{participantAvatar}</div>
               </div>
               <h2 className="text-white font-semibold text-2xl mb-2">{participantName}</h2>
@@ -296,7 +298,7 @@ const CallScreen = ({
 
         {/* Call Controls */}
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-md border-t border-white/10 z-10">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 max-w-md mx-auto w-full">
             {/* Mute Button */}
             <Button
               variant="ghost"
@@ -345,10 +347,10 @@ const CallScreen = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-16 w-16 rounded-full bg-red-500 hover:bg-red-600 text-white border border-red-400"
+              className="h-14 w-14 rounded-full bg-red-500 hover:bg-red-600 text-white border border-red-400"
               onClick={handleEndCall}
             >
-              <PhoneOff size={28} />
+              <PhoneOff size={24} />
             </Button>
           </div>
         </div>

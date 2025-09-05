@@ -44,6 +44,7 @@ import NotificationsCommunication from "./pages/NotificationsCommunication";
 import AppearanceExperience from "./pages/AppearanceExperience";
 import DeviceData from "./pages/DeviceData";
 import UserProfileActions from "./pages/UserProfileActions";
+import RoomActions from "./pages/RoomActions";
 
 const queryClient = new QueryClient();
 
@@ -137,6 +138,11 @@ const App = () => {
             <Route path="/user-actions/:userId" element={
               <AuthGuard>
                 <UserProfileActions />
+              </AuthGuard>
+            } />
+            <Route path="/room-actions/:id" element={
+              <AuthGuard>
+                <RoomActions />
               </AuthGuard>
             } />
             <Route path="/forum" element={

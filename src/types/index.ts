@@ -123,6 +123,7 @@ export interface CallRecord {
   participantName: string;
   participantAvatar: string;
   type: CallType;
+  callType: 'private' | 'group'; // New field to distinguish private vs group calls
   status: CallStatus;
   direction: CallDirection;
   startTime: Date;

@@ -11,7 +11,7 @@ export interface CallContextType {
   
   // Current Call State
   callState: CallState;
-  startCall: (participantId: string, participantName: string, participantAvatar: string, type: CallType) => void;
+  startCall: (participantId: string, participantName: string, participantAvatar: string, type: CallType, callType?: 'private' | 'group') => void;
   endCall: () => void;
   answerCall: (callId: string) => void;
   declineCall: (callId: string) => void;
@@ -135,7 +135,7 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
         setCallDurationTimer(null);
       }
     }
-  }, [callState.isInCall, callState.currentCall, callDurationTimer]);
+  }, [callState.isInCall, callState.currentCall]);
 
   const addCallRecord = (call: Omit<CallRecord, 'id'>) => {
     const newCall: CallRecord = {
@@ -175,13 +175,15 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
 
 
 
-  const startCall = (participantId: string, participantName: string, participantAvatar: string, type: CallType) => {
+  const startCall = (participantId: string, participantName: string, participantAvatar: string, type: CallType, callType: 'private' | 'group' = 'private') => {
+    
     const newCall: CallRecord = {
       id: `call-${Date.now()}`,
       participantId,
       participantName,
       participantAvatar,
       type,
+      callType,
       status: 'outgoing',
       direction: 'outgoing',
       startTime: new Date(),

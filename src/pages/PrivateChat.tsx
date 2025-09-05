@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, CheckCheck, Volume2, Download, Play, Pause, Lock, Square, X, Shield } from 'lucide-react';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, CheckCheck, Volume2, Download, Play, Pause, Lock, Square, X, Shield, Moon, Sun } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { useApp } from '@/hooks/useApp';
 import { ChatMessage } from '@/types';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
@@ -22,6 +23,7 @@ const PrivateChat = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDarkMode, toggleDarkMode } = useApp();
   
   // Function to handle back navigation based on source
   const handleBackNavigation = () => {
@@ -717,20 +719,17 @@ const PrivateChat = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border shadow-soft safe-top">
+      <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={handleBackNavigation}
-              className="flex-shrink-0"
+              className="h-10 w-10 bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"
             >
               <ArrowLeft size={20} />
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto hover:bg-muted/50 transition-colors"
+            </button>
+            <button
+              className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 m-0 rounded-lg transition-colors"
               onClick={() => navigate(`/user-actions/${userId}`)}
             >
               <div className="text-2xl flex-shrink-0">{chatPartner.avatar}</div>
@@ -741,7 +740,7 @@ const PrivateChat = () => {
                   <span className="text-xs text-muted-foreground truncate">{chatPartner.status}</span>
                 </div>
               </div>
-            </Button>
+            </button>
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -750,9 +749,18 @@ const PrivateChat = () => {
               participantName={chatPartner.name}
               participantAvatar={chatPartner.avatar}
               variant="full"
+              callType="private"
             />
+            <button
+              onClick={toggleDarkMode}
+              className="h-10 w-10 bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0 flex items-center justify-center rounded-lg transition-all hover:scale-110"
+            >
+              {isDarkMode ? 
+                <Sun size={20} className="text-warning hover:text-warning transition-smooth" /> : 
+                <Moon size={20} className="text-secondary hover:text-secondary transition-smooth" />
+              }
+            </button>
           </div>
-          
         </div>
       </div>
 

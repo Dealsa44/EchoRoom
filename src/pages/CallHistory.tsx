@@ -16,7 +16,9 @@ import {
   XCircle,
   PhoneOff,
   Search,
-  X
+  X,
+  User,
+  Users
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -50,7 +52,9 @@ const CallHistory = () => {
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [activeFilter, setActiveFilter] = useState<'voice' | 'video' | null>(null);
+  const [activeTypeFilter, setActiveTypeFilter] = useState<'private' | 'group' | null>(null);
   const [pressedCard, setPressedCard] = useState<'voice' | 'video' | null>(null);
+  const [pressedTypeCard, setPressedTypeCard] = useState<'private' | 'group' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const stats = getCallStats();
@@ -240,9 +244,26 @@ const CallHistory = () => {
     }
   };
 
+  const handleTypeFilterToggle = (filterType: 'private' | 'group') => {
+    if (activeTypeFilter === filterType) {
+      // If clicking the same filter, deactivate it
+      setActiveTypeFilter(null);
+      setPressedTypeCard(null);
+    } else {
+      // If clicking a different filter, activate it
+      setActiveTypeFilter(filterType);
+      setPressedTypeCard(filterType);
+    }
+  };
+
   const filteredCallHistory = callHistory.filter(call => {
-    // Filter by type
+    // Filter by call type (voice/video)
     if (activeFilter !== null && call.type !== activeFilter) {
+      return false;
+    }
+    
+    // Filter by private/group type
+    if (activeTypeFilter !== null && call.callType !== activeTypeFilter) {
       return false;
     }
     
@@ -328,7 +349,44 @@ const CallHistory = () => {
           )}
         </div>
 
-        {/* Filter Toggles */}
+        {/* Type Filter Toggles (Private/Group) */}
+        <div className="flex gap-2">
+          <button
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+              activeTypeFilter === 'private'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 scale-105'
+                : 'bg-card/60 backdrop-blur-sm border border-border/50 text-muted-foreground hover:bg-card hover:border-border hover:text-foreground'
+            }`}
+            onClick={() => handleTypeFilterToggle('private')}
+          >
+            <User size={18} />
+            <span>Private</span>
+            <span className={`text-sm font-bold ${
+              activeTypeFilter === 'private' ? 'text-green-100' : 'text-green-500'
+            }`}>
+              {callHistory.filter(call => call.callType === 'private').length}
+            </span>
+          </button>
+          
+          <button
+            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+              activeTypeFilter === 'group'
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 scale-105'
+                : 'bg-card/60 backdrop-blur-sm border border-border/50 text-muted-foreground hover:bg-card hover:border-border hover:text-foreground'
+            }`}
+            onClick={() => handleTypeFilterToggle('group')}
+          >
+            <Users size={18} />
+            <span>Group</span>
+            <span className={`text-sm font-bold ${
+              activeTypeFilter === 'group' ? 'text-orange-100' : 'text-orange-500'
+            }`}>
+              {callHistory.filter(call => call.callType === 'group').length}
+            </span>
+          </button>
+        </div>
+
+        {/* Call Type Filter Toggles (Voice/Video) */}
         <div className="flex gap-2">
           <button
             className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
@@ -373,16 +431,16 @@ const CallHistory = () => {
               <p className="text-muted-foreground mb-2">
                 {searchQuery.trim() !== '' 
                   ? `No calls found for "${searchQuery}"`
-                  : activeFilter 
-                    ? `No ${activeFilter} calls found` 
+                  : activeFilter || activeTypeFilter
+                    ? `No ${[activeTypeFilter, activeFilter].filter(Boolean).join(' ')} calls found` 
                     : 'No call history yet'
                 }
               </p>
               <p className="text-xs text-muted-foreground">
                 {searchQuery.trim() !== ''
                   ? 'Try a different search term or clear your search'
-                  : activeFilter 
-                    ? 'Try adjusting your filter or check back later' 
+                  : activeFilter || activeTypeFilter
+                    ? 'Try adjusting your filters or check back later' 
                     : 'Your call history will appear here'
                 }
               </p>

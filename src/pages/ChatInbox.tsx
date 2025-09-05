@@ -292,7 +292,7 @@ const ChatInbox = () => {
     if (conversation.type === 'private') {
       navigate(`/private-chat/${conversation.participant.id}`, { state: { from: 'chat-inbox' } });
     } else if (conversation.type === 'group') {
-      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}?from=chat-inbox`);
+      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}`, { state: { from: 'chat-inbox' } });
     }
     
     // Mark as read
