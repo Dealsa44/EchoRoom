@@ -90,7 +90,7 @@ const MoodThemeSelector = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[70vh] overflow-hidden rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Palette className="h-5 w-5 text-purple-500" />
@@ -101,7 +101,7 @@ const MoodThemeSelector = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(85vh-120px)] space-y-6">
+        <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-4">
           {/* AI Suggestions */}
           {suggestions.length > 0 && (
             <div>
@@ -109,10 +109,10 @@ const MoodThemeSelector = ({
                 <Sparkles className="h-4 w-4 text-yellow-500" />
                 AI Recommendations
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {suggestions.map((suggestion, index) => (
                   <Card key={suggestion.theme.id} className="hover:shadow-sm transition-shadow">
-                    <CardContent className="p-3">
+                    <CardContent className="p-2">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{suggestion.theme.emoji}</span>
@@ -159,7 +159,7 @@ const MoodThemeSelector = ({
           {/* All Themes */}
           <div>
             <h3 className="font-semibold mb-3">All Available Themes</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {Object.values(moodThemes).map((theme) => (
                 <Card 
                   key={theme.id} 
@@ -168,7 +168,7 @@ const MoodThemeSelector = ({
                   }`}
                   onClick={() => handleThemePreview(theme.id)}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{theme.emoji}</span>

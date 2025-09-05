@@ -43,6 +43,7 @@ import NotFound from "./pages/NotFound";
 import NotificationsCommunication from "./pages/NotificationsCommunication";
 import AppearanceExperience from "./pages/AppearanceExperience";
 import DeviceData from "./pages/DeviceData";
+import UserProfileActions from "./pages/UserProfileActions";
 
 const queryClient = new QueryClient();
 
@@ -131,6 +132,11 @@ const App = () => {
             <Route path="/private-chat/:userId" element={
               <AuthGuard>
                 <PrivateChat />
+              </AuthGuard>
+            } />
+            <Route path="/user-actions/:userId" element={
+              <AuthGuard>
+                <UserProfileActions />
               </AuthGuard>
             } />
             <Route path="/forum" element={

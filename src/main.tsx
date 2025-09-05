@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './styles/slide-animations.css'
 
 // iOS Safari compatibility fix
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

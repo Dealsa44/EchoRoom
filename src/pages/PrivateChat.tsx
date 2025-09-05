@@ -1,16 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, MoreVertical, CheckCheck, Volume2, Download, Play, Pause, Lock, BarChart3, Palette, Square, X, Shield } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ArrowLeft, Send, Languages, CheckCircle, Bot, UserX, Flag, BookOpen, Zap, Target, HelpCircle, Heart, Smile, ThumbsUp, Edit3, Trash2, Reply, Image, Mic, File, Camera, Paperclip, CheckCheck, Volume2, Download, Play, Pause, Lock, Square, X, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -21,15 +15,32 @@ import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionT
 import LanguagePracticePanel from '@/components/language/LanguagePracticePanel';
 import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
-import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 import CallButtons from '@/components/calls/CallButtons';
-import BlockReportModal from '@/components/modals/BlockReportModal';
 import CameraScreen from '@/components/calls/CameraScreen';
 
 const PrivateChat = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Function to handle back navigation based on source
+  const handleBackNavigation = () => {
+    const state = location.state as { from?: string } | null;
+    
+    if (state?.from === 'profile') {
+      navigate(`/profile/${userId}`);
+    } else if (state?.from === 'user-actions') {
+      // If coming from user actions, go back to chat inbox
+      navigate('/chat-inbox');
+    } else if (state?.from === 'chat-inbox') {
+      // If coming from chat inbox, go back to chat inbox
+      navigate('/chat-inbox');
+    } else {
+      // Default fallback to chat inbox
+      navigate('/chat-inbox');
+    }
+  };
+  
   const [message, setMessage] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('georgian');
   const [aiAssistantEnabled, setAiAssistantEnabled] = useState(true);
@@ -49,10 +60,6 @@ const PrivateChat = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
   const [actionSheetMessageId, setActionSheetMessageId] = useState<number | null>(null);
-  const [showCompatibilityDashboard, setShowCompatibilityDashboard] = useState(false);
-  const [showMoodThemeSelector, setShowMoodThemeSelector] = useState(false);
-  const [currentMoodTheme, setCurrentMoodTheme] = useState('default');
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -706,29 +713,6 @@ const PrivateChat = () => {
     return <span>{msg.content}</span>;
   };
 
-  const handleBlock = async (userId: string, reason: string) => {
-    // In real app, this would call an API to block the user
-    console.log(`Blocking user ${userId} for reason: ${reason}`);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Navigate back to match page after blocking
-    navigate('/match');
-  };
-
-  const handleReport = async (userId: string, reportData: any) => {
-    // In real app, this would call an API to submit the report
-    console.log(`Reporting user ${userId}:`, reportData);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // If user chose to block after report, handle that too
-    if (reportData.blockAfterReport) {
-      await handleBlock(userId, 'Reported user');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -739,21 +723,25 @@ const PrivateChat = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={handleBackNavigation}
               className="flex-shrink-0"
             >
               <ArrowLeft size={20} />
             </Button>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(`/user-actions/${userId}`)}
+            >
               <div className="text-2xl flex-shrink-0">{chatPartner.avatar}</div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 text-left">
                 <h1 className="font-semibold truncate">{chatPartner.name}</h1>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                   <span className="text-xs text-muted-foreground truncate">{chatPartner.status}</span>
                 </div>
               </div>
-            </div>
+            </Button>
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -765,39 +753,6 @@ const PrivateChat = () => {
             />
           </div>
           
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => {
-                  setShowCompatibilityDashboard(false);
-                  setShowMoodThemeSelector(true);
-                }}>
-                  <Palette size={16} className="mr-2" />
-                  Mood Themes
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  setShowMoodThemeSelector(false);
-                  setShowCompatibilityDashboard(true);
-                }}>
-                  <BarChart3 size={16} className="mr-2" />
-                  Compatibility
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  setShowCompatibilityDashboard(false);
-                  setShowMoodThemeSelector(false);
-                  setShowSafetyModal(true);
-                }}>
-                  <Shield size={16} className="mr-2" />
-                  Safety & Report
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
       </div>
 
@@ -1247,40 +1202,7 @@ const PrivateChat = () => {
           onClose={() => setShowAIModal(false)}
         />
 
-        {/* Compatibility Dashboard */}
-        <CompatibilityDashboard
-          partnerId={userId || '1'}
-          partnerName={userInfo.name}
-          isOpen={showCompatibilityDashboard}
-          onClose={() => setShowCompatibilityDashboard(false)}
-        />
 
-        {/* Mood Theme Selector */}
-        <MoodThemeSelector
-          currentTheme={currentMoodTheme}
-          messages={messages.map(msg => ({ 
-            content: msg.content, 
-            timestamp: new Date() 
-          }))}
-          onThemeChange={setCurrentMoodTheme}
-          isOpen={showMoodThemeSelector}
-          onClose={() => setShowMoodThemeSelector(false)}
-        />
-
-        {/* Safety Modal */}
-        <BlockReportModal
-          isOpen={showSafetyModal}
-          onClose={() => setShowSafetyModal(false)}
-          targetUser={{
-            id: chatPartner.id || '1',
-            name: chatPartner.name,
-            avatar: chatPartner.avatar,
-            age: 25, // Mock age
-            location: 'New York' // Mock location
-          }}
-          onBlock={handleBlock}
-          onReport={handleReport}
-        />
         
         {/* Mobile actions sheet (long-press) */}
         <Sheet open={actionSheetMessageId !== null} onOpenChange={(open) => !open && setActionSheetMessageId(null)}>

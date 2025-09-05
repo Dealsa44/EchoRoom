@@ -35,11 +35,16 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
   const [metrics, setMetrics] = useState<ConversationMetrics | null>(null);
   const [insights, setInsights] = useState<CompatibilityInsight[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
+      // Reset data when opening
+      setMetrics(null);
+      setInsights([]);
+      setSuggestions([]);
+      
       // Simulate loading delay
       const timer = setTimeout(() => {
         const analysis = simulateConversationAnalysis(partnerId);
@@ -55,10 +60,16 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
       }, 1500);
       
       return () => clearTimeout(timer);
+    } else {
+      // Reset when modal closes
+      setLoading(false);
+      setMetrics(null);
+      setInsights([]);
+      setSuggestions([]);
     }
   }, [isOpen, partnerId]);
 
-  if (!isOpen || !metrics) return null;
+  if (!isOpen) return null;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -90,7 +101,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
     }
   };
 
-  if (loading) {
+  if (loading || !metrics) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto rounded-xl">
@@ -108,7 +119,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[85vh] overflow-hidden rounded-xl">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[70vh] overflow-hidden rounded-xl">
         <DialogHeader className="text-center">
           <DialogTitle className="flex items-center justify-center gap-2 text-lg">
             <BarChart3 className="h-5 w-5 text-purple-500" />
@@ -119,7 +130,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
           </DialogDescription>
         </DialogHeader>
         
-        <div className="overflow-y-auto max-h-[calc(85vh-120px)] space-y-4">
+        <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-3">
           {/* Compatibility Score */}
           <div className="text-center">
             <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full ${getScoreBg(metrics.compatibilityScore)} mb-2`}>
@@ -130,10 +141,10 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
             <p className="text-sm text-muted-foreground">Overall Compatibility</p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-center p-2 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <MessageCircle className="h-4 w-4" />
                   <span className="font-semibold">{metrics.messageCount}</span>
@@ -141,7 +152,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
                 <p className="text-xs text-muted-foreground">Messages</p>
               </div>
               
-              <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <div className="text-center p-2 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Users className="h-4 w-4" />
                   <span className="font-semibold">{metrics.sharedInterests.length}</span>
@@ -152,7 +163,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
 
             {/* Communication Style */}
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {getCommunicationIcon(metrics.communicationStyle)}
@@ -194,7 +205,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
             {/* Shared Interests */}
             {metrics.sharedInterests.length > 0 && (
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     Shared Interests
@@ -219,7 +230,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
               
               {insights.map((insight, index) => (
                 <Card key={index}>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium capitalize">{insight.category}</span>
                       <div className="flex items-center gap-2">
@@ -267,7 +278,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
             {/* Conversation Suggestions */}
             {suggestions.length > 0 && (
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     Conversation Suggestions
@@ -286,7 +297,7 @@ const CompatibilityDashboard = ({ partnerId, partnerName, isOpen, onClose }: Com
 
             {/* Response Time */}
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />

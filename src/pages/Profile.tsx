@@ -140,6 +140,7 @@ const Profile = () => {
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
   
+  
   // Defensive check for user data with safe fallbacks
   const displayUser: DisplayUser | null = isOwnProfile 
     ? (user && user.id ? {
@@ -311,7 +312,7 @@ const Profile = () => {
 
   const handleSendMessage = () => {
     if (profileData) {
-      navigate(`/private-chat/${profileData.id}`);
+      navigate(`/private-chat/${profileData.id}`, { state: { from: 'profile' } });
     }
   };
 
