@@ -14,6 +14,15 @@ const BottomNavigation = () => {
   ];
 
   const isActive = (path: string) => {
+    if (path === '/chat-inbox') {
+      // Messages is active for chat-inbox, messages-settings, and related message pages
+      return location.pathname === '/chat-inbox' || 
+             location.pathname === '/messages-settings' ||
+             location.pathname === '/archived-chats' ||
+             location.pathname === '/call-history' ||
+             location.pathname.startsWith('/private-chat/') ||
+             location.pathname.startsWith('/chat-room/');
+    }
     if (path === '/community') {
       // Community is active for community, chat-rooms, forum, events, and their sub-pages
       return location.pathname === '/community' || 

@@ -176,7 +176,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const [state, setState] = useState<AppState>(initializeState);
 
-
+  // Apply initial dark mode to DOM
+  useEffect(() => {
+    if (state.isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []); // Run only once on mount
 
   // Listen for storage events (changes from other tabs only)
   useEffect(() => {

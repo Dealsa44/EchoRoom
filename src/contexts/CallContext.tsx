@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CallRecord, CallSettings, CallState, CallType, CallStatus, CallDirection } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { incrementCallHistoryCount } from '@/lib/notificationStorage';
 
 export interface CallContextType {
   // Call History
@@ -143,6 +144,9 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
       id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
     setCallHistory(prev => [newCall, ...prev]);
+    
+    // Increment call history notification count
+    incrementCallHistoryCount();
   };
 
   const deleteCallRecord = (callId: string) => {

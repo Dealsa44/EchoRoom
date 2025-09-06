@@ -38,6 +38,7 @@ import ProfileStats from "./pages/ProfileStats";
 import Settings from "./pages/Settings";
 import CallHistory from "./pages/CallHistory";
 import ArchivedChats from "./pages/ArchivedChats";
+import MessagesSettings from "./pages/MessagesSettings";
 import SafetyCenter from "./components/security/SafetyCenter";
 import NotFound from "./pages/NotFound";
 import NotificationsCommunication from "./pages/NotificationsCommunication";
@@ -213,6 +214,11 @@ const App = () => {
             <Route path="/archived-chats" element={
               <AuthGuard>
                 <ArchivedChats />
+              </AuthGuard>
+            } />
+            <Route path="/messages-settings" element={
+              <AuthGuard>
+                <MessagesSettings />
               </AuthGuard>
             } />
             <Route path="/safety-center" element={<AuthGuard><SafetyCenter /></AuthGuard>} />

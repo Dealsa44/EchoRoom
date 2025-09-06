@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,6 +41,7 @@ import TopBar from '@/components/layout/TopBar';
 import { useCall } from '@/hooks/useCall';
 import { CallRecord, CallType, CallStatus } from '@/types';
 import { Input } from '@/components/ui/input';
+import { markCallHistoryAsRead } from '@/lib/notificationStorage';
 
 const CallHistory = () => {
   const navigate = useNavigate();
@@ -58,6 +59,11 @@ const CallHistory = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const stats = getCallStats();
+
+  // Mark call history as read when user visits this page
+  useEffect(() => {
+    markCallHistoryAsRead();
+  }, []);
 
   const formatDuration = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
@@ -288,7 +294,7 @@ const CallHistory = () => {
              <TopBar 
          title="Call History" 
          showBack 
-         onBack={() => navigate('/chat-inbox')}
+         onBack={() => navigate('/messages-settings')}
          showNotifications={false}
          showDarkModeToggle={false}
          showAIAssistant={false}

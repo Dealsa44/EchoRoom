@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { 
   Search, 
   MessageCircle, 
-  MoreVertical, 
+  Settings, 
+  MoreVertical,
   Pin, 
   Archive, 
   LogOut,
@@ -28,12 +29,6 @@ import {
   Calendar,
   Shield
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
@@ -384,7 +379,7 @@ const ChatInbox = () => {
       <TopBar title="Messages" />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top pb-24">
-        {/* Search with Menu */}
+        {/* Search with Settings */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
           <Input
@@ -396,27 +391,14 @@ const ChatInbox = () => {
             autoComplete="off"
             className="pl-12 pr-12 border-0 bg-transparent shadow-none focus:ring-0 h-12"
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
-              >
-                <MoreVertical size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate('/call-history')}>
-                <History size={16} className="mr-2" />
-                Call History
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/archived-chats')}>
-                <Archive size={16} className="mr-2" />
-                Archived Chats
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/messages-settings')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
+          >
+            <Settings size={16} />
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -509,64 +491,22 @@ const ChatInbox = () => {
                           </Badge>
                         )}
                         
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <MoreVertical size={12} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {conversation.type === 'private' && (
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/profile/${conversation.participant.id}`);
-                              }}>
-                                <User size={14} className="mr-2" />
-                                View Profile
-                              </DropdownMenuItem>
-                            )}
-                            
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handlePinConversation(conversation.id);
-                            }}>
-                              <Pin size={14} className="mr-2" />
-                              {conversation.isPinned ? 'Unpin' : 'Pin'}
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // For now, just show a simple action - could be expanded later
+                            if (conversation.type === 'private') {
+                              navigate(`/profile/${conversation.participant.id}`);
+                            } else {
                               handleArchiveConversation(conversation.id);
-                            }}>
-                              <Archive size={14} className="mr-2" />
-                              {conversation.isArchived ? 'Unarchive' : 'Archive'}
-                            </DropdownMenuItem>
-                            
-                            {conversation.type === 'group' ? (
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleLeaveConversation(conversation.id);
-                                }}
-                                className="text-destructive"
-                              >
-                                <LogOut size={14} className="mr-2" />
-                                Leave
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleLeaveConversation(conversation.id);
-                                }}
-                                className="text-destructive"
-                              >
-                                <UserX size={14} className="mr-2" />
-                                Unmatch
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            }
+                          }}
+                        >
+                          <MoreVertical size={12} />
+                        </Button>
                       </div>
                     </div>
                   </div>

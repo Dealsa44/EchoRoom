@@ -1,4 +1,5 @@
 // Conversation storage utilities for managing conversation states in localStorage
+import { incrementArchivedChatsCount } from './notificationStorage';
 
 export interface ConversationState {
   id: string;
@@ -60,9 +61,16 @@ export const updateConversationState = (
   conversationId: string, 
   updates: Partial<ConversationState>
 ): void => {
+  const currentState = getConversationState(conversationId);
   const states = getConversationStates();
+  
+  // Check if we're archiving a conversation that wasn't previously archived
+  if (updates.isArchived === true && !currentState.isArchived) {
+    incrementArchivedChatsCount();
+  }
+  
   states[conversationId] = {
-    ...getConversationState(conversationId),
+    ...currentState,
     ...updates,
     id: conversationId
   };

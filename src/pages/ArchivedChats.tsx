@@ -41,6 +41,7 @@ import {
   updateConversationState,
   deleteConversationState 
 } from '@/lib/conversationStorage';
+import { markArchivedChatsAsRead } from '@/lib/notificationStorage';
 
 interface ArchivedConversation {
   id: string;
@@ -215,6 +216,9 @@ const ArchivedChats = () => {
     };
 
     loadArchivedConversations();
+    
+    // Mark archived chats as read when user visits this page
+    markArchivedChatsAsRead();
   }, []); // Empty dependency array to run only once
 
   const handleUnarchiveConversation = (conversationId: string) => {
@@ -293,7 +297,7 @@ const ArchivedChats = () => {
              <TopBar 
          title="Archived Chats" 
          showBack 
-         onBack={() => navigate('/chat-inbox')}
+         onBack={() => navigate('/messages-settings')}
          showNotifications={false}
          showDarkModeToggle={false}
          showAIAssistant={false}
