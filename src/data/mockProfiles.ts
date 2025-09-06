@@ -678,31 +678,31 @@ export const mockProfiles: Profile[] = [
   },
   {
     id: 10,
-    name: 'Finn',
-    avatar: '🎸',
-    age: 31,
-    location: 'Melbourne, Australia',
+    name: 'River',
+    avatar: '🌊',
+    age: 26,
+    location: 'Portland, Oregon',
     distance: 11.2,
-    bio: 'Musician and coffee roaster. Love creating music, brewing coffee, and sharing stories.',
-    about: 'I\'m a musician who runs a small coffee roastery. I believe in the power of music and coffee to bring people together. When I\'m not playing guitar or roasting beans, I love exploring new sounds and flavors.',
-    interests: ['Music', 'Coffee', 'Cooking', 'Travel'],
-    languages: [{ language: 'english', level: 'native' }, { language: 'spanish', level: 'intermediate' }],
+    bio: 'Environmental scientist and nature photographer. Passionate about conservation and capturing Earth\'s beauty.',
+    about: 'I\'m an environmental scientist who spends my free time photographing wildlife and landscapes. I believe in the power of nature to heal and inspire. When I\'m not in the field collecting data, I\'m hiking with my camera, documenting the beauty of our planet.',
+    interests: ['Nature', 'Photography', 'Conservation', 'Hiking', 'Wildlife'],
+    languages: [{ language: 'english', level: 'native' }, { language: 'french', level: 'intermediate' }],
     languageLevel: 'native',
-    chatStyle: 'ambievert',
-    lastActive: '10 min ago',
-    isOnline: true,
-    sharedInterests: 1,
-    genderIdentity: 'male',
-    orientation: 'bisexual',
+    chatStyle: 'introvert',
+    lastActive: '2 hours ago',
+    isOnline: false,
+    sharedInterests: 2,
+    genderIdentity: 'non-binary',
+    orientation: 'pansexual',
     ethnicity: 'white',
     lookingForRelationship: true,
-    lookingForFriendship: false,
+    lookingForFriendship: true,
     relationshipType: 'serious-relationship',
     smoking: 'never',
-    drinking: 'socially',
-    hasChildren: 'no',
-    education: 'bachelor',
-    occupation: 'Musician & Coffee Roaster',
+    drinking: 'never',
+    hasChildren: 'want-someday',
+    education: 'master',
+    occupation: 'Environmental Scientist',
     religion: 'atheist',
     politicalViews: 'liberal',
     photos: [
@@ -713,69 +713,69 @@ export const mockProfiles: Profile[] = [
     isVerified: true,
     profileCompletion: 92,
     iceBreakerAnswers: {
-      "What's your favorite way to spend a weekend?": "Playing music with friends and experimenting with new coffee blends",
-      "If you could travel anywhere right now, where would you go?": "Colombia to learn about coffee farming and music",
-      "What's something you're passionate about?": "Creating experiences that bring people together through music and coffee"
+      "What's your favorite way to spend a weekend?": "Hiking in the mountains with my camera, capturing the sunrise",
+      "If you could travel anywhere right now, where would you go?": "Patagonia to photograph the glaciers before they disappear",
+      "What's something you're passionate about?": "Protecting our planet and showing others its incredible beauty through photography"
     },
     profileQuestions: [
       {
         id: 'creative-10',
-        question: "What's your favorite instrument to play?",
+        question: "What's your favorite subject to photograph?",
         category: 'creative',
-        answer: "Acoustic guitar - there's something intimate about the sound that connects directly to the soul."
+        answer: "Wildlife in their natural habitat - there's something magical about capturing a moment of pure, untamed life."
       },
       {
         id: 'flirty-10',
-        question: "What's your idea of a perfect evening?",
+        question: "What's your idea of a perfect date?",
         category: 'flirty',
-        answer: "Cooking together, sharing good coffee, and playing music by candlelight."
+        answer: "A sunrise hike to a beautiful viewpoint, followed by coffee and sharing our favorite nature stories."
       },
       {
         id: 'casual-10',
-        question: "What's your favorite coffee origin?",
+        question: "What's your favorite hiking trail?",
         category: 'casual',
-        answer: "Ethiopian Yirgacheffe - the floral notes and bright acidity are perfect for morning inspiration."
+        answer: "The Pacific Crest Trail - it's challenging but the views and wildlife encounters are absolutely worth it."
       },
       {
         id: 'deep-10',
-        question: "What's the most meaningful song you've ever written?",
+        question: "What's the most important lesson life has taught you?",
         category: 'deep',
-        answer: "A song about my grandmother's coffee ritual - it taught me about love, tradition, and connection."
+        answer: "That we're all connected to nature and each other. Every action we take affects the world around us."
       },
       {
         id: 'funny-10',
-        question: "What's the most embarrassing thing that happened during a performance?",
+        question: "What's the most embarrassing thing that happened while photographing?",
         category: 'funny',
-        answer: "I once forgot the lyrics to my own song and had to make up words on the spot!"
+        answer: "I once spent 30 minutes photographing what I thought was a rare bird, only to realize it was a very realistic garden decoration!"
       }
     ]
   },
   {
     id: 11,
-    name: 'Nova',
-    avatar: '🚀',
-    age: 24,
-    location: 'Berlin, Germany',
+    name: 'Zara',
+    avatar: '🎭',
+    age: 27,
+    location: 'Montreal, Canada',
     distance: 6.7,
-    bio: 'Space enthusiast and software engineer. Love discussing technology, astronomy, and the future of humanity.',
-    about: 'I\'m a software engineer with a passion for space exploration and technology. I spend my free time stargazing, coding side projects, and discussing the future of humanity in space. Always excited to meet fellow space enthusiasts.',
-    interests: ['Space', 'Technology', 'Astronomy', 'Coding'],
-    languages: [{ language: 'english', level: 'fluent' }, { language: 'german', level: 'intermediate' }],
+    bio: 'Theater director and creative writer. Passionate about storytelling, community building, and the power of art to transform lives.',
+    about: 'I\'m a theater director who believes in the transformative power of storytelling. I create immersive experiences that bring communities together and explore the human condition through art. When I\'m not directing, I\'m writing plays and organizing community workshops.',
+    interests: ['Theater', 'Writing', 'Community', 'Art', 'Storytelling'],
+    languages: [{ language: 'english', level: 'fluent' }, { language: 'french', level: 'native' }],
     languageLevel: 'fluent',
-    chatStyle: 'introvert',
-    lastActive: '2 hours ago',
-    isOnline: false,
-    sharedInterests: 1,
-    genderIdentity: 'non-binary',
-    orientation: 'asexual',
-    ethnicity: 'white',
-    lookingForRelationship: false,
+    chatStyle: 'extrovert',
+    lastActive: '4 hours ago',
+    isOnline: true,
+    sharedInterests: 3,
+    genderIdentity: 'female',
+    orientation: 'bisexual',
+    ethnicity: 'mixed-race',
+    lookingForRelationship: true,
     lookingForFriendship: true,
     smoking: 'never',
-    drinking: 'casually',
-    hasChildren: 'no',
+    drinking: 'socially',
+    hasChildren: 'want-someday',
     education: 'master',
-    occupation: 'Software Engineer',
+    occupation: 'Theater Director',
     religion: 'atheist',
     politicalViews: 'liberal',
     photos: [
@@ -786,40 +786,40 @@ export const mockProfiles: Profile[] = [
     isVerified: true,
     profileCompletion: 88,
     iceBreakerAnswers: {
-      "What's your favorite way to spend a weekend?": "Coding side projects and watching space documentaries",
-      "If you could travel anywhere right now, where would you go?": "The International Space Station, obviously!",
-      "What's something you're passionate about?": "Advancing space technology and making space accessible to everyone"
+      "What's your favorite way to spend a weekend?": "Rehearsing with my theater troupe and exploring new neighborhoods for inspiration",
+      "If you could travel anywhere right now, where would you go?": "London to see West End shows and immerse myself in the theater scene",
+      "What's something you're passionate about?": "Using theater to build bridges between communities and tell stories that matter"
     },
     profileQuestions: [
       {
         id: 'deep-11',
         question: "What's your biggest dream for humanity?",
         category: 'deep',
-        answer: "To see humans become a multi-planetary species and explore the cosmos together."
+        answer: "To create a world where everyone feels seen, heard, and valued through the power of storytelling and community."
       },
       {
         id: 'flirty-11',
         question: "What's the most attractive quality in a person?",
         category: 'flirty',
-        answer: "Intellectual curiosity and the ability to geek out about space and technology."
+        answer: "Authenticity and the courage to be vulnerable. There's nothing more beautiful than someone who's unafraid to be themselves."
       },
       {
         id: 'casual-11',
-        question: "What's your favorite programming language?",
+        question: "What's your favorite type of theater?",
         category: 'casual',
-        answer: "Python - it's versatile and perfect for both work projects and space simulations."
+        answer: "Immersive theater - I love breaking the fourth wall and creating experiences that blur the line between performer and audience."
       },
       {
         id: 'creative-11',
         question: "What's the most creative project you've worked on?",
         category: 'creative',
-        answer: "A virtual reality simulation of walking on Mars - it was incredibly immersive!"
+        answer: "A community theater piece where the audience became part of the story - it was magical to see strangers connect through shared experience."
       },
       {
         id: 'funny-11',
-        question: "What's the most embarrassing thing that happened while stargazing?",
+        question: "What's the most embarrassing thing that happened during a performance?",
         category: 'funny',
-        answer: "I once got so excited about seeing a shooting star that I fell off my telescope!"
+        answer: "I once forgot my lines completely and had to improvise an entire monologue - the audience loved it more than the original!"
       }
     ]
   },

@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Heart, MessageCircle, Users, Bell, Check, X, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Users, Bell, Check, X, Trash2, Calendar, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
 interface Notification {
   id: number;
-  type: 'match' | 'message' | 'forum' | 'system' | 'like';
+  type: 'message' | 'event' | 'language' | 'community' | 'system' | 'forum';
   title: string;
   message: string;
   time: string;
@@ -21,70 +21,88 @@ interface Notification {
 interface NotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
-const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
+const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: NotificationModalProps) => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: 1,
-      type: 'match',
-      title: 'New Match! 💚',
-      message: 'Luna liked your profile and you matched!',
+      type: 'message',
+      title: 'New Message in Philosophy Corner',
+      message: 'Alex replied to your question about existentialism',
       time: '2 min ago',
       unread: true,
-      actionUrl: '/matches',
-      avatar: '🌙'
+      actionUrl: '/chat-room/1',
+      avatar: '🤔'
     },
     {
       id: 2,
-      type: 'message',
-      title: 'New Message',
-      message: 'Alex sent you a message about philosophy',
+      type: 'event',
+      title: 'Event Reminder',
+      message: 'Language Exchange Meetup starts in 30 minutes',
       time: '15 min ago',
       unread: true,
-      actionUrl: '/private-chat/2',
-      avatar: '📚'
+      actionUrl: '/event/3',
+      avatar: '🌍'
     },
     {
       id: 3,
-      type: 'like',
-      title: 'Profile Like',
-      message: 'Sage liked your profile',
-      time: '45 min ago',
+      type: 'language',
+      title: 'Language Learning Progress',
+      message: 'You completed 5 new vocabulary words in Georgian!',
+      time: '1 hour ago',
       unread: true,
-      actionUrl: '/profile/3',
-      avatar: '🌱'
+      actionUrl: '/profile/stats',
+      avatar: '📚'
     },
     {
       id: 4,
-      type: 'forum',
-      title: 'Forum Reply',
-      message: 'Your post about mindfulness got a thoughtful reply',
-      time: '1 hour ago',
+      type: 'community',
+      title: 'Community Update',
+      message: 'New member joined the Book Lovers United room',
+      time: '2 hours ago',
       unread: false,
-      actionUrl: '/forum/thread/1',
-      avatar: '🧘'
+      actionUrl: '/chat-room/2',
+      avatar: '📖'
     },
     {
       id: 5,
       type: 'system',
       title: 'Welcome to EchoRoom!',
-      message: 'Complete your profile to get better matches',
-      time: '2 days ago',
+      message: 'Join your first chat room to start meaningful conversations',
+      time: '1 day ago',
       unread: false,
-      actionUrl: '/profile/edit',
+      actionUrl: '/chat-rooms',
       avatar: '🌟'
+    },
+    {
+      id: 6,
+      type: 'event',
+      title: 'Event Invitation',
+      message: 'You\'re invited to the Creative Writing Workshop',
+      time: '3 hours ago',
+      unread: false,
+      actionUrl: '/event/5',
+      avatar: '✍️'
     },
   ]);
 
+  // Update unread count when notifications change
+  useEffect(() => {
+    const unreadCount = notifications.filter(n => n.unread).length;
+    onUnreadCountChange?.(unreadCount);
+  }, [notifications, onUnreadCountChange]);
+
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'match': return <Heart className="h-4 w-4 text-red-500" />;
       case 'message': return <MessageCircle className="h-4 w-4 text-blue-500" />;
-      case 'like': return <Heart className="h-4 w-4 text-pink-500" />;
+      case 'event': return <Calendar className="h-4 w-4 text-purple-500" />;
+      case 'language': return <BookOpen className="h-4 w-4 text-green-500" />;
+      case 'community': return <Users className="h-4 w-4 text-orange-500" />;
       case 'forum': return <Users className="h-4 w-4 text-green-500" />;
-      case 'system': return <Bell className="h-4 w-4 text-orange-500" />;
+      case 'system': return <Bell className="h-4 w-4 text-yellow-500" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -124,8 +142,8 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto rounded-xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between">
+            <div className="flex-1 pr-4">
               <DialogTitle className="text-lg font-semibold">
                 Notifications
                 {unreadCount > 0 && (
@@ -138,17 +156,19 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
                 Stay updated with your latest activity
               </DialogDescription>
             </div>
-            {unreadCount > 0 && (
+          </div>
+          {unreadCount > 0 && (
+            <div className="flex justify-start mt-2 -ml-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={markAllAsRead}
-                className="text-xs"
+                className="text-xs px-2 hover:bg-primary/5 hover:text-primary bg-primary/5 text-primary border border-primary/20"
               >
                 Mark all read
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </DialogHeader>
         
         <div className="max-h-96 overflow-y-auto scrollbar-hide">
@@ -168,25 +188,23 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-1">
+                    <div className="flex-shrink-0 mt-1 relative">
                       <div className="flex items-center justify-center">
                         {notification.avatar && (
                           <span className="text-lg mr-2">{notification.avatar}</span>
                         )}
                         {getTypeIcon(notification.type)}
                       </div>
+                      {notification.unread && (
+                        <div className="absolute -left-1 -top-1 w-2 h-2 bg-primary rounded-full"></div>
+                      )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
-                        <h4 className="font-medium text-sm truncate pr-2">
+                      <div className="flex items-start justify-between mb-1 pr-16">
+                        <h4 className="font-medium text-sm truncate">
                           {notification.title}
                         </h4>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {notification.unread && (
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          )}
-                        </div>
                       </div>
                       
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -198,13 +216,13 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
                       </span>
                     </div>
                     
-                    {/* Action buttons - show on hover */}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    {/* Action buttons - always visible */}
+                    <div className="absolute top-2 right-2 flex gap-1">
                       {notification.unread && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-6 w-6 hover:bg-primary/10 bg-transparent"
                           onClick={(e) => {
                             e.stopPropagation();
                             markAsRead(notification.id);
@@ -216,7 +234,7 @@ const NotificationModal = ({ isOpen, onClose }: NotificationModalProps) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 bg-transparent"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteNotification(notification.id);

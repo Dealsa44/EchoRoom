@@ -27,7 +27,11 @@ import {
   UserX,
   History,
   Calendar,
-  Shield
+  Shield,
+  UserPlus,
+  Check,
+  X,
+  MessageSquare
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BottomNavigation from '@/components/layout/BottomNavigation';
@@ -41,6 +45,7 @@ import {
   markConversationAsLeft,
   deleteConversationState 
 } from '@/lib/conversationStorage';
+import { mockProfiles } from '@/data/mockProfiles';
 
 interface ChatConversation {
   id: string;
@@ -72,12 +77,40 @@ interface ChatConversation {
   };
 }
 
+interface ContactRequest {
+  id: string;
+  from: {
+    id: string;
+    name: string;
+    avatar: string;
+    age: number;
+    location: string;
+    isOnline: boolean;
+  };
+  context: {
+    type: 'forum' | 'chatroom';
+    source: string;
+    topic?: string;
+  };
+  message: string;
+  timestamp: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
+
 const ChatInbox = () => {
   const navigate = useNavigate();
   const { user, joinedRooms, leaveRoom } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('chatInboxActiveTab') || 'all';
+  });
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+
+  // Save active tab to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('chatInboxActiveTab', activeTab);
+  }, [activeTab]);
 
   // Initialize conversations with persistent state
   useEffect(() => {
@@ -170,7 +203,76 @@ const ChatInbox = () => {
       setConversations(conversationsWithState);
     };
 
+    const initializeContactRequests = () => {
+      // Get profiles with IDs 6, 7, 8 (unused profiles for contact requests)
+      const zaraProfile = mockProfiles.find(p => p.id === 6);
+      const riverProfile = mockProfiles.find(p => p.id === 7);
+      const leoProfile = mockProfiles.find(p => p.id === 8);
+
+      const mockRequests: ContactRequest[] = [
+        {
+          id: 'req-1',
+          from: {
+            id: '6',
+            name: zaraProfile?.name || 'Zara',
+            avatar: zaraProfile?.avatar || '🎭',
+            age: zaraProfile?.age || 27,
+            location: zaraProfile?.location || 'Montreal, Canada',
+            isOnline: zaraProfile?.isOnline || true,
+          },
+          context: {
+            type: 'forum',
+            source: 'Philosophy Forum',
+            topic: 'The paradox of choice in modern life'
+          },
+          message: 'Hi! I loved your thoughtful response about decision-making. I\'d love to discuss this further with you.',
+          timestamp: '1 hour ago',
+          status: 'pending'
+        },
+        {
+          id: 'req-2',
+          from: {
+            id: '7',
+            name: riverProfile?.name || 'River',
+            avatar: riverProfile?.avatar || '🌊',
+            age: riverProfile?.age || 26,
+            location: riverProfile?.location || 'Portland, Oregon',
+            isOnline: riverProfile?.isOnline || false,
+          },
+          context: {
+            type: 'chatroom',
+            source: 'Wellness Chat',
+            topic: 'Mindfulness practices'
+          },
+          message: 'Your insights on meditation were really helpful! Would love to connect and share more experiences.',
+          timestamp: '3 hours ago',
+          status: 'pending'
+        },
+        {
+          id: 'req-3',
+          from: {
+            id: '8',
+            name: leoProfile?.name || 'Leo',
+            avatar: leoProfile?.avatar || '🎵',
+            age: leoProfile?.age || 29,
+            location: leoProfile?.location || 'Austin, Texas',
+            isOnline: leoProfile?.isOnline || true,
+          },
+          context: {
+            type: 'forum',
+            source: 'Education Forum',
+            topic: 'Learning languages as an adult'
+          },
+          message: 'I\'m also learning Georgian! It would be great to practice together and share tips.',
+          timestamp: '5 hours ago',
+          status: 'pending'
+        }
+      ];
+      setContactRequests(mockRequests);
+    };
+
     initializeConversations();
+    initializeContactRequests();
   }, []);
 
   // Refresh conversations when joined rooms change
@@ -268,6 +370,7 @@ const ChatInbox = () => {
     if (activeTab === 'private') return matchesSearch && conv.type === 'private' && !conv.isArchived;
     if (activeTab === 'groups') return matchesSearch && conv.type === 'group' && !conv.isArchived;
     if (activeTab === 'archived') return matchesSearch && conv.isArchived;
+    if (activeTab === 'requests') return false; // Requests are handled separately
     
     return matchesSearch;
   }).sort((a, b) => {
@@ -278,6 +381,17 @@ const ChatInbox = () => {
     // Then by timestamp (most recent first)
     const timeA = new Date(a.lastMessage.timestamp).getTime();
     const timeB = new Date(b.lastMessage.timestamp).getTime();
+    return timeB - timeA;
+  });
+
+  const filteredRequests = contactRequests.filter(req => {
+    const matchesSearch = req.from.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         req.message.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch && req.status === 'pending';
+  }).sort((a, b) => {
+    // Most recent requests first
+    const timeA = new Date(a.timestamp).getTime();
+    const timeB = new Date(b.timestamp).getTime();
     return timeB - timeA;
   });
 
@@ -353,6 +467,20 @@ const ChatInbox = () => {
     }
   };
 
+  const handleAcceptRequest = (requestId: string) => {
+    // Simply remove the request from the list (temporary, will reappear on refresh)
+    setContactRequests(prev => prev.filter(req => req.id !== requestId));
+  };
+
+  const handleDeclineRequest = (requestId: string) => {
+    // Simply remove the request from the list (temporary, will reappear on refresh)
+    setContactRequests(prev => prev.filter(req => req.id !== requestId));
+  };
+
+  const handleViewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
   const getMessageTypeIcon = (type: string) => {
     switch (type) {
       case 'voice': return <Mic size={12} />;
@@ -403,7 +531,7 @@ const ChatInbox = () => {
 
         {/* Tabs */}
         <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <Button
               variant={activeTab === 'all' ? 'default' : 'outline'}
               size="sm"
@@ -428,6 +556,22 @@ const ChatInbox = () => {
             >
               Groups ({allConversations.filter(c => c.type === 'group' && !c.isArchived).length})
             </Button>
+            <div className="relative">
+              <Button
+                variant={activeTab === 'requests' ? 'default' : 'outline'}
+                size="sm"
+                className="h-10 text-xs font-medium"
+                onClick={() => setActiveTab('requests')}
+              >
+                <UserPlus size={12} className="mr-1" />
+                Requests
+              </Button>
+              {contactRequests.filter(req => req.status === 'pending').length > 0 && (
+                <Badge variant="destructive" className="absolute -top-2.5 -right-2.5 h-5 w-5 text-xs p-0 flex items-center justify-center min-w-[20px] z-10">
+                  {contactRequests.filter(req => req.status === 'pending').length}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
@@ -441,7 +585,100 @@ const ChatInbox = () => {
           Discover New Chat Rooms
         </Button>
 
-        {/* Conversations List */}
+        {/* Content based on active tab */}
+        {activeTab === 'requests' ? (
+          /* Contact Requests List */
+          <div className="space-y-3">
+            {filteredRequests.map((request, index) => (
+              <Card 
+                key={request.id}
+                className="transform-gpu will-change-transform transition-all hover:shadow-large animate-fade-in animate-slide-up border-primary/20"
+                style={{ animationDelay: `${0.05 + index * 0.05}s` }}
+              >
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    {/* Request Header */}
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="relative w-12 h-12 rounded-2xl bg-gradient-primary/10 grid place-items-center shadow-inner-soft cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => handleViewProfile(request.from.id)}
+                      >
+                        <div className="text-2xl select-none" aria-hidden>{request.from.avatar}</div>
+                        {request.from.isOnline && (
+                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse-soft" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h3 
+                              className="font-medium truncate cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => handleViewProfile(request.from.id)}
+                            >
+                              {request.from.name}
+                            </h3>
+                            <Badge variant="outline" className="text-xs">
+                              {request.from.age}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {formatTimestamp(request.timestamp)}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground truncate">
+                          {request.from.location}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Context */}
+                    <div className="bg-muted/30 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare size={14} className="text-primary" />
+                        <span className="text-sm font-medium text-primary">
+                          From {request.context.source}
+                        </span>
+                      </div>
+                      {request.context.topic && (
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Topic: {request.context.topic}
+                        </p>
+                      )}
+                      <p className="text-sm leading-relaxed">
+                        "{request.message}"
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleAcceptRequest(request.id)}
+                        className="flex-1"
+                      >
+                        <Check size={14} className="mr-2" />
+                        Accept
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeclineRequest(request.id)}
+                        className="flex-1"
+                      >
+                        <X size={14} className="mr-2" />
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          /* Conversations List */
         <div className="space-y-3">
           {filteredConversations.map((conversation, index) => (
             <Card 
@@ -515,12 +752,22 @@ const ChatInbox = () => {
             </Card>
           ))}
         </div>
+        )}
 
-        {filteredConversations.length === 0 && (
+        {/* Empty State */}
+        {((activeTab === 'requests' && filteredRequests.length === 0) || 
+          (activeTab !== 'requests' && filteredConversations.length === 0)) && (
           <div className="text-center py-8">
-            <div className="text-4xl mb-2">💬</div>
+            <div className="text-4xl mb-2">
+              {activeTab === 'requests' ? '📨' : '💬'}
+            </div>
             <p className="text-muted-foreground">
-              {activeTab === 'all' ? 'No conversations yet' : `No ${activeTab} conversations`}
+              {activeTab === 'requests' 
+                ? 'No contact requests yet' 
+                : activeTab === 'all' 
+                  ? 'No conversations yet' 
+                  : `No ${activeTab} conversations`
+              }
             </p>
           </div>
         )}

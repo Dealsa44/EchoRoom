@@ -282,54 +282,6 @@ const UserProfileActions = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
-                onClick={() => handleCall('audio')}
-                className="h-12 flex-col gap-1"
-              >
-                <Phone className="w-5 h-5" />
-                <span className="text-xs">Call</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => handleCall('video')}
-                className="h-12 flex-col gap-1"
-              >
-                <Video className="w-5 h-5" />
-                <span className="text-xs">Video</span>
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
-                onClick={handleMessage}
-                className="h-12 flex-col gap-1"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-xs">Message</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleViewProfile}
-                className="h-12 flex-col gap-1"
-              >
-                <User className="w-5 h-5" />
-                <span className="text-xs">Profile</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* AI & Analysis Tools */}
         <Card>

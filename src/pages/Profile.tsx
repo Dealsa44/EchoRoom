@@ -476,21 +476,7 @@ const Profile = () => {
                     </Button>
                   </div>
                 </>
-              ) : (
-                <div className="flex justify-center gap-2">
-                  <CallButtons
-                    participantId={profileData?.id?.toString() || '1'}
-                    participantName={profileData?.name || 'User'}
-                    participantAvatar={profileData?.avatar || '🌟'}
-                    variant="full"
-                    callType="private"
-                  />
-                  <Button variant="outline" onClick={handleSendMessage}>
-                    <MessageCircle size={16} />
-                    <span className="ml-2">Message</span>
-                  </Button>
-                </div>
-              )}
+              ) : null}
             </div>
           </CardContent>
         </Card>

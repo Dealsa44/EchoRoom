@@ -31,6 +31,7 @@ const TopBar = ({
   const navigate = useNavigate();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(3);
 
   const handleBack = () => {
     if (onBack) {
@@ -81,15 +82,21 @@ const TopBar = ({
             )}
             
             {showNotifications && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowNotificationModal(true)}
-                className="relative hover:scale-110 transition-spring hover:bg-transparent"
-              >
-                <Bell size={20} className="hover:text-accent transition-smooth" />
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white/20"></span>
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowNotificationModal(true)}
+                  className="hover:scale-110 transition-spring hover:bg-transparent"
+                >
+                  <Bell size={20} className="hover:text-accent transition-smooth" />
+                </Button>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 min-w-[20px] h-[20px] bg-red-500 text-white text-xs font-bold rounded-full border-2 border-background flex items-center justify-center px-1 z-10">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
             )}
             
             {showDarkModeToggle && (
@@ -112,6 +119,7 @@ const TopBar = ({
       <NotificationModal 
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
+        onUnreadCountChange={setUnreadCount}
       />
       
       <AIAssistantModal 
