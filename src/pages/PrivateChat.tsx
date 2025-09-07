@@ -18,6 +18,7 @@ import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CallButtons from '@/components/calls/CallButtons';
 import CameraScreen from '@/components/calls/CameraScreen';
+import PhotoGallery from '@/components/ui/PhotoGallery';
 
 const PrivateChat = () => {
   const { userId } = useParams();
@@ -58,6 +59,7 @@ const PrivateChat = () => {
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [showAttachments, setShowAttachments] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
@@ -459,8 +461,48 @@ const PrivateChat = () => {
 
   // File attachment handlers
   const handleImageUpload = () => {
-    setShowCamera(true);
+    setShowPhotoGallery(true);
     setShowAttachments(false);
+  };
+
+  const handlePhotoGalleryClose = () => {
+    setShowPhotoGallery(false);
+  };
+
+  const handleSendPhotos = (photos: File[]) => {
+    // Create messages for each photo
+    photos.forEach((photo, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string;
+        const newMessage = {
+          id: messages.length + index + 1,
+          sender: 'me' as const,
+          content: '📷 Photo',
+          timestamp: 'now',
+          translated: false,
+          corrected: false,
+          originalContent: '',
+          translatedContent: '',
+          hasErrors: false,
+          corrections: [],
+          type: 'image' as const,
+          reactions: [],
+          isEdited: false,
+          isDeleted: false,
+          replyTo: replyingTo,
+          deliveryStatus: 'sent' as const,
+          isEncrypted: true,
+          imageUrl: imageData
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+      };
+      reader.readAsDataURL(photo);
+    });
+
+    setReplyingTo(null);
+    setShowPhotoGallery(false);
   };
 
   const handleImageCaptured = (imageData: string) => {
@@ -1008,8 +1050,17 @@ const PrivateChat = () => {
         </div>
       </div>
 
+      {/* Photo Gallery */}
+      {showPhotoGallery && (
+        <PhotoGallery
+          onClose={handlePhotoGalleryClose}
+          onSendPhotos={handleSendPhotos}
+          maxPhotos={10}
+        />
+      )}
+
       {/* Attachment panel - positioned above fixed input */}
-      {showAttachments && (
+      {showAttachments && !showPhotoGallery && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full z-10">
           <div className="grid grid-cols-3 gap-3">
             <Button
@@ -1025,8 +1076,8 @@ const PrivateChat = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                // Simulate camera
-                handleImageUpload();
+                setShowCamera(true);
+                setShowAttachments(false);
               }}
               className="flex-col h-auto p-3 gap-1"
             >
@@ -1047,7 +1098,8 @@ const PrivateChat = () => {
       )}
 
       {/* Message Input */}
-      <div className={`fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border ${showAttachments ? 'bottom-20' : ''}`}>
+      {!showPhotoGallery && (
+        <div className={`fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border ${showAttachments ? 'bottom-20' : ''}`}>
         {/* Reply indicator */}
         {replyingTo && (
           <div className="mb-3 p-2 bg-primary/10 rounded border-l-2 border-primary">
@@ -1203,12 +1255,14 @@ const PrivateChat = () => {
             </div>
           </div>
         )}
+        </div>
+      )}
 
-        {/* AI Assistant Modal */}
-        <AIAssistantModal
-          isOpen={showAIModal}
-          onClose={() => setShowAIModal(false)}
-        />
+      {/* AI Assistant Modal */}
+      <AIAssistantModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+      />
 
 
         
@@ -1240,7 +1294,6 @@ const PrivateChat = () => {
           onClose={() => setShowCamera(false)}
           onImageCaptured={handleImageCaptured}
         />
-      </div>
     </div>
   );
 };

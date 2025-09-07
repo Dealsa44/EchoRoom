@@ -201,10 +201,37 @@ const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: Notificatio
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1 pr-16">
-                        <h4 className="font-medium text-sm truncate">
+                      <div className="flex items-start justify-between mb-1">
+                        <h4 className="font-medium text-sm truncate pr-2">
                           {notification.title}
                         </h4>
+                        {/* Action buttons - positioned in the header area */}
+                        <div className="flex gap-1 flex-shrink-0">
+                          {notification.unread && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-primary/10 bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 bg-transparent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -214,34 +241,6 @@ const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: Notificatio
                       <span className="text-xs text-muted-foreground">
                         {notification.time}
                       </span>
-                    </div>
-                    
-                    {/* Action buttons - always visible */}
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      {notification.unread && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:bg-primary/10 bg-transparent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification.id);
-                          }}
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 bg-transparent"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.id);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
                     </div>
                   </div>
                 </div>

@@ -17,6 +17,7 @@ import AITooltip from '@/components/ai/AITooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CameraScreen from '@/components/calls/CameraScreen';
 import CallButtons from '@/components/calls/CallButtons';
+import PhotoGallery from '@/components/ui/PhotoGallery';
 
 const ChatRoom = () => {
   const { id } = useParams();
@@ -60,6 +61,7 @@ const ChatRoom = () => {
   const [pinnedMessages, setPinnedMessages] = useState<Set<number>>(new Set());
   const [showAttachments, setShowAttachments] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
@@ -989,8 +991,47 @@ const ChatRoom = () => {
   };
 
   const handleImageUpload = () => {
-    setShowCamera(true);
+    setShowPhotoGallery(true);
     setShowAttachments(false);
+  };
+
+  const handlePhotoGalleryClose = () => {
+    setShowPhotoGallery(false);
+  };
+
+  const handleSendPhotos = (photos: File[]) => {
+    // Create messages for each photo
+    photos.forEach((photo, index) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string;
+        const newMessage = {
+          id: messages.length + index + 1,
+          user: {
+            name: anonymousMode ? 'Anonymous' : (user?.username || 'Guest'),
+            avatar: anonymousMode ? '👤' : (user?.avatar || '👤'),
+            isAnonymous: anonymousMode,
+            role: 'member'
+          },
+          content: '📷 Photo',
+          timestamp: 'now',
+          isAI: false,
+          channel: activeChannel,
+          replyTo: replyingTo,
+          replies: [],
+          isPinned: false,
+          reactions: [],
+          type: 'image',
+          imageUrl: imageData
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+      };
+      reader.readAsDataURL(photo);
+    });
+
+    setReplyingTo(null);
+    setShowPhotoGallery(false);
   };
 
   const handleImageCaptured = (imageData: string) => {
@@ -1426,8 +1467,17 @@ const ChatRoom = () => {
         </div>
       </div>
 
+      {/* Photo Gallery */}
+      {showPhotoGallery && (
+        <PhotoGallery
+          onClose={handlePhotoGalleryClose}
+          onSendPhotos={handleSendPhotos}
+          maxPhotos={10}
+        />
+      )}
+
       {/* Attachment panel - positioned above fixed input */}
-      {showAttachments && (
+      {showAttachments && !showPhotoGallery && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full z-10">
           <div className="grid grid-cols-3 gap-3">
             <Button
@@ -1443,8 +1493,8 @@ const ChatRoom = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                // Simulate camera
-                handleImageUpload();
+                setShowCamera(true);
+                setShowAttachments(false);
               }}
               className="flex-col h-auto p-3 gap-1"
             >
@@ -1500,7 +1550,8 @@ const ChatRoom = () => {
       )}
 
       {/* Message Input */}
-      <div className={`fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full ${showAttachments ? 'bottom-20' : ''}`}>
+      {!showPhotoGallery && (
+        <div className={`fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full ${showAttachments ? 'bottom-20' : ''}`}>
         {anonymousMode && (
           <div className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
             <EyeOff size={12} />
@@ -1637,7 +1688,8 @@ const ChatRoom = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Language Practice Panel */}
       {showLanguagePanel && (

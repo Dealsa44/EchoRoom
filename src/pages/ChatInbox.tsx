@@ -31,9 +31,20 @@ import {
   UserPlus,
   Check,
   X,
-  MessageSquare
+  MessageSquare,
+  Eye,
+  Trash2,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
@@ -102,7 +113,7 @@ const ChatInbox = () => {
   const { user, joinedRooms, leaveRoom } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState(() => {
-    return localStorage.getItem('chatInboxActiveTab') || 'all';
+    return localStorage.getItem('chatInboxActiveTab') || 'chats';
   });
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
@@ -366,10 +377,7 @@ const ChatInbox = () => {
     const matchesSearch = conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (activeTab === 'all') return matchesSearch && !conv.isArchived;
-    if (activeTab === 'private') return matchesSearch && conv.type === 'private' && !conv.isArchived;
-    if (activeTab === 'groups') return matchesSearch && conv.type === 'group' && !conv.isArchived;
-    if (activeTab === 'archived') return matchesSearch && conv.isArchived;
+    if (activeTab === 'chats') return matchesSearch && !conv.isArchived;
     if (activeTab === 'requests') return false; // Requests are handled separately
     
     return matchesSearch;
@@ -444,6 +452,21 @@ const ChatInbox = () => {
     ));
     
     // Archived/unarchived conversation - toast removed per user request
+  };
+
+  const handleMuteConversation = (conversationId: string) => {
+    const conv = allConversations.find(c => c.id === conversationId);
+    const newMutedState = !conv?.isMuted;
+    
+    // Update persistent storage
+    updateConversationState(conversationId, { isMuted: newMutedState });
+    
+    // Update local state
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId 
+        ? { ...conv, isMuted: newMutedState }
+        : conv
+    ));
   };
 
   const handleLeaveConversation = (conversationId: string) => {
@@ -530,48 +553,32 @@ const ChatInbox = () => {
         </div>
 
         {/* Tabs */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={activeTab === 'chats' ? 'default' : 'outline'}
+            size="sm"
+            className="h-10 text-xs font-medium"
+            onClick={() => setActiveTab('chats')}
+          >
+            <MessageCircle size={12} className="mr-2" />
+            Chats ({allConversations.filter(c => !c.isArchived).length})
+          </Button>
+          
+          <div className="relative">
             <Button
-              variant={activeTab === 'all' ? 'default' : 'outline'}
+              variant={activeTab === 'requests' ? 'default' : 'outline'}
               size="sm"
-              className="h-10 text-xs font-medium"
-              onClick={() => setActiveTab('all')}
+              className="w-full h-10 text-xs font-medium"
+              onClick={() => setActiveTab('requests')}
             >
-              All ({allConversations.filter(c => !c.isArchived).length})
+              <UserPlus size={12} className="mr-2" />
+              Requests ({contactRequests.filter(req => req.status === 'pending').length})
             </Button>
-            <Button
-              variant={activeTab === 'private' ? 'default' : 'outline'}
-              size="sm"
-              className="h-10 text-xs font-medium"
-              onClick={() => setActiveTab('private')}
-            >
-              Private ({allConversations.filter(c => c.type === 'private' && !c.isArchived).length})
-            </Button>
-            <Button
-              variant={activeTab === 'groups' ? 'default' : 'outline'}
-              size="sm"
-              className="h-10 text-xs font-medium"
-              onClick={() => setActiveTab('groups')}
-            >
-              Groups ({allConversations.filter(c => c.type === 'group' && !c.isArchived).length})
-            </Button>
-            <div className="relative">
-              <Button
-                variant={activeTab === 'requests' ? 'default' : 'outline'}
-                size="sm"
-                className="h-10 text-xs font-medium"
-                onClick={() => setActiveTab('requests')}
-              >
-                <UserPlus size={12} className="mr-1" />
-                Requests
-              </Button>
-              {contactRequests.filter(req => req.status === 'pending').length > 0 && (
-                <Badge variant="destructive" className="absolute -top-2.5 -right-2.5 h-5 w-5 text-xs p-0 flex items-center justify-center min-w-[20px] z-10">
-                  {contactRequests.filter(req => req.status === 'pending').length}
-                </Badge>
-              )}
-            </div>
+            {contactRequests.filter(req => req.status === 'pending').length > 0 && (
+              <Badge variant="destructive" className="absolute -top-2.5 -right-2.5 h-5 w-5 text-xs p-0 flex items-center justify-center min-w-[20px] z-10">
+                {contactRequests.filter(req => req.status === 'pending').length}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -728,22 +735,137 @@ const ChatInbox = () => {
                           </Badge>
                         )}
                         
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 hover:bg-primary/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // For now, just show a simple action - could be expanded later
-                            if (conversation.type === 'private') {
-                              navigate(`/profile/${conversation.participant.id}`);
-                            } else {
-                              handleArchiveConversation(conversation.id);
-                            }
-                          }}
-                        >
-                          <MoreVertical size={12} />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 hover:bg-primary/10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical size={12} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {conversation.type === 'private' ? (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/profile/${conversation.participant.id}`);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye size={14} className="mr-2" />
+                                  View Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMuteConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  {conversation.isMuted ? (
+                                    <>
+                                      <Bell size={14} className="mr-2" />
+                                      Unmute
+                                    </>
+                                  ) : (
+                                    <>
+                                      <BellOff size={14} className="mr-2" />
+                                      Mute
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePinConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Pin size={14} className="mr-2" />
+                                  {conversation.isPinned ? 'Unpin' : 'Pin'} Chat
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArchiveConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Archive size={14} className="mr-2" />
+                                  {conversation.isArchived ? 'Unarchive' : 'Archive'} Chat
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLeaveConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 size={14} className="mr-2" />
+                                  Delete Chat
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMuteConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  {conversation.isMuted ? (
+                                    <>
+                                      <Bell size={14} className="mr-2" />
+                                      Unmute
+                                    </>
+                                  ) : (
+                                    <>
+                                      <BellOff size={14} className="mr-2" />
+                                      Mute
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePinConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Pin size={14} className="mr-2" />
+                                  {conversation.isPinned ? 'Unpin' : 'Pin'} Chat
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArchiveConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Archive size={14} className="mr-2" />
+                                  {conversation.isArchived ? 'Unarchive' : 'Archive'} Chat
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLeaveConversation(conversation.id);
+                                  }}
+                                  className="cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  <LogOut size={14} className="mr-2" />
+                                  Leave Group
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -764,9 +886,7 @@ const ChatInbox = () => {
             <p className="text-muted-foreground">
               {activeTab === 'requests' 
                 ? 'No contact requests yet' 
-                : activeTab === 'all' 
-                  ? 'No conversations yet' 
-                  : `No ${activeTab} conversations`
+                : 'No conversations yet'
               }
             </p>
           </div>
