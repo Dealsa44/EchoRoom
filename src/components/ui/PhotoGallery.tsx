@@ -31,210 +31,16 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load gallery photos on mobile
-  useEffect(() => {
-    if (isMobile) {
-      // Automatically load gallery photos when component mounts
-      loadGalleryPhotos();
-    }
-  }, [isMobile]);
-
   // Auto-request gallery access when component mounts on mobile
   useEffect(() => {
-    if (isMobile && !hasRealPhotos) {
+    if (isMobile) {
       // Automatically trigger file picker to request gallery access
       setTimeout(() => {
         openFilePicker();
       }, 100);
     }
-  }, [isMobile, hasRealPhotos]);
+  }, [isMobile]);
 
-  // Fallback: if user cancels or denies permission, show mock photos after 3 seconds
-  useEffect(() => {
-    if (isMobile && !hasRealPhotos) {
-      const fallbackTimer = setTimeout(() => {
-        if (!hasRealPhotos) {
-          setHasRealPhotos(true);
-        }
-      }, 3000);
-      
-      return () => clearTimeout(fallbackTimer);
-    }
-  }, [isMobile, hasRealPhotos]);
-
-  const loadGalleryPhotos = () => {
-    // For mobile, we'll create a more realistic gallery simulation
-    // In a real app, you'd use libraries like react-native-image-picker or similar
-    const mockPhotos = Array.from({ length: 24 }, (_, i) => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 400;
-      canvas.height = 400;
-      const ctx = canvas.getContext('2d');
-      
-      if (ctx) {
-        // Create more realistic photo-like images
-        const scenarios = [
-          // Portrait photos
-          () => {
-            ctx.fillStyle = '#f0f0f0';
-            ctx.fillRect(0, 0, 400, 400);
-            // Face
-            ctx.fillStyle = '#ffdbac';
-            ctx.beginPath();
-            ctx.arc(200, 150, 60, 0, 2 * Math.PI);
-            ctx.fill();
-            // Hair
-            ctx.fillStyle = ['#8B4513', '#654321', '#2F1B14', '#D2691E'][i % 4];
-            ctx.fillRect(140, 90, 120, 80);
-            // Eyes
-            ctx.fillStyle = '#000';
-            ctx.fillRect(180, 130, 8, 8);
-            ctx.fillRect(212, 130, 8, 8);
-            // Smile
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(200, 170, 20, 0, Math.PI);
-            ctx.stroke();
-          },
-          // Landscape photos
-          () => {
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(0.7, '#98FB98');
-            gradient.addColorStop(1, '#90EE90');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 400, 400);
-            // Mountains
-            ctx.fillStyle = '#8B7D6B';
-            ctx.beginPath();
-            ctx.moveTo(0, 300);
-            ctx.lineTo(100, 200);
-            ctx.lineTo(200, 250);
-            ctx.lineTo(300, 180);
-            ctx.lineTo(400, 220);
-            ctx.lineTo(400, 400);
-            ctx.closePath();
-            ctx.fill();
-            // Sun
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(320, 80, 30, 0, 2 * Math.PI);
-            ctx.fill();
-          },
-          // Food photos
-          () => {
-            ctx.fillStyle = '#FFF8DC';
-            ctx.fillRect(0, 0, 400, 400);
-            // Plate
-            ctx.fillStyle = '#F5F5DC';
-            ctx.beginPath();
-            ctx.arc(200, 200, 120, 0, 2 * Math.PI);
-            ctx.fill();
-            // Food items
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(150, 150, 100, 20);
-            ctx.fillStyle = '#FF6347';
-            ctx.fillRect(160, 170, 80, 15);
-            ctx.fillStyle = '#32CD32';
-            ctx.fillRect(170, 185, 60, 10);
-          },
-          // Pet photos
-          () => {
-            ctx.fillStyle = '#E6E6FA';
-            ctx.fillRect(0, 0, 400, 400);
-            // Cat body
-            ctx.fillStyle = ['#FFA500', '#808080', '#8B4513', '#000000'][i % 4];
-            ctx.beginPath();
-            ctx.arc(200, 200, 80, 0, 2 * Math.PI);
-            ctx.fill();
-            // Ears
-            ctx.fillStyle = ['#FFA500', '#808080', '#8B4513', '#000000'][i % 4];
-            ctx.beginPath();
-            ctx.moveTo(180, 120);
-            ctx.lineTo(200, 80);
-            ctx.lineTo(220, 120);
-            ctx.closePath();
-            ctx.fill();
-            ctx.beginPath();
-            ctx.moveTo(200, 80);
-            ctx.lineTo(220, 120);
-            ctx.lineTo(240, 120);
-            ctx.closePath();
-            ctx.fill();
-            // Eyes
-            ctx.fillStyle = '#000';
-            ctx.fillRect(185, 180, 8, 8);
-            ctx.fillRect(207, 180, 8, 8);
-            // Nose
-            ctx.fillStyle = '#FF69B4';
-            ctx.beginPath();
-            ctx.arc(196, 200, 4, 0, 2 * Math.PI);
-            ctx.fill();
-          },
-          // City photos
-          () => {
-            ctx.fillStyle = '#191970';
-            ctx.fillRect(0, 0, 400, 400);
-            // Buildings
-            for (let x = 0; x < 400; x += 40) {
-              const height = 100 + Math.random() * 200;
-              ctx.fillStyle = ['#2F4F4F', '#696969', '#A9A9A9', '#C0C0C0'][Math.floor(x / 40) % 4];
-              ctx.fillRect(x, 400 - height, 35, height);
-            }
-            // Windows
-            ctx.fillStyle = '#FFD700';
-            for (let x = 10; x < 390; x += 40) {
-              for (let y = 300; y < 380; y += 20) {
-                if (Math.random() > 0.3) {
-                  ctx.fillRect(x, y, 8, 12);
-                }
-              }
-            }
-          },
-          // Nature photos
-          () => {
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(1, '#228B22');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 400, 400);
-            // Trees
-            for (let x = 50; x < 350; x += 60) {
-              ctx.fillStyle = '#8B4513';
-              ctx.fillRect(x, 250, 15, 150);
-              ctx.fillStyle = '#228B22';
-              ctx.beginPath();
-              ctx.arc(x + 7, 250, 30, 0, 2 * Math.PI);
-              ctx.fill();
-            }
-            // Flowers
-            ctx.fillStyle = '#FF69B4';
-            for (let x = 30; x < 370; x += 40) {
-              ctx.beginPath();
-              ctx.arc(x, 350, 8, 0, 2 * Math.PI);
-              ctx.fill();
-            }
-          }
-        ];
-        
-        // Use different scenarios for variety
-        const scenario = scenarios[i % scenarios.length];
-        scenario();
-      }
-      
-      return new Promise<File>((resolve) => {
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], `photo_${Date.now()}_${i + 1}.jpg`, { type: 'image/jpeg' });
-            resolve(file);
-          }
-        }, 'image/jpeg', 0.8);
-      });
-    });
-
-    Promise.all(mockPhotos).then(setGalleryPhotos);
-  };
 
   const handleFileSelect = useCallback((files: FileList) => {
     const fileArray = Array.from(files);
@@ -284,7 +90,23 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   };
 
   const openFilePicker = () => {
-    fileInputRef.current?.click();
+    // Create a new file input to ensure it triggers properly
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        handleFileInputChange({ target } as React.ChangeEvent<HTMLInputElement>);
+      }
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
   };
 
   // For PC, show file picker interface
@@ -370,9 +192,17 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
   // For mobile, show gallery interface
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto w-full z-10 max-h-[60vh] flex flex-col">
+    <div 
+      className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto w-full z-10 max-h-[60vh] flex flex-col"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseMove={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -400,8 +230,16 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         </div>
       </div>
 
-      {/* Gallery Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Gallery Content - Scrollable */}
+      <div 
+        className="flex-1 overflow-y-auto p-4"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseMove={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+      >
         {isLoadingPhotos ? (
           // Show loading state
           <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -409,17 +247,20 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             <p className="text-sm text-muted-foreground">Loading photos...</p>
           </div>
         ) : !hasRealPhotos ? (
-          // Show loading state while waiting for gallery access
+          // Show empty state when no photos
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
               <ImageIcon size={32} className="text-muted-foreground" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Accessing Gallery</h3>
+              <h3 className="text-lg font-medium mb-2">No Photos</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Please allow access to your photo gallery
+                Select photos from your device to add them to the gallery
               </p>
-              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <Button onClick={openFilePicker} size="lg">
+                <ImageIcon size={20} className="mr-2" />
+                Select Photos
+              </Button>
             </div>
           </div>
         ) : (
@@ -434,7 +275,10 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
                     isSelected ? "ring-2 ring-primary" : "hover:opacity-80"
                   )}
-                  onClick={() => togglePhotoSelection(photo)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePhotoSelection(photo);
+                  }}
                 >
                   <img
                     src={URL.createObjectURL(photo)}
@@ -455,7 +299,10 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             
             {/* Add more photos button */}
             <button
-              onClick={openFilePicker}
+              onClick={(e) => {
+                e.stopPropagation();
+                openFilePicker();
+              }}
               className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center hover:border-muted-foreground/50 transition-colors"
             >
               <ImageIcon size={24} className="text-muted-foreground mb-1" />
