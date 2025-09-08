@@ -21,6 +21,56 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Load persisted photos from localStorage on component mount
+  useEffect(() => {
+    const savedPhotos = localStorage.getItem('echoroom_gallery_photos');
+    if (savedPhotos) {
+      try {
+        const photoData = JSON.parse(savedPhotos);
+        // Convert base64 strings back to File objects
+        const files = photoData.map((data: any) => {
+          const byteCharacters = atob(data.base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          return new File([byteArray], data.name, { type: data.type });
+        });
+        setGalleryPhotos(files);
+        setHasRealPhotos(true);
+      } catch (error) {
+        console.error('Error loading saved photos:', error);
+      }
+    }
+  }, []);
+
+  // Save photos to localStorage whenever galleryPhotos changes
+  useEffect(() => {
+    if (galleryPhotos.length > 0) {
+      const photoData = galleryPhotos.map(file => ({
+        name: file.name,
+        type: file.type,
+        base64: new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+          };
+          reader.readAsDataURL(file);
+        })
+      }));
+
+      Promise.all(photoData.map(async (data) => ({
+        name: data.name,
+        type: data.type,
+        base64: await data.base64
+      }))).then((savedData) => {
+        localStorage.setItem('echoroom_gallery_photos', JSON.stringify(savedData));
+      });
+    }
+  }, [galleryPhotos]);
+
   // Check if mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -31,15 +81,15 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-request gallery access when component mounts on mobile
+  // Auto-request gallery access when component mounts on mobile (only if no photos exist)
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && !hasRealPhotos) {
       // Automatically trigger file picker to request gallery access
       setTimeout(() => {
         openFilePicker();
       }, 100);
     }
-  }, [isMobile]);
+  }, [isMobile, hasRealPhotos]);
 
 
   const handleFileSelect = useCallback((files: FileList) => {
@@ -107,6 +157,13 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     document.body.appendChild(input);
     input.click();
     document.body.removeChild(input);
+  };
+
+  const clearGallery = () => {
+    setGalleryPhotos([]);
+    setSelectedPhotos([]);
+    setHasRealPhotos(false);
+    localStorage.removeItem('echoroom_gallery_photos');
   };
 
   // For PC, show file picker interface
@@ -213,6 +270,16 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             <ChevronLeft size={20} />
           </Button>
           <h3 className="text-lg font-semibold">Gallery</h3>
+          {hasRealPhotos && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearGallery}
+              className="p-2 text-muted-foreground hover:text-destructive"
+            >
+              <X size={16} />
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
