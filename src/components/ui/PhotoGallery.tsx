@@ -18,6 +18,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [hasRealPhotos, setHasRealPhotos] = useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if mobile device
@@ -33,11 +34,33 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   // Load gallery photos on mobile
   useEffect(() => {
     if (isMobile) {
-      // For mobile, we'll simulate loading photos from gallery
-      // In a real app, you'd use a library like react-native-image-picker or similar
+      // Automatically load gallery photos when component mounts
       loadGalleryPhotos();
     }
   }, [isMobile]);
+
+  // Auto-request gallery access when component mounts on mobile
+  useEffect(() => {
+    if (isMobile && !hasRealPhotos) {
+      // Automatically trigger file picker to request gallery access
+      setTimeout(() => {
+        openFilePicker();
+      }, 100);
+    }
+  }, [isMobile, hasRealPhotos]);
+
+  // Fallback: if user cancels or denies permission, show mock photos after 3 seconds
+  useEffect(() => {
+    if (isMobile && !hasRealPhotos) {
+      const fallbackTimer = setTimeout(() => {
+        if (!hasRealPhotos) {
+          setHasRealPhotos(true);
+        }
+      }, 3000);
+      
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [isMobile, hasRealPhotos]);
 
   const loadGalleryPhotos = () => {
     // For mobile, we'll create a more realistic gallery simulation
@@ -233,11 +256,13 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
+      setIsLoadingPhotos(true);
       // Add real photos to gallery
       const realPhotos = Array.from(files).filter(file => file.type.startsWith('image/'));
       setGalleryPhotos(prev => [...prev, ...realPhotos]);
       setHasRealPhotos(true);
       handleFileSelect(files);
+      setIsLoadingPhotos(false);
     }
   };
 
@@ -377,21 +402,24 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
       {/* Gallery Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {!hasRealPhotos ? (
-          // Show load photos button when no real photos
+        {isLoadingPhotos ? (
+          // Show loading state
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-muted-foreground">Loading photos...</p>
+          </div>
+        ) : !hasRealPhotos ? (
+          // Show loading state while waiting for gallery access
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
               <ImageIcon size={32} className="text-muted-foreground" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Load Your Photos</h3>
+              <h3 className="text-lg font-medium mb-2">Accessing Gallery</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Select photos from your device to add them to the gallery
+                Please allow access to your photo gallery
               </p>
-              <Button onClick={openFilePicker} size="lg">
-                <ImageIcon size={20} className="mr-2" />
-                Load Photos
-              </Button>
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
             </div>
           </div>
         ) : (
