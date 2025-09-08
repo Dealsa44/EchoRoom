@@ -19,117 +19,31 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [hasRealPhotos, setHasRealPhotos] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
-  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const directoryHandleRef = useRef<any>(null);
 
-  // Check for existing permission and load photos
+  // Load persisted photos from localStorage on component mount
   useEffect(() => {
-    checkExistingPermission();
-  }, []);
-
-  const checkExistingPermission = async () => {
-    // Check if we have permission stored
-    const hasPermission = localStorage.getItem('echoroom_gallery_permission');
-    if (hasPermission === 'true') {
-      setPermissionGranted(true);
-      await loadAllPhotosFromDirectory();
-    } else {
-      // Load persisted photos from localStorage as fallback
-      const savedPhotos = localStorage.getItem('echoroom_gallery_photos');
-      if (savedPhotos) {
-        try {
-          const photoData = JSON.parse(savedPhotos);
-          const files = photoData.map((data: any) => {
-            const byteCharacters = atob(data.base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            return new File([byteArray], data.name, { type: data.type });
-          });
-          setGalleryPhotos(files);
-          setHasRealPhotos(true);
-        } catch (error) {
-          console.error('Error loading saved photos:', error);
-        }
-      }
-    }
-  };
-
-  const requestDirectoryPermission = async () => {
-    if (!('showDirectoryPicker' in window)) {
-      // Fallback to file picker if File System Access API not supported
-      openFilePicker();
-      return;
-    }
-
-    setIsRequestingPermission(true);
-    try {
-      // Request permission to access a directory (like Pictures folder)
-      const directoryHandle = await (window as any).showDirectoryPicker({
-        mode: 'read',
-        startIn: 'pictures'
-      });
-      
-      directoryHandleRef.current = directoryHandle;
-      setPermissionGranted(true);
-      localStorage.setItem('echoroom_gallery_permission', 'true');
-      
-      await loadAllPhotosFromDirectory();
-    } catch (error) {
-      console.error('Permission denied or cancelled:', error);
-      // Fallback to file picker
-      openFilePicker();
-    } finally {
-      setIsRequestingPermission(false);
-    }
-  };
-
-  const loadAllPhotosFromDirectory = async () => {
-    if (!directoryHandleRef.current) return;
-
-    setIsLoadingPhotos(true);
-    const photos: File[] = [];
-
-    try {
-      // Recursively load all image files from the directory
-      await loadPhotosRecursively(directoryHandleRef.current, photos);
-      
-      // Sort by last modified date (newest first)
-      photos.sort((a, b) => b.lastModified - a.lastModified);
-      
-      setGalleryPhotos(photos);
-      setHasRealPhotos(true);
-    } catch (error) {
-      console.error('Error loading photos from directory:', error);
-    } finally {
-      setIsLoadingPhotos(false);
-    }
-  };
-
-  const loadPhotosRecursively = async (dirHandle: any, photos: File[]) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
-    
-    for await (const [name, handle] of dirHandle.entries()) {
-      if (handle.kind === 'file') {
-        const extension = name.toLowerCase().substring(name.lastIndexOf('.'));
-        if (imageExtensions.includes(extension)) {
-          try {
-            const file = await handle.getFile();
-            photos.push(file);
-          } catch (error) {
-            console.warn(`Could not load file ${name}:`, error);
+    const savedPhotos = localStorage.getItem('echoroom_gallery_photos');
+    if (savedPhotos) {
+      try {
+        const photoData = JSON.parse(savedPhotos);
+        // Convert base64 strings back to File objects
+        const files = photoData.map((data: any) => {
+          const byteCharacters = atob(data.base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
-        }
-      } else if (handle.kind === 'directory') {
-        // Recursively search subdirectories
-        await loadPhotosRecursively(handle, photos);
+          const byteArray = new Uint8Array(byteNumbers);
+          return new File([byteArray], data.name, { type: data.type });
+        });
+        setGalleryPhotos(files);
+        setHasRealPhotos(true);
+      } catch (error) {
+        console.error('Error loading saved photos:', error);
       }
     }
-  };
+  }, []);
 
   // Save photos to localStorage whenever galleryPhotos changes
   useEffect(() => {
@@ -167,15 +81,15 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-request gallery access when component mounts (only if no photos exist)
+  // Auto-request gallery access when component mounts on mobile (only if no photos exist)
   useEffect(() => {
-    if (!hasRealPhotos && !permissionGranted) {
-      // Automatically request directory permission
+    if (isMobile && !hasRealPhotos) {
+      // Automatically trigger file picker to request gallery access
       setTimeout(() => {
-        requestDirectoryPermission();
+        openFilePicker();
       }, 100);
     }
-  }, [hasRealPhotos, permissionGranted]);
+  }, [isMobile, hasRealPhotos]);
 
 
   const handleFileSelect = useCallback((files: FileList) => {
@@ -249,10 +163,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     setGalleryPhotos([]);
     setSelectedPhotos([]);
     setHasRealPhotos(false);
-    setPermissionGranted(false);
-    directoryHandleRef.current = null;
     localStorage.removeItem('echoroom_gallery_photos');
-    localStorage.removeItem('echoroom_gallery_permission');
   };
 
   // For PC, show file picker interface
@@ -360,26 +271,14 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           </Button>
           <h3 className="text-lg font-semibold">Gallery</h3>
           {hasRealPhotos && (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadAllPhotosFromDirectory}
-                className="p-2 text-muted-foreground hover:text-primary"
-                title="Refresh photos"
-              >
-                <ImageIcon size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearGallery}
-                className="p-2 text-muted-foreground hover:text-destructive"
-                title="Clear gallery"
-              >
-                <X size={16} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearGallery}
+              className="p-2 text-muted-foreground hover:text-destructive"
+            >
+              <X size={16} />
+            </Button>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -408,13 +307,11 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         onMouseMove={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
-        {isLoadingPhotos || isRequestingPermission ? (
+        {isLoadingPhotos ? (
           // Show loading state
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm text-muted-foreground">
-              {isRequestingPermission ? 'Requesting permission...' : 'Loading photos...'}
-            </p>
+            <p className="text-sm text-muted-foreground">Loading photos...</p>
           </div>
         ) : !hasRealPhotos ? (
           // Show empty state when no photos
@@ -423,13 +320,13 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               <ImageIcon size={32} className="text-muted-foreground" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Access Photo Gallery</h3>
+              <h3 className="text-lg font-medium mb-2">No Photos</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Grant permission to access your photo gallery and automatically load all photos
+                Select photos from your device to add them to the gallery
               </p>
-              <Button onClick={requestDirectoryPermission} size="lg">
+              <Button onClick={openFilePicker} size="lg">
                 <ImageIcon size={20} className="mr-2" />
-                Grant Permission
+                Select Photos
               </Button>
             </div>
           </div>
