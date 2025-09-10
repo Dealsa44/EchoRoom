@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { userApi } from '@/services/api';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 import CallButtons from '@/components/calls/CallButtons';
 
@@ -129,7 +130,7 @@ type DisplayUser = UserType | (ProfileType & {
 const Profile = () => {
   const navigate = useNavigate();
   const { userId } = useParams();
-  const { user, safeMode, setSafeMode, logout } = useApp();
+  const { user, safeMode, setSafeMode, logout, setUser } = useApp();
   const [profileData, setProfileData] = useState<ProfileType | null>(null);
   const [loading, setLoading] = useState(false);
   const [userPhotos, setUserPhotos] = useState<Array<{ id: string; url: string; uploadDate: Date; [key: string]: unknown }>>([]);
@@ -139,6 +140,29 @@ const Profile = () => {
   
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
+
+  // Fetch user profile data from backend
+  const fetchUserProfile = async () => {
+    if (!isOwnProfile) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await userApi.getProfile();
+      
+      if (result.success && result.user) {
+        setUser(result.user);
+      } else {
+        setError('Failed to load profile data');
+      }
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   
   // Defensive check for user data with safe fallbacks
@@ -157,6 +181,13 @@ const Profile = () => {
           ? profileData.languages.filter(lang => lang && typeof lang === 'object' && lang.language)
           : []
       } as unknown as DisplayUser : null);
+
+  // Fetch user profile data on mount
+  useEffect(() => {
+    if (isOwnProfile) {
+      fetchUserProfile();
+    }
+  }, [isOwnProfile]);
 
   // Load other user's profile if viewing someone else
   useEffect(() => {

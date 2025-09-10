@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users, MessageCircle, ChevronDown, ChevronRight, Camera, X } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
-import { updateUserProfile } from '@/lib/auth';
+import { userApi } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 import { getRandomProfileQuestions } from '@/data/profileQuestions';
@@ -390,20 +390,32 @@ const ProfileEdit = () => {
 
 
 
-      const result = await updateUserProfile(user.id, updates);
+      const result = await userApi.updateProfile(updates);
 
       if (result.success && result.user) {
         setUser(result.user);
         // Update initial form data to reflect saved state
         initialFormData.current = { ...formData };
         setHasUnsavedChanges(false);
-        // Profile updated - toast removed per user request
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been updated successfully.",
+        });
         navigate('/profile');
       } else {
-        // Update failed - toast removed per user request
+        toast({
+          title: "Update Failed",
+          description: result.message || "Failed to update profile. Please try again.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      // Update error - toast removed per user request
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      toast({
+        title: "Update Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
