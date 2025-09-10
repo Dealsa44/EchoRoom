@@ -5,6 +5,9 @@ import { ProfileQuestion } from '@/types';
 
 // Convert API User to local User format
 const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
+  console.log('🔄 Converting API user to local user:', apiUser);
+  console.log('📋 API user interests:', apiUser.interests);
+  
   return {
     id: apiUser.id,
     username: apiUser.username,
@@ -13,7 +16,11 @@ const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
     avatar: apiUser.avatar || '',
     bio: apiUser.bio || '',
     about: apiUser.about || '',
-    interests: apiUser.interests?.map(i => i.interest) || [],
+    interests: apiUser.interests?.map(i => {
+      if (typeof i === 'string') return i;
+      if (typeof i === 'object' && i && 'interest' in i) return i.interest;
+      return String(i); // Fallback for any other type
+    }) || [],
     languages: apiUser.languages || [],
     chatStyle: (apiUser.chatStyle as 'introvert' | 'ambievert' | 'extrovert') || 'ambievert',
     safeMode: (apiUser.safeMode as 'light' | 'deep' | 'learning') || 'light',
