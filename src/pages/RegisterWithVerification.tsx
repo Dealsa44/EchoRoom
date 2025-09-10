@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
-import { registerUser, RegisterData } from '@/lib/authApi';
+import { registerUser, RegisterData, loginUser } from '@/lib/authApi';
 import { sendVerificationCode, verifyEmailCode } from '@/lib/authApi';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 
@@ -28,7 +28,7 @@ interface UserLanguage {
 }
 
 // Registration steps
-type RegistrationStep = 'basic' | 'email-verification' | 'profile' | 'preferences' | 'photos';
+type RegistrationStep = 'registration' | 'email-verification';
 
 // Helper functions
 const validateAge = (dateOfBirth: string): boolean => {
@@ -62,7 +62,7 @@ const RegisterWithVerification = () => {
   const { setUser, setIsAuthenticated } = useApp();
   
   // Current step
-  const [currentStep, setCurrentStep] = useState<RegistrationStep>('basic');
+  const [currentStep, setCurrentStep] = useState<RegistrationStep>('registration');
   
   // Basic info state
   const [formData, setFormData] = useState({
@@ -122,7 +122,7 @@ const RegisterWithVerification = () => {
   }, [countdown]);
 
   // Validation functions
-  const validateBasicInfo = () => {
+  const validateRegistrationData = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.username.trim()) {
@@ -157,34 +157,14 @@ const RegisterWithVerification = () => {
       newErrors.location = 'Location is required';
     }
 
+    if (!formData.about.trim()) {
+      newErrors.about = 'About section is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle email verification
-  const handleSendVerificationCode = async () => {
-    if (!validateBasicInfo()) return;
-
-    setVerificationLoading(true);
-    setVerificationError('');
-
-    try {
-      const result = await sendVerificationCode(formData.email);
-      
-      if (result.success) {
-        setVerificationSuccess('Verification code sent! Check your email.');
-        setCurrentStep('email-verification');
-        setCountdown(60); // 1 minute cooldown
-        setTimeout(() => setVerificationSuccess(''), 3000);
-      } else {
-        setVerificationError(result.errors?.[0] || 'Failed to send verification code');
-      }
-    } catch (error: any) {
-      setVerificationError(error.message || 'Failed to send verification code');
-    } finally {
-      setVerificationLoading(false);
-    }
-  };
 
   const handleVerifyEmail = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
@@ -200,10 +180,38 @@ const RegisterWithVerification = () => {
       
       if (result.success) {
         setVerificationSuccess('Email verified successfully!');
-        setEmailVerified(true);
-        setTimeout(() => {
-          setCurrentStep('profile');
-        }, 1000);
+        
+        // Log the user in after successful verification
+        try {
+          const loginResult = await loginUser({
+            email: formData.email,
+            password: formData.password,
+          });
+          
+          if (loginResult.success && loginResult.user) {
+            setUser(loginResult.user);
+            setIsAuthenticated(true);
+            
+            toast({
+              title: "Welcome to EchoRoom!",
+              description: "Your account has been created and verified successfully.",
+            });
+            
+            navigate('/community');
+          } else {
+            toast({
+              title: "Email Verified",
+              description: "Please log in with your credentials.",
+            });
+            navigate('/login');
+          }
+        } catch (loginError: any) {
+          toast({
+            title: "Email Verified",
+            description: "Please log in with your credentials.",
+          });
+          navigate('/login');
+        }
       } else {
         setVerificationError(result.errors?.[0] || 'Invalid verification code');
       }
@@ -235,16 +243,9 @@ const RegisterWithVerification = () => {
     }
   };
 
-  // Handle registration
+  // Handle registration - create account and send verification
   const handleRegister = async () => {
-    if (!emailVerified) {
-      toast({
-        title: "Email Verification Required",
-        description: "Please verify your email before completing registration.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!validateRegistrationData()) return;
 
     setLoading(true);
 
@@ -284,16 +285,26 @@ const RegisterWithVerification = () => {
 
       const result = await registerUser(registerData);
       
-      if (result.success && result.user) {
-        setUser(result.user);
-        setIsAuthenticated(true);
+      if (result.success) {
+        // Account created successfully, now send verification email
+        const verificationResult = await sendVerificationCode(formData.email);
         
-        toast({
-          title: "Registration Successful!",
-          description: "Welcome to EchoRoom! Your account has been created.",
-        });
-        
-        navigate('/dashboard');
+        if (verificationResult.success) {
+          toast({
+            title: "Account Created!",
+            description: "Please check your email for verification code.",
+          });
+          
+          // Move to verification step
+          setCurrentStep('email-verification');
+          setCountdown(60); // 1 minute cooldown
+        } else {
+          toast({
+            title: "Account Created",
+            description: "But failed to send verification email. Please try logging in.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Registration Failed",
@@ -312,8 +323,8 @@ const RegisterWithVerification = () => {
     }
   };
 
-  // Render basic info step
-  const renderBasicInfoStep = () => (
+  // Render registration step
+  const renderRegistrationStep = () => (
     <div className="w-full max-w-md mx-auto space-y-6">
       <Card className="glass-strong border-border-soft/50">
         <CardHeader className="text-center pb-4">
@@ -433,21 +444,59 @@ const RegisterWithVerification = () => {
             {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
           </div>
 
-          {/* Send Verification Code Button */}
+          {/* About */}
+          <div className="space-y-2">
+            <Label htmlFor="about">About You *</Label>
+            <Textarea
+              id="about"
+              placeholder="Tell us about yourself..."
+              value={formData.about}
+              onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+              rows={3}
+              className={errors.about ? 'border-red-500' : ''}
+            />
+            {errors.about && <p className="text-red-500 text-sm">{errors.about}</p>}
+          </div>
+
+          {/* Hometown */}
+          <div className="space-y-2">
+            <Label htmlFor="hometown">Hometown (Optional)</Label>
+            <Input
+              id="hometown"
+              type="text"
+              placeholder="Where are you from?"
+              value={formData.hometown}
+              onChange={(e) => setFormData({ ...formData, hometown: e.target.value })}
+            />
+          </div>
+
+          {/* Occupation */}
+          <div className="space-y-2">
+            <Label htmlFor="occupation">Occupation (Optional)</Label>
+            <Input
+              id="occupation"
+              type="text"
+              placeholder="What do you do?"
+              value={formData.occupation}
+              onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+            />
+          </div>
+
+          {/* Create Account Button */}
           <Button
-            onClick={handleSendVerificationCode}
-            disabled={verificationLoading}
+            onClick={handleRegister}
+            disabled={loading}
             className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
           >
-            {verificationLoading ? (
+            {loading ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Sending Code...
+                Creating Account...
               </>
             ) : (
               <>
-                <Mail className="w-4 h-4 mr-2" />
-                Send Verification Code
+                <Check className="w-4 h-4 mr-2" />
+                Create Account
               </>
             )}
           </Button>
@@ -573,103 +622,15 @@ const RegisterWithVerification = () => {
     </div>
   );
 
-  // Render profile step (simplified for now)
-  const renderProfileStep = () => (
-    <div className="w-full max-w-md mx-auto space-y-6">
-      <Card className="glass-strong border-border-soft/50">
-        <CardHeader className="text-center pb-4">
-          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold gradient-text-hero">
-            Complete Your Profile
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Tell us more about yourself
-          </p>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {/* About */}
-          <div className="space-y-2">
-            <Label htmlFor="about">About You</Label>
-            <Textarea
-              id="about"
-              placeholder="Tell us about yourself..."
-              value={formData.about}
-              onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-              rows={3}
-            />
-          </div>
-
-          {/* Hometown */}
-          <div className="space-y-2">
-            <Label htmlFor="hometown">Hometown (Optional)</Label>
-            <Input
-              id="hometown"
-              type="text"
-              placeholder="Where are you from?"
-              value={formData.hometown}
-              onChange={(e) => setFormData({ ...formData, hometown: e.target.value })}
-            />
-          </div>
-
-          {/* Occupation */}
-          <div className="space-y-2">
-            <Label htmlFor="occupation">Occupation (Optional)</Label>
-            <Input
-              id="occupation"
-              type="text"
-              placeholder="What do you do?"
-              value={formData.occupation}
-              onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-            />
-          </div>
-
-          {/* Complete Registration Button */}
-          <Button
-            onClick={handleRegister}
-            disabled={loading}
-            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              <>
-                <Check className="w-4 h-4 mr-2" />
-                Complete Registration
-              </>
-            )}
-          </Button>
-
-          {/* Back Button */}
-          <Button
-            variant="ghost"
-            onClick={() => setCurrentStep('email-verification')}
-            className="w-full"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Verification
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   // Render current step
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'basic':
-        return renderBasicInfoStep();
+      case 'registration':
+        return renderRegistrationStep();
       case 'email-verification':
         return renderEmailVerificationStep();
-      case 'profile':
-        return renderProfileStep();
       default:
-        return renderBasicInfoStep();
+        return renderRegistrationStep();
     }
   };
 
