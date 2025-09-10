@@ -243,10 +243,16 @@ const RegisterWithVerification = () => {
     }
   };
 
-  // Handle registration - create account and send verification
-  const handleRegister = async () => {
+  // Handle registration - just move to next stage
+  const handleContinue = () => {
     if (!validateRegistrationData()) return;
+    
+    // Move to email verification stage
+    setCurrentStep('email-verification');
+  };
 
+  // Handle final registration - create account and send verification
+  const handleCreateAccount = async () => {
     setLoading(true);
 
     try {
@@ -295,8 +301,6 @@ const RegisterWithVerification = () => {
             description: "Please check your email for verification code.",
           });
           
-          // Move to verification step
-          setCurrentStep('email-verification');
           setCountdown(60); // 1 minute cooldown
         } else {
           toast({
@@ -484,21 +488,11 @@ const RegisterWithVerification = () => {
 
           {/* Continue Button */}
           <Button
-            onClick={handleRegister}
-            disabled={loading}
+            onClick={handleContinue}
             className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
           >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              <>
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Continue
-              </>
-            )}
+            <ArrowRight className="w-4 h-4 mr-2" />
+            Continue
           </Button>
 
           {/* Back to Login */}
@@ -565,21 +559,69 @@ const RegisterWithVerification = () => {
             </div>
           )}
 
-          {/* Complete Registration Button */}
+          {/* Verification Code Input */}
+          <div className="space-y-2">
+            <Label htmlFor="verification-code">Verification Code</Label>
+            <Input
+              id="verification-code"
+              type="text"
+              placeholder="Enter 6-digit code"
+              value={verificationCode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setVerificationCode(value);
+                setVerificationError('');
+              }}
+              className="text-center text-2xl font-mono tracking-widest"
+              maxLength={6}
+            />
+          </div>
+
+          {/* Error Message */}
+          {verificationError && (
+            <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              {verificationError}
+            </div>
+          )}
+
+          {/* Success Message */}
+          {verificationSuccess && (
+            <div className="text-green-500 text-sm text-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+              {verificationSuccess}
+            </div>
+          )}
+
+          {/* Verify Email Button */}
           <Button
             onClick={handleVerifyEmail}
             disabled={verificationLoading || verificationCode.length !== 6}
-            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
+            className="w-full bg-gradient-secondary hover:bg-gradient-secondary/90"
           >
             {verificationLoading ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Completing Registration...
+                Verifying...
+              </>
+            ) : (
+              'Verify Email'
+            )}
+          </Button>
+
+          {/* Create Account Button */}
+          <Button
+            onClick={handleCreateAccount}
+            disabled={loading}
+            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Creating Account...
               </>
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Complete Registration
+                Create Account
               </>
             )}
           </Button>
