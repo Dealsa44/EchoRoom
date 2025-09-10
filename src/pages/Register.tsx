@@ -178,6 +178,8 @@ const Register = () => {
   const [verificationSuccess, setVerificationSuccess] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [resendLoading, setResendLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [sendCodeLoading, setSendCodeLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [languageErrors, setLanguageErrors] = useState<{[key: number]: string}>({});
@@ -242,6 +244,39 @@ const Register = () => {
   const currentStageIndex = stages.findIndex(stage => stage.key === currentStage);
 
   // Email verification functions
+  const handleSendCode = async () => {
+    if (!formData.email) {
+      setVerificationError('Please enter your email address first');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setVerificationError('Please enter a valid email address');
+      return;
+    }
+
+    setSendCodeLoading(true);
+    setVerificationError('');
+    setVerificationSuccess('');
+
+    try {
+      const result = await sendVerificationCode(formData.email);
+      
+      if (result.success) {
+        setCodeSent(true);
+        setVerificationSuccess('Verification code sent! Check your email.');
+        setCountdown(60); // 1 minute cooldown
+        setTimeout(() => setVerificationSuccess(''), 3000);
+      } else {
+        setVerificationError(result.errors?.[0] || 'Failed to send code');
+      }
+    } catch (error: any) {
+      setVerificationError(error.message || 'Failed to send code');
+    } finally {
+      setSendCodeLoading(false);
+    }
+  };
+
   const handleResendCode = async () => {
     if (!formData.email) {
       setVerificationError('Please enter your email address first');
@@ -754,7 +789,7 @@ const Register = () => {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
           newErrors.email = 'Please enter a valid email address';
         }
-        if (!verificationCode || verificationCode.length !== 6) {
+        if (codeSent && (!verificationCode || verificationCode.length !== 6)) {
           newErrors.verificationCode = 'Please enter a valid 6-digit code';
         }
         break;
@@ -791,7 +826,7 @@ const Register = () => {
         return formData.chatStyle;
       case 'email-verification':
         return formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && 
-               verificationCode && verificationCode.length === 6;
+               (!codeSent || (verificationCode && verificationCode.length === 6));
       default:
         return false;
     }
@@ -1667,10 +1702,6 @@ const Register = () => {
           <div className="space-y-4">
             <div className="text-center space-y-2 mb-4">
               <div className="text-lg font-semibold">📧 Verify Your Email</div>
-              <div className="text-sm text-muted-foreground">
-                We've sent a 6-digit verification code to
-              </div>
-              <div className="font-medium text-foreground">{formData.email}</div>
             </div>
             
             {/* Email Input */}
@@ -1683,28 +1714,50 @@ const Register = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={errors.email ? 'border-red-500' : ''}
+                disabled={codeSent}
               />
               {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
 
-            {/* Verification Code Input */}
-            <div className="space-y-2">
-              <Label htmlFor="verification-code">Verification Code</Label>
-              <Input
-                id="verification-code"
-                type="text"
-                placeholder="Enter 6-digit code"
-                value={verificationCode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                  setVerificationCode(value);
-                  setVerificationError('');
-                }}
-                className="text-center text-2xl font-mono tracking-widest"
-                maxLength={6}
-              />
-              {errors.verificationCode && <p className="text-red-500 text-sm">{errors.verificationCode}</p>}
-            </div>
+            {/* Send Verification Code Button - Only show when code not sent */}
+            {!codeSent && (
+              <Button
+                type="button"
+                onClick={handleSendCode}
+                disabled={sendCodeLoading || !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)}
+                className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
+              >
+                {sendCodeLoading ? (
+                  <>
+                    <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Verification Code'
+                )}
+              </Button>
+            )}
+
+            {/* Verification Code Input - Only show after code is sent */}
+            {codeSent && (
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Verification Code</Label>
+                <Input
+                  id="verification-code"
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setVerificationCode(value);
+                    setVerificationError('');
+                  }}
+                  className="text-center text-2xl font-mono tracking-widest"
+                  maxLength={6}
+                />
+                {errors.verificationCode && <p className="text-red-500 text-sm">{errors.verificationCode}</p>}
+              </div>
+            )}
 
             {/* Error Message */}
             {verificationError && (
@@ -1720,31 +1773,33 @@ const Register = () => {
               </div>
             )}
 
-            {/* Resend Code */}
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Didn't receive the code?
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleResendCode}
-                disabled={resendLoading || countdown > 0}
-                className="text-sm"
-              >
-                {resendLoading ? (
-                  <>
-                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-2" />
-                    Sending...
-                  </>
-                ) : countdown > 0 ? (
-                  `Resend in ${countdown}s`
-                ) : (
-                  'Resend Code'
-                )}
-              </Button>
-            </div>
+            {/* Resend Code - Only show after code is sent */}
+            {codeSent && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Didn't receive the code?
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendCode}
+                  disabled={resendLoading || countdown > 0}
+                  className="text-sm"
+                >
+                  {resendLoading ? (
+                    <>
+                      <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : countdown > 0 ? (
+                    `Resend in ${countdown}s`
+                  ) : (
+                    'Resend Code'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         );
 
