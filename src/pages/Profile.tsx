@@ -680,16 +680,22 @@ const Profile = () => {
                 <p className="text-sm text-muted-foreground mb-2">Interests</p>
                 {(isOwnProfile ? user?.interests : profileData?.interests) && (isOwnProfile ? user?.interests : profileData?.interests)?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest, idx) => (
-                      <Badge
-                        key={interest}
-                        variant="secondary"
-                        className="text-xs rounded-full px-3 py-1 bg-secondary/15 text-foreground border-2 border-border hover:border-secondary/40 transition-smooth animate-breathe"
-                        style={{ animationDelay: `${(idx % 6) * 120}ms` }}
-                      >
-                        {interest}
-                      </Badge>
-                    ))}
+                    {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest, idx) => {
+                      // Handle both string arrays (from mock data) and object arrays (from backend)
+                      const interestText = typeof interest === 'string' ? interest : interest.interest;
+                      const interestKey = typeof interest === 'string' ? interest : interest.id;
+                      
+                      return (
+                        <Badge
+                          key={interestKey}
+                          variant="secondary"
+                          className="text-xs rounded-full px-3 py-1 bg-secondary/15 text-foreground border-2 border-border hover:border-secondary/40 transition-smooth animate-breathe"
+                          style={{ animationDelay: `${(idx % 6) * 120}ms` }}
+                        >
+                          {interestText}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 ) : (
                   <span className="text-sm text-muted-foreground">No interests selected yet</span>

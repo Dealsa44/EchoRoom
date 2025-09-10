@@ -1399,15 +1399,21 @@ const ProfileCardContent = memo(({
             {profile.bio}
           </p>
           <div className="flex items-center gap-2 flex-wrap">
-            {profile.interests.slice(0, 3).map((interest) => (
-              <Badge
-                key={interest}
-                variant="outline"
-                className="text-xs h-7 px-3 rounded-full font-semibold bg-background/70 text-foreground border-border-soft"
-              >
-                {interest}
-              </Badge>
-            ))}
+            {profile.interests.slice(0, 3).map((interest, index) => {
+              // Handle both string arrays (from mock data) and object arrays (from backend)
+              const interestText = typeof interest === 'string' ? interest : interest.interest;
+              const interestKey = typeof interest === 'string' ? interest : interest.id || index;
+              
+              return (
+                <Badge
+                  key={interestKey}
+                  variant="outline"
+                  className="text-xs h-7 px-3 rounded-full font-semibold bg-background/70 text-foreground border-border-soft"
+                >
+                  {interestText}
+                </Badge>
+              );
+            })}
             {profile.interests.length > 3 && (
               <span className="text-xs text-muted-foreground font-medium">
                 +{profile.interests.length - 3} more
