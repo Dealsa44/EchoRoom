@@ -28,7 +28,7 @@ interface UserLanguage {
 }
 
 // Registration steps
-type RegistrationStep = 'registration' | 'email-verification';
+type RegistrationStep = 'basic' | 'profile' | 'preferences' | 'email-verification';
 
 // Helper functions
 const validateAge = (dateOfBirth: string): boolean => {
@@ -62,7 +62,7 @@ const RegisterWithVerification = () => {
   const { setUser, setIsAuthenticated } = useApp();
   
   // Current step
-  const [currentStep, setCurrentStep] = useState<RegistrationStep>('registration');
+  const [currentStep, setCurrentStep] = useState<RegistrationStep>('basic');
   
   // Basic info state
   const [formData, setFormData] = useState({
@@ -122,7 +122,7 @@ const RegisterWithVerification = () => {
   }, [countdown]);
 
   // Validation functions
-  const validateRegistrationData = () => {
+  const validateBasicInfo = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.username.trim()) {
@@ -156,6 +156,13 @@ const RegisterWithVerification = () => {
     if (!formData.location.trim()) {
       newErrors.location = 'Location is required';
     }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateProfileInfo = () => {
+    const newErrors: Record<string, string> = {};
 
     if (!formData.about.trim()) {
       newErrors.about = 'About section is required';
@@ -243,12 +250,37 @@ const RegisterWithVerification = () => {
     }
   };
 
-  // Handle registration - just move to next stage
-  const handleContinue = () => {
-    if (!validateRegistrationData()) return;
-    
-    // Move to email verification stage
-    setCurrentStep('email-verification');
+  // Handle stage navigation
+  const handleNextStage = () => {
+    switch (currentStep) {
+      case 'basic':
+        if (validateBasicInfo()) {
+          setCurrentStep('profile');
+        }
+        break;
+      case 'profile':
+        if (validateProfileInfo()) {
+          setCurrentStep('preferences');
+        }
+        break;
+      case 'preferences':
+        setCurrentStep('email-verification');
+        break;
+    }
+  };
+
+  const handlePreviousStage = () => {
+    switch (currentStep) {
+      case 'profile':
+        setCurrentStep('basic');
+        break;
+      case 'preferences':
+        setCurrentStep('profile');
+        break;
+      case 'email-verification':
+        setCurrentStep('preferences');
+        break;
+    }
   };
 
   // Handle final registration - create account and send verification
@@ -327,8 +359,8 @@ const RegisterWithVerification = () => {
     }
   };
 
-  // Render registration step
-  const renderRegistrationStep = () => (
+  // Render basic info step
+  const renderBasicStep = () => (
     <div className="w-full max-w-md mx-auto space-y-6">
       <Card className="glass-strong border-border-soft/50">
         <CardHeader className="text-center pb-4">
@@ -448,6 +480,46 @@ const RegisterWithVerification = () => {
             {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
           </div>
 
+          {/* Continue Button */}
+          <Button
+            onClick={handleNextStage}
+            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
+          >
+            <ArrowRight className="w-4 h-4 mr-2" />
+            Continue
+          </Button>
+
+          {/* Back to Login */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/login')}
+            className="w-full"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Login
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Render profile step
+  const renderProfileStep = () => (
+    <div className="w-full max-w-md mx-auto space-y-6">
+      <Card className="glass-strong border-border-soft/50">
+        <CardHeader className="text-center pb-4">
+          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold gradient-text-hero">
+            Tell Us About Yourself
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Help others get to know you
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
           {/* About */}
           <div className="space-y-2">
             <Label htmlFor="about">About You *</Label>
@@ -488,21 +560,101 @@ const RegisterWithVerification = () => {
 
           {/* Continue Button */}
           <Button
-            onClick={handleContinue}
+            onClick={handleNextStage}
             className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
           >
             <ArrowRight className="w-4 h-4 mr-2" />
             Continue
           </Button>
 
-          {/* Back to Login */}
+          {/* Back Button */}
           <Button
             variant="ghost"
-            onClick={() => navigate('/login')}
+            onClick={handlePreviousStage}
             className="w-full"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Login
+            Back
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Render preferences step
+  const renderPreferencesStep = () => (
+    <div className="w-full max-w-md mx-auto space-y-6">
+      <Card className="glass-strong border-border-soft/50">
+        <CardHeader className="text-center pb-4">
+          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageCircle className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold gradient-text-hero">
+            Your Preferences
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Set your chat preferences
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {/* Chat Style */}
+          <div className="space-y-2">
+            <Label htmlFor="chatStyle">Chat Style</Label>
+            <Select value={formData.chatStyle} onValueChange={(value: 'introvert' | 'ambievert' | 'extrovert') => setFormData({ ...formData, chatStyle: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your chat style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="introvert">Introvert</SelectItem>
+                <SelectItem value="ambievert">Ambievert</SelectItem>
+                <SelectItem value="extrovert">Extrovert</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Safe Mode */}
+          <div className="space-y-2">
+            <Label htmlFor="safeMode">Safe Mode</Label>
+            <Select value={formData.safeMode} onValueChange={(value: 'light' | 'deep' | 'learning') => setFormData({ ...formData, safeMode: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select safe mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="deep">Deep</SelectItem>
+                <SelectItem value="learning">Learning</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Create Account Button */}
+          <Button
+            onClick={handleCreateAccount}
+            disabled={loading}
+            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Create Account
+              </>
+            )}
+          </Button>
+
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            onClick={handlePreviousStage}
+            className="w-full"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
           </Button>
         </CardContent>
       </Card>
@@ -559,69 +711,21 @@ const RegisterWithVerification = () => {
             </div>
           )}
 
-          {/* Verification Code Input */}
-          <div className="space-y-2">
-            <Label htmlFor="verification-code">Verification Code</Label>
-            <Input
-              id="verification-code"
-              type="text"
-              placeholder="Enter 6-digit code"
-              value={verificationCode}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setVerificationCode(value);
-                setVerificationError('');
-              }}
-              className="text-center text-2xl font-mono tracking-widest"
-              maxLength={6}
-            />
-          </div>
-
-          {/* Error Message */}
-          {verificationError && (
-            <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-              {verificationError}
-            </div>
-          )}
-
-          {/* Success Message */}
-          {verificationSuccess && (
-            <div className="text-green-500 text-sm text-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-              {verificationSuccess}
-            </div>
-          )}
-
-          {/* Verify Email Button */}
+          {/* Complete Registration Button */}
           <Button
             onClick={handleVerifyEmail}
             disabled={verificationLoading || verificationCode.length !== 6}
-            className="w-full bg-gradient-secondary hover:bg-gradient-secondary/90"
+            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
           >
             {verificationLoading ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              'Verify Email'
-            )}
-          </Button>
-
-          {/* Create Account Button */}
-          <Button
-            onClick={handleCreateAccount}
-            disabled={loading}
-            className="w-full bg-gradient-primary hover:bg-gradient-primary/90"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Creating Account...
+                Completing Registration...
               </>
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Create Account
+                Complete Registration
               </>
             )}
           </Button>
@@ -670,12 +774,16 @@ const RegisterWithVerification = () => {
   // Render current step
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'registration':
-        return renderRegistrationStep();
+      case 'basic':
+        return renderBasicStep();
+      case 'profile':
+        return renderProfileStep();
+      case 'preferences':
+        return renderPreferencesStep();
       case 'email-verification':
         return renderEmailVerificationStep();
       default:
-        return renderRegistrationStep();
+        return renderBasicStep();
     }
   };
 
