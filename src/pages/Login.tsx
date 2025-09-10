@@ -30,13 +30,16 @@ const Login = () => {
       };
 
       const result = await loginUser(loginData);
+      console.log('🔍 Login result:', result);
 
       if (result.success && result.user) {
+        console.log('✅ Setting user and navigating:', result.user);
         setUser(result.user);
         setIsAuthenticated(true);
         // Welcome back - toast removed per user request
         navigate('/match');
       } else {
+        console.log('❌ Login failed:', result.errors);
         // Login failed - toast removed per user request
       }
     } catch (error) {

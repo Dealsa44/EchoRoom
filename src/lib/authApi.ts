@@ -213,23 +213,30 @@ export const registerUser = async (data: RegisterData): Promise<{ success: boole
 
 export const loginUser = async (data: LoginData): Promise<{ success: boolean; user?: User; errors?: string[] }> => {
   try {
+    console.log('🔍 Calling authApi.login with data:', data);
     const response = await authApi.login(data);
+    console.log('📋 authApi.login response:', response);
     
     if (response.success && response.user) {
       // Store the token
       if (response.token) {
         localStorage.setItem('authToken', response.token);
+        console.log('✅ Token stored:', response.token);
       }
       
       // Convert API user to local user format
       const localUser = convertApiUserToLocalUser(response.user);
+      console.log('🔄 Converted user:', localUser);
       saveCurrentUser(localUser);
+      
+      console.log('✅ Login successful, user:', localUser);
       
       return { 
         success: true, 
         user: localUser
       };
     } else {
+      console.log('❌ Login failed:', response.message);
       return { 
         success: false, 
         errors: [response.message || 'Login failed'] 
