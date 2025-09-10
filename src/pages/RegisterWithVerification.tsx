@@ -482,7 +482,7 @@ const RegisterWithVerification = () => {
             />
           </div>
 
-          {/* Create Account Button */}
+          {/* Continue Button */}
           <Button
             onClick={handleRegister}
             disabled={loading}
@@ -495,8 +495,8 @@ const RegisterWithVerification = () => {
               </>
             ) : (
               <>
-                <Check className="w-4 h-4 mr-2" />
-                Create Account
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Continue
               </>
             )}
           </Button>
@@ -565,7 +565,7 @@ const RegisterWithVerification = () => {
             </div>
           )}
 
-          {/* Verify Button */}
+          {/* Complete Registration Button */}
           <Button
             onClick={handleVerifyEmail}
             disabled={verificationLoading || verificationCode.length !== 6}
@@ -574,10 +574,13 @@ const RegisterWithVerification = () => {
             {verificationLoading ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Verifying...
+                Completing Registration...
               </>
             ) : (
-              'Verify Email'
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Complete Registration
+              </>
             )}
           </Button>
 
