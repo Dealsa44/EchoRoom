@@ -78,7 +78,7 @@ const Welcome = () => {
             variant="glass"
             size="lg"
             className="w-full h-12 animate-slide-up hover:scale-105 transition-all duration-300 font-semibold text-base rounded-xl shadow-large"
-            onClick={() => navigate('/register')}
+            onClick={() => navigate('/register-new')}
             style={{ animationDelay: '0.2s' }}
           >
             <span className="flex items-center gap-2">

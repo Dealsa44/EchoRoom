@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { logoutUser, getCurrentUserFromStorage } from '@/lib/auth';
+import { logoutUser, getCurrentUser } from '@/lib/authApi';
 import { ProfileQuestion } from '@/types';
 import { clearConversationStates } from '@/lib/conversationStorage';
 import { GenderIdentity, Orientation, AttractionPreference, getAttractionPreferences } from './app-utils';
@@ -96,7 +96,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       // Safely get user from storage with enhanced error handling
       try {
-        savedUser = getCurrentUserFromStorage();
+        savedUser = getCurrentUser();
       } catch (userError) {
         console.warn('Failed to get user from storage, trying fallback methods:', userError);
         

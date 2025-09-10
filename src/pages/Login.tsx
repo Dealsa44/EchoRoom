@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
-import { loginUser, LoginData } from '@/lib/auth';
+import { loginUser, LoginData } from '@/lib/authApi';
 
 const Login = () => {
   const navigate = useNavigate();
