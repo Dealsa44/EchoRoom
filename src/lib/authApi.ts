@@ -171,7 +171,7 @@ const getCurrentUserFromStorage = (): User | null => {
 };
 
 // API Authentication Functions
-export const registerUser = async (data: RegisterData): Promise<{ success: boolean; user?: User; token?: string; errors?: string[] }> => {
+export const registerUser = async (data: RegisterData): Promise<{ success: boolean; user?: User; token?: string; message?: string; errors?: string[] }> => {
   try {
     const response = await authApi.register(data);
     
@@ -188,7 +188,8 @@ export const registerUser = async (data: RegisterData): Promise<{ success: boole
       return { 
         success: true, 
         user: localUser,
-        token: response.data.token
+        token: response.data.token,
+        message: response.message
       };
     } else {
       return { 
@@ -209,10 +210,20 @@ export const loginUser = async (data: LoginData): Promise<{ success: boolean; us
   try {
     const response = await authApi.login(data);
     
-    if (response.success && response.user) {
-      const localUser = convertApiUserToLocalUser(response.user);
+    if (response.success && response.data) {
+      // Store the token
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+      }
+      
+      // Convert API user to local user format
+      const localUser = convertApiUserToLocalUser(response.data.user);
       saveCurrentUser(localUser);
-      return { success: true, user: localUser };
+      
+      return { 
+        success: true, 
+        user: localUser
+      };
     } else {
       return { 
         success: false, 
