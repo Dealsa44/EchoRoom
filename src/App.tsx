@@ -19,7 +19,6 @@ import { UpdateNotification } from "@/components/UpdateNotification";
 import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import RegisterWithVerification from "./pages/RegisterWithVerification";
 import ChatRooms from "./pages/ChatRooms";
 import ChatRoom from "./pages/ChatRoom";
 import Match from "./pages/Match";
@@ -102,11 +101,6 @@ const App = () => {
             <Route path="/register" element={
               <PublicGuard>
                 <Register />
-              </PublicGuard>
-            } />
-            <Route path="/register-new" element={
-              <PublicGuard>
-                <RegisterWithVerification />
               </PublicGuard>
             } />
             

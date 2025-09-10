@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
-import { registerUser, RegisterData, validateAge, calculateAge } from '@/lib/auth';
+import { registerUser, RegisterData, validateAge, calculateAge, loginUser } from '@/lib/auth';
+import { sendVerificationCode, verifyEmailCode } from '@/lib/authApi';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 
 // Define missing types
@@ -130,7 +131,7 @@ const getLanguageDisplayName = (languageCode: string): string => {
   return languageMap[languageCode] || languageCode;
 };
 
-type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'lifestyle' | 'photos' | 'preferences';
+type RegistrationStage = 'account' | 'profile' | 'interests' | 'identity' | 'lifestyle' | 'photos' | 'preferences' | 'email-verification';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -170,6 +171,13 @@ const Register = () => {
     politicalViews: 'prefer-not-to-say' as 'liberal' | 'conservative' | 'moderate' | 'apolitical' | 'other' | 'prefer-not-to-say',
     about: ''
   });
+  
+  // Email verification state
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [languageErrors, setLanguageErrors] = useState<{[key: number]: string}>({});
@@ -222,10 +230,50 @@ const Register = () => {
       title: 'Personality',
       description: 'Choose how you prefer to communicate',
       icon: <MessageCircle className="w-5 h-5" />
+    },
+    {
+      key: 'email-verification',
+      title: 'Email Verification',
+      description: 'Verify your email address',
+      icon: <Mail className="w-5 h-5" />
     }
   ];
 
   const currentStageIndex = stages.findIndex(stage => stage.key === currentStage);
+
+  // Email verification functions
+  const handleResendCode = async () => {
+    if (!formData.email) {
+      setVerificationError('Please enter your email address first');
+      return;
+    }
+
+    setResendLoading(true);
+    setVerificationError('');
+    setVerificationSuccess('');
+
+    try {
+      const result = await sendVerificationCode(formData.email);
+      if (result.success) {
+        setVerificationSuccess('Verification code sent! Check your email.');
+        setCountdown(60); // 1 minute cooldown
+      } else {
+        setVerificationError(result.message || 'Failed to send verification code');
+      }
+    } catch (error: any) {
+      setVerificationError(error.message || 'Failed to send verification code');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Countdown effect
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const toggleInterest = (interest: string) => {
     const newInterests = formData.interests.includes(interest)
@@ -302,6 +350,12 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // If we're on email verification stage, handle verification
+    if (currentStage === 'email-verification') {
+      await handleEmailVerification();
+      return;
+    }
+    
     // Validate languages before submitting
     const newLanguageErrors: {[key: number]: string} = {};
     formData.languages.forEach((lang, index) => {
@@ -325,7 +379,7 @@ const Register = () => {
       return;
     }
     
-    // Validate the final stage before submitting
+    // Validate the current stage before submitting
     if (!validateCurrentStage()) {
       return;
     }
@@ -402,26 +456,25 @@ const Register = () => {
 
       const result = await registerUser(registerData);
 
-      if (result.success && result.user) {
-        // Transfer photos from temp storage to actual user storage with safe fallback
-        if (photos.length > 0) {
-          try {
-            const finalSaveResult = photoStorage.savePhotos(result.user.id, photos);
-            if (finalSaveResult.success) {
-              photoStorage.clearPhotos(tempUserId); // Clean up temp storage
-            } else {
-              console.warn('Failed to save photos to final user storage:', finalSaveResult.error);
-            }
-          } catch (error) {
-            console.error('Failed to save photos to final user storage:', error);
-            // Continue with registration even if photos fail to save
-          }
-        }
+      if (result.success) {
+        // Account created successfully, now send verification email
+        const verificationResult = await sendVerificationCode(formData.email);
         
-        setUser(result.user);
-        setIsAuthenticated(true);
-        // Welcome to EchoRoom - toast removed per user request
-        navigate('/match');
+        if (verificationResult.success) {
+          toast({
+            title: "Account Created!",
+            description: "Please check your email for verification code.",
+          });
+          
+          setCountdown(60); // 1 minute cooldown
+          setCurrentStage('email-verification');
+        } else {
+          toast({
+            title: "Account Created",
+            description: "But failed to send verification email. Please try logging in.",
+            variant: "destructive",
+          });
+        }
       } else {
         // Handle server-side validation errors
         if (result.errors) {
@@ -435,10 +488,51 @@ const Register = () => {
           setErrors(newErrors);
         }
         
-        // Registration failed - toast removed per user request
+        toast({
+          title: "Registration Failed",
+          description: result.errors?.[0] || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      // Registration error - toast removed per user request
+    } catch (error: any) {
+      toast({
+        title: "Registration Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailVerification = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setVerificationError('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setLoading(true);
+    setVerificationError('');
+    setVerificationSuccess('');
+
+    try {
+      const verificationResult = await verifyEmailCode(formData.email, verificationCode);
+      
+      if (verificationResult.success && verificationResult.user) {
+        setUser(verificationResult.user);
+        setIsAuthenticated(true);
+        
+        toast({
+          title: "Welcome to EchoRoom!",
+          description: "Your account has been created and verified successfully.",
+        });
+        
+        navigate('/community');
+      } else {
+        setVerificationError(verificationResult.message || 'Invalid verification code');
+      }
+    } catch (error: any) {
+      setVerificationError(error.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -579,12 +673,6 @@ const Register = () => {
           newErrors.username = 'Username can only contain letters, numbers, and underscores';
         }
         
-        if (!formData.email) {
-          newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Please enter a valid email address';
-        }
-        
         if (!formData.password) {
           newErrors.password = 'Password is required';
         } else if (formData.password.length < 8) {
@@ -659,6 +747,17 @@ const Register = () => {
           newErrors.chatStyle = 'Please select your personality type';
         }
         break;
+        
+      case 'email-verification':
+        if (!formData.email) {
+          newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          newErrors.email = 'Please enter a valid email address';
+        }
+        if (!verificationCode || verificationCode.length !== 6) {
+          newErrors.verificationCode = 'Please enter a valid 6-digit code';
+        }
+        break;
     }
     
     setErrors(newErrors);
@@ -668,10 +767,9 @@ const Register = () => {
   const canProceed = () => {
     switch (currentStage) {
       case 'account':
-        return formData.username && formData.email && formData.password && formData.dateOfBirth && formData.location &&
+        return formData.username && formData.password && formData.dateOfBirth && formData.location &&
                formData.username.length >= 3 && 
                /^[a-zA-Z0-9_]+$/.test(formData.username) &&
-               /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
                formData.password.length >= 8 &&
                validateAge(formData.dateOfBirth) &&
                formData.location.length >= 2 &&
@@ -691,6 +789,9 @@ const Register = () => {
         return true; // Photos are optional
       case 'preferences':
         return formData.chatStyle;
+      case 'email-verification':
+        return formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && 
+               verificationCode && verificationCode.length === 6;
       default:
         return false;
     }
@@ -728,33 +829,6 @@ const Register = () => {
                )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-                             <Input
-                 id="email"
-                 name="email"
-                 type="email"
-                 placeholder="your@email.com"
-                 value={formData.email}
-                 onChange={(e) => {
-                   const value = e.target.value;
-                   setFormData(prev => ({ ...prev, email: value }));
-                   if (touched.email) {
-                     validateField('email', value);
-                   }
-                 }}
-                 onBlur={() => {
-                   setTouched(prev => ({ ...prev, email: true }));
-                   validateField('email', formData.email);
-                 }}
-                 autoComplete="email"
-                 required
-                 className={errors.email ? 'border-red-500' : ''}
-               />
-               {errors.email && touched.email && (
-                 <p className="text-sm text-red-500">{errors.email}</p>
-               )}
-            </div>
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -1588,6 +1662,92 @@ const Register = () => {
           </div>
         );
 
+      case 'email-verification':
+        return (
+          <div className="space-y-4">
+            <div className="text-center space-y-2 mb-4">
+              <div className="text-lg font-semibold">📧 Verify Your Email</div>
+              <div className="text-sm text-muted-foreground">
+                We've sent a 6-digit verification code to
+              </div>
+              <div className="font-medium text-foreground">{formData.email}</div>
+            </div>
+            
+            {/* Email Input */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={errors.email ? 'border-red-500' : ''}
+              />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+            </div>
+
+            {/* Verification Code Input */}
+            <div className="space-y-2">
+              <Label htmlFor="verification-code">Verification Code</Label>
+              <Input
+                id="verification-code"
+                type="text"
+                placeholder="Enter 6-digit code"
+                value={verificationCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setVerificationCode(value);
+                  setVerificationError('');
+                }}
+                className="text-center text-2xl font-mono tracking-widest"
+                maxLength={6}
+              />
+              {errors.verificationCode && <p className="text-red-500 text-sm">{errors.verificationCode}</p>}
+            </div>
+
+            {/* Error Message */}
+            {verificationError && (
+              <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                {verificationError}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {verificationSuccess && (
+              <div className="text-green-500 text-sm text-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                {verificationSuccess}
+              </div>
+            )}
+
+            {/* Resend Code */}
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                Didn't receive the code?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResendCode}
+                disabled={resendLoading || countdown > 0}
+                className="text-sm"
+              >
+                {resendLoading ? (
+                  <>
+                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-2" />
+                    Sending...
+                  </>
+                ) : countdown > 0 ? (
+                  `Resend in ${countdown}s`
+                ) : (
+                  'Resend Code'
+                )}
+              </Button>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -1682,12 +1842,12 @@ const Register = () => {
                     {loading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Creating Account...
+                        {currentStage === 'email-verification' ? 'Verifying...' : 'Creating Account...'}
                       </>
                     ) : (
                       <>
                         <Check size={16} />
-                        Create Account
+                        {currentStage === 'email-verification' ? 'Complete Registration' : 'Create Account'}
                       </>
                     )}
                   </Button>

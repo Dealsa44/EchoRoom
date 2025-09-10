@@ -162,8 +162,8 @@ export const authApi = {
   },
 
   // Verify email code
-  verifyEmailCode: async (email: string, code: string): Promise<ApiResponse> => {
-    return apiRequest('/auth/verify-email-code', {
+  verifyEmailCode: async (email: string, code: string): Promise<ApiResponse<{ user: User; token: string }>> => {
+    return apiRequest<{ user: User; token: string }>('/auth/verify-email-code', {
       method: 'POST',
       body: JSON.stringify({ email, code }),
     });

@@ -254,12 +254,23 @@ export const sendVerificationCode = async (email: string): Promise<{ success: bo
   }
 };
 
-export const verifyEmailCode = async (email: string, code: string): Promise<{ success: boolean; message?: string; errors?: string[] }> => {
+export const verifyEmailCode = async (email: string, code: string): Promise<{ success: boolean; message?: string; user?: User; token?: string; errors?: string[] }> => {
   try {
     const response = await authApi.verifyEmailCode(email, code);
     
-    if (response.success) {
-      return { success: true, message: response.message };
+    if (response.success && response.data) {
+      // Store the token
+      localStorage.setItem('authToken', response.data.token);
+      
+      // Convert API user to local user format
+      const localUser = convertApiUserToLocalUser(response.data.user);
+      
+      return { 
+        success: true, 
+        message: response.message,
+        user: localUser,
+        token: response.data.token
+      };
     } else {
       return { 
         success: false, 
