@@ -131,6 +131,7 @@ interface RegisterData {
   politicalViews?: string;
   about?: string;
   chatStyle?: string;
+  photos?: string[];
 }
 
 // Login data interface
@@ -170,14 +171,25 @@ const getCurrentUserFromStorage = (): User | null => {
 };
 
 // API Authentication Functions
-export const registerUser = async (data: RegisterData): Promise<{ success: boolean; user?: User; errors?: string[] }> => {
+export const registerUser = async (data: RegisterData): Promise<{ success: boolean; user?: User; token?: string; errors?: string[] }> => {
   try {
     const response = await authApi.register(data);
     
-    if (response.success && response.user) {
-      const localUser = convertApiUserToLocalUser(response.user);
+    if (response.success && response.data) {
+      // Store the token
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+      }
+      
+      // Convert API user to local user format
+      const localUser = convertApiUserToLocalUser(response.data.user);
       saveCurrentUser(localUser);
-      return { success: true, user: localUser };
+      
+      return { 
+        success: true, 
+        user: localUser,
+        token: response.data.token
+      };
     } else {
       return { 
         success: false, 
@@ -254,22 +266,14 @@ export const sendVerificationCode = async (email: string): Promise<{ success: bo
   }
 };
 
-export const verifyEmailCode = async (email: string, code: string): Promise<{ success: boolean; message?: string; user?: User; token?: string; errors?: string[] }> => {
+export const verifyEmailCode = async (email: string, code: string): Promise<{ success: boolean; message?: string; errors?: string[] }> => {
   try {
     const response = await authApi.verifyEmailCode(email, code);
     
-    if (response.success && response.data) {
-      // Store the token
-      localStorage.setItem('authToken', response.data.token);
-      
-      // Convert API user to local user format
-      const localUser = convertApiUserToLocalUser(response.data.user);
-      
+    if (response.success) {
       return { 
         success: true, 
-        message: response.message,
-        user: localUser,
-        token: response.data.token
+        message: response.message
       };
     } else {
       return { 

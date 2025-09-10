@@ -12,8 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useApp } from '@/hooks/useApp';
 import { toast } from '@/hooks/use-toast';
-import { registerUser, RegisterData, validateAge, calculateAge, loginUser } from '@/lib/auth';
-import { sendVerificationCode, verifyEmailCode } from '@/lib/authApi';
+import { sendVerificationCode, verifyEmailCode, registerUser, RegisterData } from '@/lib/authApi';
+import { validateAge, calculateAge, loginUser } from '@/lib/auth';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 
 // Define missing types
@@ -485,8 +485,6 @@ const Register = () => {
         religion: formData.religion,
         politicalViews: formData.politicalViews,
         about: formData.about,
-        // Include photos
-        photos: photos.map(photo => photo.url),
       };
 
       const result = await registerUser(registerData);
@@ -551,20 +549,47 @@ const Register = () => {
     setVerificationSuccess('');
 
     try {
+      // First verify the email code
       const verificationResult = await verifyEmailCode(formData.email, verificationCode);
       
-      if (verificationResult.success && verificationResult.user) {
-        setUser(verificationResult.user);
-        setIsAuthenticated(true);
+      if (verificationResult.success) {
+        setVerificationSuccess('Email verified! Completing registration...');
         
-        toast({
-          title: "Welcome to EchoRoom!",
-          description: "Your account has been created and verified successfully.",
-        });
+        // Now register the user with all the form data
+        const registrationData = {
+          ...formData,
+          chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
+          ethnicity: formData.ethnicity as string,
+          languages: formData.languages.map(lang => ({
+            code: lang.language,
+            name: lang.language,
+            proficiency: (lang.level === 'native' ? 'native' : 
+                        lang.level === 'c2' || lang.level === 'c1' ? 'advanced' :
+                        lang.level === 'b2' || lang.level === 'b1' ? 'intermediate' : 'beginner') as 'native' | 'advanced' | 'intermediate' | 'beginner'
+          }))
+        };
+        const registrationResult = await registerUser(registrationData);
         
-        navigate('/community');
+        if (registrationResult.success && registrationResult.user) {
+          setUser(registrationResult.user);
+          setIsAuthenticated(true);
+          
+          // Store token if provided
+          if ('token' in registrationResult && registrationResult.token) {
+            localStorage.setItem('authToken', registrationResult.token as string);
+          }
+          
+          toast({
+            title: "Welcome to EchoRoom!",
+            description: "Your account has been created and verified successfully.",
+          });
+          
+          navigate('/community');
+        } else {
+          setVerificationError(registrationResult.errors?.[0] || 'Registration failed');
+        }
       } else {
-        setVerificationError(verificationResult.message || 'Invalid verification code');
+        setVerificationError(verificationResult.errors?.[0] || 'Invalid verification code');
       }
     } catch (error: any) {
       setVerificationError(error.message || 'Verification failed. Please try again.');
