@@ -176,12 +176,12 @@ export const authApi = {
       body: JSON.stringify(data),
     });
 
-    if (response.success && response.data) {
-      setAuthToken(response.data.token);
+    if (response.success && response.user) {
+      setAuthToken(response.token);
       return {
         success: true,
-        user: response.data.user,
-        token: response.data.token,
+        user: response.user,
+        token: response.token,
       };
     }
 

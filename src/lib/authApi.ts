@@ -173,25 +173,30 @@ const getCurrentUserFromStorage = (): User | null => {
 // API Authentication Functions
 export const registerUser = async (data: RegisterData): Promise<{ success: boolean; user?: User; token?: string; message?: string; errors?: string[] }> => {
   try {
+    console.log('🔍 Calling authApi.register with data:', data);
     const response = await authApi.register(data);
+    console.log('📋 authApi.register response:', response);
     
-    if (response.success && response.data) {
+    if (response.success && response.user) {
       // Store the token
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
       }
       
       // Convert API user to local user format
-      const localUser = convertApiUserToLocalUser(response.data.user);
+      const localUser = convertApiUserToLocalUser(response.user);
       saveCurrentUser(localUser);
+      
+      console.log('✅ Registration successful, user:', localUser);
       
       return { 
         success: true, 
         user: localUser,
-        token: response.data.token,
+        token: response.token,
         message: response.message
       };
     } else {
+      console.log('❌ Registration failed:', response.message);
       return { 
         success: false, 
         errors: response.errors || [response.message || 'Registration failed'] 
@@ -210,14 +215,14 @@ export const loginUser = async (data: LoginData): Promise<{ success: boolean; us
   try {
     const response = await authApi.login(data);
     
-    if (response.success && response.data) {
+    if (response.success && response.user) {
       // Store the token
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
       }
       
       // Convert API user to local user format
-      const localUser = convertApiUserToLocalUser(response.data.user);
+      const localUser = convertApiUserToLocalUser(response.user);
       saveCurrentUser(localUser);
       
       return { 

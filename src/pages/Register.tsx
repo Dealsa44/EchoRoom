@@ -568,7 +568,10 @@ const Register = () => {
                         lang.level === 'b2' || lang.level === 'b1' ? 'intermediate' : 'beginner') as 'native' | 'advanced' | 'intermediate' | 'beginner'
           }))
         };
+        
+        console.log('🔍 Registering user with data:', registrationData);
         const registrationResult = await registerUser(registrationData);
+        console.log('📋 Registration result:', registrationResult);
         
         if (registrationResult.success && registrationResult.user) {
           setUser(registrationResult.user);
@@ -584,7 +587,7 @@ const Register = () => {
             description: "Your account has been created and verified successfully.",
           });
           
-          navigate('/community');
+          navigate('/match');
         } else {
           setVerificationError(registrationResult.errors?.[0] || 'Registration failed');
         }
