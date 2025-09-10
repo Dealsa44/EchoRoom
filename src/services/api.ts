@@ -194,16 +194,13 @@ export const authApi = {
 
   // Login user
   login: async (data: LoginData): Promise<ApiResponse<User>> => {
-    console.log('🔍 API service login called with:', data);
     const response = await apiRequest<{ user: User; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    console.log('📋 API service login response:', response);
 
     if (response.success && response.user) {
       setAuthToken(response.token);
-      console.log('✅ API service login success, token set');
       return {
         success: true,
         user: response.user,
@@ -211,7 +208,6 @@ export const authApi = {
       };
     }
 
-    console.log('❌ API service login failed:', response.message);
     return {
       success: false,
       message: response.message || 'Login failed',
