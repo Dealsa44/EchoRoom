@@ -1,5 +1,5 @@
 // API service for communicating with EchoRoom backend
-const API_BASE_URL = 'https://echoroombackend-production.up.railway.app/api';
+const API_BASE_URL = 'https://echoroom-backend-23jb.onrender.com/api';
 
 // Types for API responses
 export interface ApiResponse<T = any> {
