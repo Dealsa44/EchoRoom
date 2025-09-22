@@ -184,7 +184,7 @@ export const registerUser = async (data: RegisterData): Promise<{ success: boole
     if (response.success && response.user) {
       // Store the token
       if (response.token) {
-        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('echoroom_token', response.token);
       }
       
       // Convert API user to local user format
@@ -222,7 +222,7 @@ export const loginUser = async (data: LoginData): Promise<{ success: boolean; us
     if (response.success && response.user) {
       // Store the token
       if (response.token) {
-        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('echoroom_token', response.token);
       }
       
       // Convert API user to local user format

@@ -141,9 +141,15 @@ const Profile = () => {
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
 
-  // Fetch user profile data from backend
+  // Fetch user profile data from backend (only if needed)
   const fetchUserProfile = async () => {
     if (!isOwnProfile) return;
+    
+    // If user data is already available, don't make unnecessary API calls
+    if (user && user.id) {
+      console.log('User data already available, skipping API call');
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -277,6 +283,24 @@ const Profile = () => {
   
   // Show login prompt if no user data and this is own profile
   const shouldShowLoginPrompt = isOwnProfile && !user;
+  
+  // Debug information for PWA troubleshooting
+  const debugInfo = {
+    isPWA,
+    isIOS,
+    isOwnProfile,
+    hasUser: !!user,
+    userId: user?.id,
+    loading,
+    error: !!error,
+    userDataExists: !!localStorage.getItem('echoroom_current_user'),
+    authTokenExists: !!localStorage.getItem('echoroom_token'),
+  };
+  
+  // Log debug info in PWA mode
+  if (isPWA) {
+    console.log('Profile Debug Info:', debugInfo);
+  }
 
   // Render error state
   const renderErrorState = () => (
@@ -284,11 +308,45 @@ const Profile = () => {
       <TopBar title="Profile" />
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
         <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">{error}</p>
-            <Button onClick={() => window.location.reload()} className="mt-4">
-              Retry
-            </Button>
+          <CardContent className="p-6 text-center space-y-4">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">{error}</p>
+              
+              {isPWA && isIOS && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
+                  <p className="text-amber-800 mb-2">
+                    <strong>iOS PWA Data Issue</strong>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    Try refreshing the app or opening in Safari browser. Your data might be stored differently in PWA mode.
+                  </p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Button onClick={() => window.location.reload()} className="w-full">
+                  Refresh App
+                </Button>
+                
+                {isPWA && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="w-full"
+                  >
+                    Open in Browser
+                  </Button>
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/login')}
+                  className="w-full"
+                >
+                  Go to Login
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
