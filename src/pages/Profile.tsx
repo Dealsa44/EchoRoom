@@ -270,76 +270,31 @@ const Profile = () => {
     }
   }, [isOwnProfile, user?.id]);
 
-  // Early return if no user data and this is own profile
-  if (isOwnProfile && !user) {
-    // Check if this might be a PWA storage issue
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                   (window.navigator as any).standalone === true;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
-    return (
-      <div className="min-h-screen bg-background">
-        <TopBar title="Profile" />
-        <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
-          <Card>
-            <CardContent className="p-6 text-center space-y-4">
-              <div className="text-center">
-                <p className="text-muted-foreground mb-4">Please log in to view your profile.</p>
-                
-                {isPWA && isIOS && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
-                    <p className="text-amber-800 mb-2">
-                      <strong>iOS PWA Issue Detected</strong>
-                    </p>
-                    <p className="text-amber-700 text-xs">
-                      If you're experiencing login problems, try opening the app in Safari browser instead of from the home screen.
-                    </p>
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Button onClick={() => navigate('/login')} className="w-full">
-                    Go to Login
-                  </Button>
-                  
-                  {isPWA && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => window.open(window.location.href, '_blank')}
-                      className="w-full"
-                    >
-                      Open in Browser
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <BottomNavigation />
-      </div>
-    );
-  }
+  // Check if this might be a PWA storage issue
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                 (window.navigator as any).standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  // Show login prompt if no user data and this is own profile
+  const shouldShowLoginPrompt = isOwnProfile && !user;
 
-  // Show error state if there's an error
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <TopBar title="Profile" />
-        <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">{error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-        <BottomNavigation />
+  // Render error state
+  const renderErrorState = () => (
+    <div className="min-h-screen bg-background">
+      <TopBar title="Profile" />
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    );
-  }
+      <BottomNavigation />
+    </div>
+  );
 
   const handleSendMessage = () => {
     if (profileData) {
@@ -355,87 +310,135 @@ const Profile = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <TopBar title="Profile" />
-        <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
-          {/* Profile Card Skeleton */}
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-6 text-center">
-              <div className="relative flex justify-center mb-4">
-                <div className="h-14 w-14 bg-muted rounded-full animate-pulse"></div>
-              </div>
-              <div className="h-6 bg-muted rounded w-32 mx-auto mb-2 animate-pulse"></div>
-              <div className="h-4 bg-muted rounded w-24 mx-auto animate-pulse"></div>
-            </CardContent>
-          </Card>
+  // Render loading state
+  const renderLoadingState = () => (
+    <div className="min-h-screen bg-background">
+      <TopBar title="Profile" />
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+        {/* Profile Card Skeleton */}
+        <Card className="relative overflow-hidden">
+          <CardContent className="p-6 text-center">
+            <div className="relative flex justify-center mb-4">
+              <div className="h-14 w-14 bg-muted rounded-full animate-pulse"></div>
+            </div>
+            <div className="h-6 bg-muted rounded w-32 mx-auto mb-2 animate-pulse"></div>
+            <div className="h-4 bg-muted rounded w-24 mx-auto animate-pulse"></div>
+          </CardContent>
+        </Card>
 
-          {/* Bio Section Skeleton */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="h-5 bg-muted rounded w-24 mb-4 animate-pulse"></div>
+        {/* Bio Section Skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="h-5 bg-muted rounded w-24 mb-4 animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-1/2 animate-pulse"></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Basic Info Skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="h-5 bg-muted rounded w-32 mb-4 animate-pulse"></div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
-                <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
-                <div className="h-4 bg-muted rounded w-1/2 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-16 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Basic Info Skeleton */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="h-5 bg-muted rounded w-32 mb-4 animate-pulse"></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
-                  <div className="h-4 bg-muted rounded w-16 animate-pulse"></div>
-                  <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-28 animate-pulse"></div>
-                  <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
-                  <div className="h-4 bg-muted rounded w-18 animate-pulse"></div>
-                </div>
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded w-28 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-18 animate-pulse"></div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Interests Skeleton */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="h-5 bg-muted rounded w-24 mb-4 animate-pulse"></div>
-              <div className="flex flex-wrap gap-2">
-                <div className="h-8 bg-muted rounded-full w-20 animate-pulse"></div>
-                <div className="h-8 bg-muted rounded-full w-24 animate-pulse"></div>
-                <div className="h-8 bg-muted rounded-full w-28 animate-pulse"></div>
-                <div className="h-8 bg-muted rounded-full w-20 animate-pulse"></div>
-                <div className="h-8 bg-muted rounded-full w-24 animate-pulse"></div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Interests Skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="h-5 bg-muted rounded w-24 mb-4 animate-pulse"></div>
+            <div className="flex flex-wrap gap-2">
+              <div className="h-8 bg-muted rounded-full w-20 animate-pulse"></div>
+              <div className="h-8 bg-muted rounded-full w-24 animate-pulse"></div>
+              <div className="h-8 bg-muted rounded-full w-28 animate-pulse"></div>
+              <div className="h-8 bg-muted rounded-full w-20 animate-pulse"></div>
+              <div className="h-8 bg-muted rounded-full w-24 animate-pulse"></div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Action Buttons Skeleton */}
-          <div className="flex gap-3">
-            <div className="h-12 bg-muted rounded-full flex-1 animate-pulse"></div>
-            <div className="h-12 bg-muted rounded-full flex-1 animate-pulse"></div>
-          </div>
+        {/* Action Buttons Skeleton */}
+        <div className="flex gap-3">
+          <div className="h-12 bg-muted rounded-full flex-1 animate-pulse"></div>
+          <div className="h-12 bg-muted rounded-full flex-1 animate-pulse"></div>
         </div>
-        
-        <BottomNavigation />
       </div>
-    );
-  }
+      
+      <BottomNavigation />
+    </div>
+  );
+
+  // Render login prompt
+  const renderLoginPrompt = () => (
+    <div className="min-h-screen bg-background">
+      <TopBar title="Profile" />
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+        <Card>
+          <CardContent className="p-6 text-center space-y-4">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">Please log in to view your profile.</p>
+              
+              {isPWA && isIOS && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
+                  <p className="text-amber-800 mb-2">
+                    <strong>iOS PWA Issue Detected</strong>
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    If you're experiencing login problems, try opening the app in Safari browser instead of from the home screen.
+                  </p>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Button onClick={() => navigate('/login')} className="w-full">
+                  Go to Login
+                </Button>
+                
+                {isPWA && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="w-full"
+                  >
+                    Open in Browser
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <BottomNavigation />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-background">
-      <TopBar 
-        title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
-        showBack={!isOwnProfile}
-      />
-      
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+    <>
+      {loading && renderLoadingState()}
+      {error && renderErrorState()}
+      {shouldShowLoginPrompt && renderLoginPrompt()}
+      {!loading && !error && !shouldShowLoginPrompt && (
+        <div className="min-h-screen bg-background">
+          <TopBar 
+            title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
+            showBack={!isOwnProfile}
+          />
+          
+          <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
         <Card className="relative overflow-hidden animate-breathe">
           {/* Floating background accents */}
           <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
@@ -984,10 +987,12 @@ const Profile = () => {
             </CardContent>
           </Card>
         )}
-      </div>
+        </div>
 
-      <BottomNavigation />
-    </div>
+        <BottomNavigation />
+      </div>
+      )}
+    </>
   );
 };
 
