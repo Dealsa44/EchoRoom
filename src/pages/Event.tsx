@@ -918,7 +918,7 @@ const Event = () => {
     return (
       <div className="min-h-screen app-gradient-bg">
         <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
-        <div className="px-4 py-5 max-w-md mx-auto space-y-5 content-safe-top pb-24">
+        <div className="px-4 py-5 max-w-md mx-auto space-y-5 content-safe-top content-safe-bottom">
           <div className="animate-pulse space-y-4">
             <div className="h-64 bg-muted rounded-2xl"></div>
             <div className="h-6 bg-muted rounded w-3/4"></div>
@@ -935,7 +935,7 @@ const Event = () => {
     return (
       <div className="min-h-screen app-gradient-bg">
         <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
-        <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
+        <div className="px-4 py-5 max-w-md mx-auto content-safe-top content-safe-bottom">
           <Card>
             <CardContent className="p-8 text-center">
               <div className="text-4xl mb-4">❌</div>
@@ -959,7 +959,7 @@ const Event = () => {
     return (
       <div className="min-h-screen app-gradient-bg">
         <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
-        <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
+        <div className="px-4 py-5 max-w-md mx-auto content-safe-top content-safe-bottom">
           <Card>
             <CardContent className="p-8 text-center">
               <div className="text-4xl mb-4">⚠️</div>
@@ -992,7 +992,7 @@ const Event = () => {
         onBack={() => navigate(-1)}
       />
       
-      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24 flex flex-col overflow-x-hidden">
+      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top content-safe-bottom flex flex-col overflow-x-hidden">
         {/* Event Header Image */}
         <div className="relative h-64 rounded-2xl overflow-hidden">
           <img

@@ -1478,7 +1478,7 @@ const CreateEvent = () => {
         onBack={() => navigate('/events')}
       />
       
-      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24 flex flex-col overflow-x-hidden">
+      <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top content-safe-bottom flex flex-col overflow-x-hidden">
         {/* Progress Steps */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">

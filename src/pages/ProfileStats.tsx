@@ -13,7 +13,7 @@ const ProfileStats = () => {
     <div className="min-h-screen bg-background">
       <TopBar title="Your Journey" showBack onBack={() => navigate('/profile')} />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-safe-bottom">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -570,8 +570,8 @@ const Match = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
-          <div className="space-y-4 pb-20">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top content-safe-bottom">
+          <div className="space-y-4 ">
             {/* Loading skeleton for profile card */}
             <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6">
               <div className="w-full h-full bg-muted/50 rounded-2xl animate-pulse overflow-hidden">
@@ -619,9 +619,9 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!loading && !(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top content-safe-bottom">
 
-          <div className="space-y-4 pb-20">
+          <div className="space-y-4 ">
 
         {/* Card Stack - optimized to render only top + preview */}
         <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6 will-change-transform match-card-stack">
@@ -692,7 +692,7 @@ const Match = () => {
 
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 pt-6 pb-28">
+          <div className="fixed bottom-0 left-0 right-0 z-20 pt-6 safe-bottom">
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
             <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}

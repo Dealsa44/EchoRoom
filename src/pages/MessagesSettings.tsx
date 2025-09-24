@@ -117,7 +117,7 @@ const MessagesSettings: React.FC = () => {
         showAIAssistant={true}
       />
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6 content-safe-top pb-24">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-6 content-safe-top content-safe-bottom">
 
         {/* Conversation Management */}
         <Card className="border-border/50 shadow-soft">

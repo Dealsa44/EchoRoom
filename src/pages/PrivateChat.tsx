@@ -815,7 +815,7 @@ const PrivateChat = () => {
       />
 
       {/* Messages */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-24 content-safe-top ${showAttachments ? 'pb-52' : 'pb-36'}`}>
+      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-24 content-safe-top ${showAttachments ? 'chat-safe-large' : 'chat-safe-small'}`}>
         <div className="space-y-4">
           {messages.map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;

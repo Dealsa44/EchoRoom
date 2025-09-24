@@ -146,7 +146,7 @@ const RoomActions = () => {
         </div>
       </div>
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24 overflow-y-auto h-full">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-safe-bottom overflow-y-auto h-full">
         
         {/* Room Info Header */}
         <Card className="relative overflow-hidden animate-breathe">
