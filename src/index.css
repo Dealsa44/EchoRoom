@@ -1254,7 +1254,7 @@
   
   /* Ensure content areas account for bottom navigation */
   .content-safe-top {
-    padding-bottom: calc(6rem + max(env(safe-area-inset-bottom, 0px), 0px));
+    padding-bottom: calc(5rem + max(env(safe-area-inset-bottom, 0px), 0px));
   }
 }
 
