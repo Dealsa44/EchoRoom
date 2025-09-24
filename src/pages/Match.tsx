@@ -692,7 +692,7 @@ const Match = () => {
 
         {/* Mobile Action Buttons - Optimized for performance */}
         {currentProfile && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 pt-6 pb-32">
+          <div className="fixed bottom-0 left-0 right-0 z-20 pt-6 pb-34">
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none"></div>
             <div className="relative flex justify-center items-center gap-3 sm:gap-4 px-4 sm:px-6 action-buttons-container">
               {/* Pass Button */}
