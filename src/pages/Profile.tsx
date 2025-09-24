@@ -679,8 +679,8 @@ const Profile = () => {
                 <div className="mt-1">
                   <Badge variant="outline">
                     {isOwnProfile
-                      ? ((user as any)?.ethnicity && (user as any).ethnicity !== 'prefer-not-to-say'
-                        ? (user as any).ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                      ? (user?.ethnicity && user.ethnicity !== 'prefer-not-to-say'
+                        ? user.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                           : 'Not specified')
                       : (profileData?.ethnicity && profileData.ethnicity !== 'prefer-not-to-say'
                           ? profileData.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
@@ -743,8 +743,8 @@ const Profile = () => {
                   <div className="flex flex-wrap gap-2">
                     {(isOwnProfile ? user?.interests : profileData?.interests)?.map((interest, idx) => {
                       // Handle both string arrays (from mock data) and object arrays (from backend)
-                      const interestText = typeof interest === 'string' ? interest : interest.interest;
-                      const interestKey = typeof interest === 'string' ? interest : interest.id;
+                      const interestText = typeof interest === 'string' ? interest : (interest as any).interest || interest;
+                      const interestKey = typeof interest === 'string' ? interest : (interest as any).id || idx;
                       
                       return (
                         <Badge
@@ -769,13 +769,19 @@ const Profile = () => {
                     {isOwnProfile ? (
                       user?.languages && user.languages.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {user.languages.map((lang, index: number) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {lang && (lang as any).language && typeof (lang as any).language === 'string'
-                                ? (lang as any).language.charAt(0).toUpperCase() + (lang as any).language.slice(1)
-                                : 'Unknown'} ({(lang as any).level || 'Unknown'})
-                            </Badge>
-                          ))}
+                          {user.languages.map((lang, index: number) => {
+                            // Handle both backend format { code, name, proficiency } and frontend format { language, level }
+                            const languageName = (lang as any).language || (lang as any).code || (lang as any).name || 'Unknown';
+                            const proficiency = (lang as any).level || (lang as any).proficiency || 'Unknown';
+                            
+                            return (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {typeof languageName === 'string' 
+                                  ? languageName.charAt(0).toUpperCase() + languageName.slice(1)
+                                  : 'Unknown'} ({proficiency})
+                              </Badge>
+                            );
+                          })}
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">Not set</span>

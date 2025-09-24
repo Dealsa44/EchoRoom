@@ -9,6 +9,7 @@ import { ArrowLeft, Eye, EyeOff, Save, User, Mail, Lock, Heart, Users, MessageCi
 import { useApp } from '@/hooks/useApp';
 import { userApi } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { convertApiUserToLocalUser } from '@/lib/authApi';
 import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 import { getRandomProfileQuestions } from '@/data/profileQuestions';
 
@@ -399,7 +400,9 @@ const ProfileEdit = () => {
       const result = await userApi.updateProfile(updates);
 
       if (result.success && result.user) {
-        setUser(result.user);
+        // Convert API user to local user format
+        const localUser = convertApiUserToLocalUser(result.user);
+        setUser(localUser);
         // Update initial form data to reflect saved state
         initialFormData.current = { ...formData };
         setHasUnsavedChanges(false);

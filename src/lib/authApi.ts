@@ -4,7 +4,7 @@ import { GenderIdentity, Orientation } from '@/contexts/app-utils';
 import { ProfileQuestion } from '@/types';
 
 // Convert API User to local User format
-const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
+export const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
   return {
     id: apiUser.id,
     username: apiUser.username,
@@ -19,9 +19,8 @@ const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
       return String(i); // Fallback for any other type
     }) || [],
     languages: apiUser.languages?.map(lang => ({
-      code: lang.code,
-      name: lang.name,
-      proficiency: lang.proficiency
+      language: lang.code,
+      level: lang.proficiency
     })) || [],
     chatStyle: (apiUser.chatStyle as 'introvert' | 'ambievert' | 'extrovert') || 'ambievert',
     safeMode: (apiUser.safeMode as 'light' | 'deep' | 'learning') || 'light',
@@ -38,6 +37,7 @@ const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
     lookingForFriendship: apiUser.lookingForFriendship || false,
     customGender: apiUser.customGender,
     customOrientation: apiUser.customOrientation,
+    ethnicity: apiUser.ethnicity,
     smoking: (apiUser.smoking as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say') || 'prefer-not-to-say',
     drinking: (apiUser.drinking as 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say') || 'prefer-not-to-say',
     hasChildren: (apiUser.hasChildren as 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say') || 'prefer-not-to-say',
