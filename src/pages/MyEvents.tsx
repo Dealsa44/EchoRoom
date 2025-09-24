@@ -422,7 +422,7 @@ const MyEvents = () => {
         onBack={() => navigate('/events')}
       />
       
-      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top">
+      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
         {/* Header */}
         <div className="text-center animate-fade-in">
           <h1 className="text-display-2 font-bold gradient-text-hero mb-2">My Events</h1>

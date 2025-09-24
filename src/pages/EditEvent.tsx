@@ -1262,7 +1262,7 @@ const EditEvent = () => {
         onBack={() => navigate(-1)}
       />
       
-      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top">
+      <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">
         {/* Progress Steps */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">

@@ -254,7 +254,7 @@ const UserProfileActions = () => {
         onBack={() => navigate(`/private-chat/${userId}`)}
       />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top overflow-y-auto h-full">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24 overflow-y-auto h-full">
         
         {/* User Info Header */}
         <Card className="relative overflow-hidden animate-breathe">
