@@ -18,7 +18,11 @@ const convertApiUserToLocalUser = (apiUser: ApiUser): User => {
       if (typeof i === 'object' && i && 'interest' in i) return i.interest;
       return String(i); // Fallback for any other type
     }) || [],
-    languages: apiUser.languages || [],
+    languages: apiUser.languages?.map(lang => ({
+      code: lang.code,
+      name: lang.name,
+      proficiency: lang.proficiency
+    })) || [],
     chatStyle: (apiUser.chatStyle as 'introvert' | 'ambievert' | 'extrovert') || 'ambievert',
     safeMode: (apiUser.safeMode as 'light' | 'deep' | 'learning') || 'light',
     anonymousMode: apiUser.anonymousMode || false,

@@ -243,7 +243,7 @@ const ProfileEdit = () => {
       if (typeof lang === 'string') {
         return { language: lang, level: 'beginner' as LanguageLevel };
       } else if (lang && typeof lang === 'object') {
-        // Handle the auth.ts format: { code, name, proficiency }
+        // Handle the backend format: { code, name, proficiency }
         if ('code' in lang && 'proficiency' in lang) {
           return { language: lang.code, level: lang.proficiency as LanguageLevel };
         }
@@ -356,7 +356,7 @@ const ProfileEdit = () => {
         username: formData.username,
         email: formData.email,
         bio: formData.bio,
-        interests: formData.interests,
+        interests: formData.interests, // Backend will handle string[] format
         photos: photoUrls, // Add photos to updates
         // New fields for identity and preferences
         genderIdentity: formData.genderIdentity,
@@ -367,8 +367,14 @@ const ProfileEdit = () => {
         relationshipType: formData.lookingForRelationship ? formData.relationshipType : undefined,
         customGender: formData.customGender,
         customOrientation: formData.customOrientation,
-        // Language and lifestyle fields
-        languages: formData.languages.filter(lang => lang.language && lang.level),
+        // Language and lifestyle fields - convert to backend format
+        languages: formData.languages.filter(lang => lang.language && lang.level).map(lang => ({
+          code: lang.language,
+          name: getLanguageDisplayName(lang.language),
+          proficiency: lang.level === 'native' ? 'native' : 
+                      lang.level === 'c2' || lang.level === 'c1' ? 'advanced' :
+                      lang.level === 'b2' || lang.level === 'b1' ? 'intermediate' : 'beginner'
+        })),
         chatStyle: formData.chatStyle,
         location: formData.location,
         hometown: formData.hometown,
