@@ -1202,6 +1202,11 @@
   .scroll-safe {
     scroll-padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
+  
+  /* Bottom navigation safe area handling */
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  }
 }
 
 /* iOS Safari specific safe area handling */
@@ -1220,6 +1225,36 @@
   
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  }
+}
+
+/* Mobile viewport fixes for bottom navigation */
+@media (max-width: 768px) {
+  /* Ensure bottom navigation stays fixed on mobile */
+  .fixed.bottom-0 {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 30 !important;
+    transform: translateZ(0); /* Force hardware acceleration */
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Prevent body scroll issues on mobile */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+  
+  /* Ensure content areas account for bottom navigation */
+  .content-safe-top {
+    padding-bottom: calc(6rem + max(env(safe-area-inset-bottom, 0px), 0px));
   }
 }
 

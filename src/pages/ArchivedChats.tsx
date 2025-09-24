@@ -303,7 +303,7 @@ const ArchivedChats = () => {
          showAIAssistant={false}
        />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top">
         {/* Archived Conversations List */}
         <div className="space-y-3">
           {archivedConversations.length === 0 ? (

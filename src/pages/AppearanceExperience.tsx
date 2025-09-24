@@ -164,7 +164,7 @@ const AppearanceExperience = () => {
       />
 
       {/* Content */}
-      <div className="flex-1 px-4 py-6 max-w-md mx-auto w-full space-y-6 content-safe-top pb-24">
+      <div className="flex-1 px-4 py-6 max-w-md mx-auto w-full space-y-6 content-safe-top">
         
         {/* Tab Navigation - Mobile First */}
         <div className="grid grid-cols-2 gap-2">

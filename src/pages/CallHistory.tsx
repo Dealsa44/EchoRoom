@@ -331,7 +331,7 @@ const CallHistory = () => {
          }
        />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top">
         {/* Search Input */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />

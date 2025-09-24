@@ -322,7 +322,7 @@ const Profile = () => {
   const renderErrorState = () => (
     <div className="min-h-screen bg-background">
       <TopBar title="Profile" />
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top">
         <Card>
           <CardContent className="p-6 text-center space-y-4">
             <div className="text-center">
@@ -388,7 +388,7 @@ const Profile = () => {
   const renderLoadingState = () => (
     <div className="min-h-screen bg-background">
       <TopBar title="Profile" />
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top">
         {/* Profile Card Skeleton */}
         <Card className="relative overflow-hidden">
           <CardContent className="p-6 text-center">
@@ -460,7 +460,7 @@ const Profile = () => {
   const renderLoginPrompt = () => (
     <div className="min-h-screen bg-background">
       <TopBar title="Profile" />
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top">
         <Card>
           <CardContent className="p-6 text-center space-y-4">
             <div className="text-center">
@@ -512,7 +512,7 @@ const Profile = () => {
             showBack={!isOwnProfile}
           />
           
-          <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
+          <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top">
         <Card className="relative overflow-hidden animate-breathe">
           {/* Floating background accents */}
           <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />

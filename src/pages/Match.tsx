@@ -570,7 +570,7 @@ const Match = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top">
           <div className="space-y-4 pb-20">
             {/* Loading skeleton for profile card */}
             <div className="relative h-[480px] w-full max-w-sm mx-auto mb-6">
@@ -619,7 +619,7 @@ const Match = () => {
 
       {/* Normal Content - Header scrollable inside */}
       {!loading && !(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && (
-        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top pb-32">
+        <div className="px-4 sm:px-5 w-full max-w-sm mx-auto relative z-10 match-page-container overflow-hidden content-safe-top">
 
           <div className="space-y-4 pb-20">
 
