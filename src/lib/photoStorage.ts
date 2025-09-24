@@ -216,6 +216,34 @@ export const photoStorage = {
     }
   },
 
+  // Transfer photos from temporary ID to actual user ID
+  transferPhotos: (tempUserId: string, actualUserId: string): { success: boolean; error?: string } => {
+    try {
+      const tempStorageKey = `${PHOTOS_STORAGE_KEY}_${tempUserId}`;
+      const actualStorageKey = `${PHOTOS_STORAGE_KEY}_${actualUserId}`;
+      
+      // Get photos from temporary storage
+      const tempPhotosData = localStorage.getItem(tempStorageKey);
+      if (!tempPhotosData) {
+        return { success: true }; // No photos to transfer
+      }
+      
+      // Save to actual user storage
+      localStorage.setItem(actualStorageKey, tempPhotosData);
+      
+      // Remove temporary storage
+      localStorage.removeItem(tempStorageKey);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to transfer photos:', error);
+      return { 
+        success: false, 
+        error: 'Failed to transfer photos. Please try again.' 
+      };
+    }
+  },
+
   // Clear old photos to free up space
   clearOldPhotos: (keepCount: number = 10): number => {
     try {
