@@ -141,7 +141,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
-  const [tempUserId, setTempUserId] = useState<string>('');
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -423,24 +422,8 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Save photos to localStorage before registration with safe fallback
-      const currentTempUserId = tempUserId || `temp-${Date.now()}`;
-      if (!tempUserId) {
-        setTempUserId(currentTempUserId);
-      }
-      if (photos.length > 0) {
-        try {
-          const saveResult = photoStorage.savePhotos(currentTempUserId, photos);
-          if (!saveResult.success) {
-            setErrors({ photos: saveResult.error || 'Failed to save photos' });
-            setLoading(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to save photos to localStorage:', error);
-          // Continue with registration even if photos fail to save
-        }
-      }
+      // Convert photos to URL array for backend storage
+      const photoUrls = photos.map(photo => photo.url);
 
       const registerData: RegisterData = {
         username: formData.username,
@@ -489,6 +472,7 @@ const Register = () => {
         religion: formData.religion,
         politicalViews: formData.politicalViews,
         about: formData.about,
+        photos: photoUrls,
       };
 
       const result = await registerUser(registerData);
@@ -560,6 +544,7 @@ const Register = () => {
         setVerificationSuccess('Email verified! Completing registration...');
         
         // Now register the user with all the form data
+        const photoUrls = photos.map(photo => photo.url);
         const registrationData = {
           ...formData,
           chatStyle: formData.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
@@ -570,7 +555,8 @@ const Register = () => {
             proficiency: (lang.level === 'native' ? 'native' : 
                         lang.level === 'c2' || lang.level === 'c1' ? 'advanced' :
                         lang.level === 'b2' || lang.level === 'b1' ? 'intermediate' : 'beginner') as 'native' | 'advanced' | 'intermediate' | 'beginner'
-          }))
+          })),
+          photos: photoUrls,
         };
         
         console.log('🔍 Registering user with data:', registrationData);
@@ -584,20 +570,6 @@ const Register = () => {
           // Store token if provided
           if ('token' in registrationResult && registrationResult.token) {
             localStorage.setItem('authToken', registrationResult.token as string);
-          }
-          
-          // Transfer photos from temporary ID to actual user ID
-          if (photos.length > 0 && tempUserId) {
-            try {
-              const transferResult = photoStorage.transferPhotos(tempUserId, registrationResult.user.id);
-              if (!transferResult.success) {
-                console.error('Failed to transfer photos:', transferResult.error);
-                // Don't fail registration if photo transfer fails
-              }
-            } catch (error) {
-              console.error('Error transferring photos:', error);
-              // Don't fail registration if photo transfer fails
-            }
           }
           
           toast({
