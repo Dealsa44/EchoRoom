@@ -255,12 +255,28 @@ const Profile = () => {
     }
   }, [userId, isOwnProfile, navigate]);
 
-  // Load user photos from localStorage for own profile
+  // Load user photos from database for own profile
   useEffect(() => {
     if (isOwnProfile && user?.id) {
       try {
-        const photos = photoStorage.loadPhotos(user.id);
-        setUserPhotos(photos as any);
+        // First try to load from localStorage (for existing users)
+        const localStoragePhotos = photoStorage.loadPhotos(user.id);
+        if (localStoragePhotos.length > 0) {
+          setUserPhotos(localStoragePhotos as any);
+        } else if (user.photos && user.photos.length > 0) {
+          // If no localStorage photos, load from database
+          const dbPhotos = user.photos.map((url, index) => ({
+            id: `photo-${index}`,
+            url,
+            isVerified: index === 0,
+            isPrimary: index === 0,
+            uploadDate: new Date(),
+            verificationStatus: index === 0 ? 'approved' as const : 'not_submitted' as const
+          }));
+          setUserPhotos(dbPhotos as any);
+        } else {
+          setUserPhotos([]);
+        }
       } catch (photoError) {
         console.error('Error loading photos:', photoError);
         // Don't fail the entire component if photos fail to load
@@ -274,7 +290,7 @@ const Profile = () => {
         }
       }
     }
-  }, [isOwnProfile, user?.id]);
+  }, [isOwnProfile, user?.id, user?.photos]);
 
   // Check if this might be a PWA storage issue
   const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
