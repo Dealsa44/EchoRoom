@@ -104,7 +104,7 @@ const ChatRooms = () => {
         }}
       />
       
-              <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top content-safe-bottom">
+              <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top pb-24">
         {/* Header */}
         <div className="text-center animate-fade-in">
           <h1 className="text-display-2 font-bold gradient-text-hero mb-2">Discover Conversations</h1>

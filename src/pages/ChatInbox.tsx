@@ -529,7 +529,7 @@ const ChatInbox = () => {
 
       <TopBar title="Messages" />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top content-safe-bottom">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 relative z-10 content-safe-top pb-24">
         {/* Search with Settings */}
         <div className="relative glass rounded-2xl p-1 shadow-medium animate-breathe-slow">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />

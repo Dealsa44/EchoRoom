@@ -154,7 +154,7 @@ const Settings = () => {
         onBack={() => navigate('/profile')}
       />
       
-      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top content-safe-bottom">
+      <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">
         
         {/* App Updates */}
         <UpdateBanner />

@@ -1198,38 +1198,9 @@
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
   }
   
-  /* Bottom safe area with minimum fallback for mobile touch buttons */
-  .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
-  }
-  
-  /* Content area that accounts for fixed bottom navigation */
-  .content-safe-bottom {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 6rem);
-  }
-  
-  /* Fixed bottom navigation height that includes safe area */
-  .bottom-nav-height {
-    height: calc(5rem + max(env(safe-area-inset-bottom, 0px), 0.75rem));
-  }
-  
-  /* Chat-specific safe areas for message input overlays */
-  .chat-safe-small {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 2.25rem);
-  }
-  
-  .chat-safe-medium {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 3rem);
-  }
-  
-  .chat-safe-large {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 3.25rem);
-  }
-  
   /* Ensure content doesn't scroll under fixed elements */
   .scroll-safe {
     scroll-padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
-    scroll-padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 6rem);
   }
 }
 
@@ -1249,30 +1220,6 @@
   
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
-  }
-  
-  .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
-  }
-  
-  .content-safe-bottom {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 6rem);
-  }
-  
-  .bottom-nav-height {
-    height: calc(5rem + max(env(safe-area-inset-bottom, 0px), 0.75rem));
-  }
-  
-  .chat-safe-small {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 2.25rem);
-  }
-  
-  .chat-safe-medium {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 3rem);
-  }
-  
-  .chat-safe-large {
-    padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 0.75rem) + 3.25rem);
   }
 }
 
