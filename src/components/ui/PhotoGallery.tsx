@@ -1,7 +1,16 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Send, Check, Image as ImageIcon, ChevronLeft } from 'lucide-react';
+import { X, Send, Check, Image as ImageIcon, ChevronLeft, Search, Calendar, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface PhotoItem {
+  id: string;
+  file: File;
+  url: string;
+  name: string;
+  size: number;
+  date: Date;
+}
 
 interface PhotoGalleryProps {
   onClose: () => void;
@@ -14,143 +23,185 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   onSendPhotos, 
   maxPhotos = 10 
 }) => {
-  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
-  const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
-  const [hasRealPhotos, setHasRealPhotos] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [galleryPhotos, setGalleryPhotos] = useState<PhotoItem[]>([]);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load persisted photos from localStorage on component mount
+  // Check if we have previously granted permission
   useEffect(() => {
+    const hasPermission = localStorage.getItem('echoroom_photo_permission') === 'granted';
+    if (hasPermission) {
+      setPermissionGranted(true);
+      loadPhotosFromStorage();
+    }
+  }, []);
+
+  // Load photos from localStorage if available
+  const loadPhotosFromStorage = () => {
     const savedPhotos = localStorage.getItem('echoroom_gallery_photos');
     if (savedPhotos) {
       try {
         const photoData = JSON.parse(savedPhotos);
-        // Convert base64 strings back to File objects
-        const files = photoData.map((data: any) => {
-          const byteCharacters = atob(data.base64);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          return new File([byteArray], data.name, { type: data.type });
-        });
-        setGalleryPhotos(files);
-        setHasRealPhotos(true);
+        const photos = photoData.map((data: any, index: number) => ({
+          id: `photo-${index}`,
+          file: new File([], data.name, { type: data.type }),
+          url: data.url,
+          name: data.name,
+          size: data.size,
+          date: new Date(data.date)
+        }));
+        setGalleryPhotos(photos);
       } catch (error) {
         console.error('Error loading saved photos:', error);
       }
     }
-  }, []);
+  };
 
-  // Save photos to localStorage whenever galleryPhotos changes
-  useEffect(() => {
-    if (galleryPhotos.length > 0) {
-      const photoData = galleryPhotos.map(file => ({
-        name: file.name,
-        type: file.type,
-        base64: new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(',')[1]); // Remove data:image/jpeg;base64, prefix
-          };
-          reader.readAsDataURL(file);
-        })
-      }));
 
-      Promise.all(photoData.map(async (data) => ({
-        name: data.name,
-        type: data.type,
-        base64: await data.base64
-      }))).then((savedData) => {
-        localStorage.setItem('echoroom_gallery_photos', JSON.stringify(savedData));
-      });
-    }
-  }, [galleryPhotos]);
-
-  // Check if mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Auto-request gallery access when component mounts on mobile (only if no photos exist)
-  useEffect(() => {
-    if (isMobile && !hasRealPhotos) {
-      // Automatically trigger file picker to request gallery access
-      setTimeout(() => {
+  // Request photo library access
+  const requestPhotoAccess = async () => {
+    setIsLoading(true);
+    try {
+      if ('showDirectoryPicker' in window) {
+        // Modern browsers with File System Access API
+        const dirHandle = await window.showDirectoryPicker({
+          mode: 'read',
+          types: [{
+            description: 'Photos',
+            accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }
+          }]
+        });
+        
+        await loadPhotosFromDirectory(dirHandle);
+        setPermissionGranted(true);
+        localStorage.setItem('echoroom_photo_permission', 'granted');
+      } else if ('showOpenFilePicker' in window) {
+        // Fallback for browsers with limited File System Access API
+        const fileHandles = await window.showOpenFilePicker({
+          multiple: true,
+          types: [{
+            description: 'Images',
+            accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }
+          }]
+        });
+        
+        const files = await Promise.all(fileHandles.map(handle => handle.getFile()));
+        await loadPhotosFromFiles(files);
+        setPermissionGranted(true);
+        localStorage.setItem('echoroom_photo_permission', 'granted');
+      } else {
+        // Fallback to traditional file picker
         openFilePicker();
-      }, 100);
-    }
-  }, [isMobile, hasRealPhotos]);
-
-
-  const handleFileSelect = useCallback((files: FileList) => {
-    const fileArray = Array.from(files);
-    const validFiles = fileArray.filter(file => file.type.startsWith('image/'));
-    
-    // Limit to maxPhotos
-    const filesToAdd = validFiles.slice(0, maxPhotos - selectedPhotos.length);
-    
-    if (filesToAdd.length === 0) return;
-
-    setSelectedPhotos(prev => [...prev, ...filesToAdd]);
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [selectedPhotos, maxPhotos]);
-
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      setIsLoadingPhotos(true);
-      // Add real photos to gallery
-      const realPhotos = Array.from(files).filter(file => file.type.startsWith('image/'));
-      setGalleryPhotos(prev => [...prev, ...realPhotos]);
-      setHasRealPhotos(true);
-      handleFileSelect(files);
-      setIsLoadingPhotos(false);
+      }
+    } catch (error) {
+      console.error('Failed to access photos:', error);
+      // Fallback to traditional file picker
+      openFilePicker();
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const togglePhotoSelection = (photo: File) => {
-    const isSelected = selectedPhotos.some(p => p === photo);
+  // Load photos from directory using File System Access API
+  const loadPhotosFromDirectory = async (dirHandle: FileSystemDirectoryHandle) => {
+    const photoList: PhotoItem[] = [];
     
-    if (isSelected) {
-      setSelectedPhotos(prev => prev.filter(p => p !== photo));
-    } else if (selectedPhotos.length < maxPhotos) {
-      setSelectedPhotos(prev => [...prev, photo]);
+    for await (const [name, handle] of dirHandle.entries()) {
+      if (handle.kind === 'file' && handle.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        try {
+          const file = await handle.getFile();
+          photoList.push({
+            id: `photo-${photoList.length}`,
+            file,
+            url: URL.createObjectURL(file),
+            name: file.name,
+            size: file.size,
+            date: new Date(file.lastModified)
+          });
+        } catch (error) {
+          console.error(`Failed to load ${name}:`, error);
+        }
+      }
     }
+    
+    // Sort by date (newest first)
+    photoList.sort((a, b) => b.date.getTime() - a.date.getTime());
+    setGalleryPhotos(photoList);
+    savePhotosToStorage(photoList);
   };
 
+  // Load photos from files
+  const loadPhotosFromFiles = async (files: File[]) => {
+    const photoList: PhotoItem[] = files.map((file, index) => ({
+      id: `photo-${index}`,
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      date: new Date(file.lastModified)
+    }));
+    
+    // Sort by date (newest first)
+    photoList.sort((a, b) => b.date.getTime() - a.date.getTime());
+    setGalleryPhotos(photoList);
+    savePhotosToStorage(photoList);
+  };
+
+  // Save photos to localStorage
+  const savePhotosToStorage = (photos: PhotoItem[]) => {
+    const photoData = photos.map(photo => ({
+      name: photo.name,
+      type: photo.file.type,
+      url: photo.url,
+      size: photo.size,
+      date: photo.date.toISOString()
+    }));
+    localStorage.setItem('echoroom_gallery_photos', JSON.stringify(photoData));
+  };
+
+  // Handle photo selection
+  const togglePhotoSelection = (photoId: string) => {
+    const newSelection = new Set(selectedPhotos);
+    if (newSelection.has(photoId)) {
+      newSelection.delete(photoId);
+    } else if (newSelection.size < maxPhotos) {
+      newSelection.add(photoId);
+    }
+    setSelectedPhotos(newSelection);
+  };
+
+  // Send selected photos
   const handleSend = () => {
-    if (selectedPhotos.length > 0) {
-      onSendPhotos(selectedPhotos);
-      setSelectedPhotos([]);
+    const selectedFiles = galleryPhotos
+      .filter(photo => selectedPhotos.has(photo.id))
+      .map(photo => photo.file);
+    
+    if (selectedFiles.length > 0) {
+      onSendPhotos(selectedFiles);
+      setSelectedPhotos(new Set());
     }
   };
 
+  // Traditional file picker fallback
   const openFilePicker = () => {
-    // Create a new file input to ensure it triggers properly
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
     input.accept = 'image/*';
     input.style.display = 'none';
     
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files.length > 0) {
-        handleFileInputChange({ target } as React.ChangeEvent<HTMLInputElement>);
+        const files = Array.from(target.files);
+        await loadPhotosFromFiles(files);
+        setPermissionGranted(true);
+        localStorage.setItem('echoroom_photo_permission', 'granted');
       }
     };
     
@@ -159,235 +210,225 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     document.body.removeChild(input);
   };
 
+  // Filter and sort photos
+  const filteredPhotos = galleryPhotos
+    .filter(photo => 
+      photo.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'size':
+          return b.size - a.size;
+        case 'date':
+        default:
+          return b.date.getTime() - a.date.getTime();
+      }
+    });
+
+  // Clear gallery
   const clearGallery = () => {
     setGalleryPhotos([]);
-    setSelectedPhotos([]);
-    setHasRealPhotos(false);
+    setSelectedPhotos(new Set());
+    setPermissionGranted(false);
     localStorage.removeItem('echoroom_gallery_photos');
+    localStorage.removeItem('echoroom_photo_permission');
   };
 
-  // For PC, show file picker interface
-  if (!isMobile) {
-    return (
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 max-w-md mx-auto w-full z-10">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Select Photos</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="p-2"
-          >
-            <X size={20} />
-          </Button>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
-              <ImageIcon size={24} className="text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Select up to {maxPhotos} photos from your computer
-            </p>
-            <Button onClick={openFilePicker} size="lg">
-              <ImageIcon size={20} className="mr-2" />
-              Choose Photos
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="p-2"
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            <h3 className="text-lg font-semibold">Photo Library</h3>
+            {permissionGranted && galleryPhotos.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearGallery}
+                className="p-2 text-gray-500 hover:text-red-500"
+              >
+                <X size={16} />
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              {selectedPhotos.size}/{maxPhotos}
+            </span>
+            <Button
+              onClick={handleSend}
+              disabled={selectedPhotos.size === 0}
+              size="sm"
+              className="px-4"
+            >
+              <Send size={16} className="mr-2" />
+              Send {selectedPhotos.size}
             </Button>
           </div>
-          
-          {selectedPhotos.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {selectedPhotos.length} photo{selectedPhotos.length !== 1 ? 's' : ''} selected
-                </span>
-                <Button
-                  onClick={handleSend}
-                  size="sm"
-                  className="px-4"
-                >
-                  <Send size={16} className="mr-2" />
-                  Send
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-2">
-                {selectedPhotos.map((photo, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                    <img
-                      src={URL.createObjectURL(photo)}
-                      alt={`Selected photo ${index + 1}`}
-                      className="w-full h-full object-cover"
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
+          {!permissionGranted ? (
+            <div className="p-6 text-center">
+              <div className="text-4xl mb-4">📸</div>
+              <h4 className="text-lg font-medium mb-2">Access Your Photos</h4>
+              <p className="text-gray-600 mb-4">
+                Allow EchoRoom to access your photo library to select and share photos easily.
+              </p>
+              <Button
+                onClick={requestPhotoAccess}
+                disabled={isLoading}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    Loading...
+                  </>
+                ) : (
+                  'Grant Access'
+                )}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Search and Sort Controls */}
+              {galleryPhotos.length > 0 && (
+                <div className="p-4 border-b border-gray-200 space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Search photos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
+                  </div>
+                  <div className="flex gap-2">
                     <Button
-                      variant="destructive"
+                      variant={sortBy === 'date' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setSelectedPhotos(prev => prev.filter((_, i) => i !== index))}
-                      className="absolute top-1 right-1 w-6 h-6 p-0"
+                      onClick={() => setSortBy('date')}
+                      className="flex-1"
                     >
-                      <X size={12} />
+                      <Calendar size={14} className="mr-1" />
+                      Date
+                    </Button>
+                    <Button
+                      variant={sortBy === 'name' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortBy('name')}
+                      className="flex-1"
+                    >
+                      <Folder size={14} className="mr-1" />
+                      Name
+                    </Button>
+                    <Button
+                      variant={sortBy === 'size' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortBy('size')}
+                      className="flex-1"
+                    >
+                      Size
                     </Button>
                   </div>
-                ))}
+                </div>
+              )}
+
+              {/* Photo Grid */}
+              <div className="p-4 flex-1 overflow-y-auto">
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full space-y-4">
+                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-600">Loading photos...</p>
+                  </div>
+                ) : filteredPhotos.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full space-y-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                      <ImageIcon size={32} className="text-gray-400" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-lg font-medium mb-2">
+                        {galleryPhotos.length === 0 ? 'No Photos Found' : 'No Photos Match Your Search'}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4">
+                        {galleryPhotos.length === 0 
+                          ? 'Try selecting a different folder or use the file picker'
+                          : 'Try adjusting your search terms'
+                        }
+                      </p>
+                      <Button onClick={requestPhotoAccess} size="lg">
+                        <ImageIcon size={20} className="mr-2" />
+                        {galleryPhotos.length === 0 ? 'Select Photos' : 'Refresh'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {filteredPhotos.map((photo) => {
+                      const isSelected = selectedPhotos.has(photo.id);
+                      return (
+                        <div
+                          key={photo.id}
+                          className={cn(
+                            "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
+                            isSelected ? "ring-2 ring-blue-500" : "hover:opacity-80"
+                          )}
+                          onClick={() => togglePhotoSelection(photo.id)}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={photo.name}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                <Check size={14} className="text-white" />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Photo info overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs opacity-0 hover:opacity-100 transition-opacity">
+                            <div className="truncate">{photo.name}</div>
+                            <div className="text-xs opacity-75">
+                              {(photo.size / 1024 / 1024).toFixed(1)} MB
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
+            </>
           )}
         </div>
 
+        {/* Hidden file input for fallback */}
         <input
           ref={fileInputRef}
           type="file"
           multiple
           accept="image/*"
-          onChange={handleFileInputChange}
           className="hidden"
         />
       </div>
-    );
-  }
-
-  // For mobile, show gallery interface
-  return (
-    <div 
-      className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto w-full z-10 max-h-[60vh] flex flex-col"
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseMove={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="p-2"
-          >
-            <ChevronLeft size={20} />
-          </Button>
-          <h3 className="text-lg font-semibold">Gallery</h3>
-          {hasRealPhotos && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearGallery}
-              className="p-2 text-muted-foreground hover:text-destructive"
-            >
-              <X size={16} />
-            </Button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {selectedPhotos.length}/{maxPhotos}
-          </span>
-          <Button
-            onClick={handleSend}
-            disabled={selectedPhotos.length === 0}
-            size="sm"
-            className="px-4"
-          >
-            <Send size={16} className="mr-2" />
-            Send
-          </Button>
-        </div>
-      </div>
-
-      {/* Gallery Content - Scrollable */}
-      <div 
-        className="flex-1 overflow-y-auto p-4"
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseMove={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
-      >
-        {isLoadingPhotos ? (
-          // Show loading state
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm text-muted-foreground">Loading photos...</p>
-          </div>
-        ) : !hasRealPhotos ? (
-          // Show empty state when no photos
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
-              <ImageIcon size={32} className="text-muted-foreground" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">No Photos</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Select photos from your device to add them to the gallery
-              </p>
-              <Button onClick={openFilePicker} size="lg">
-                <ImageIcon size={20} className="mr-2" />
-                Select Photos
-              </Button>
-            </div>
-          </div>
-        ) : (
-          // Show gallery grid
-          <div className="grid grid-cols-3 gap-2">
-            {galleryPhotos.map((photo, index) => {
-              const isSelected = selectedPhotos.includes(photo);
-              return (
-                <div
-                  key={index}
-                  className={cn(
-                    "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
-                    isSelected ? "ring-2 ring-primary" : "hover:opacity-80"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePhotoSelection(photo);
-                  }}
-                >
-                  <img
-                    src={URL.createObjectURL(photo)}
-                    alt={`Gallery photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                        <Check size={14} className="text-primary-foreground" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {/* Add more photos button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openFilePicker();
-              }}
-              className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center hover:border-muted-foreground/50 transition-colors"
-            >
-              <ImageIcon size={24} className="text-muted-foreground mb-1" />
-              <span className="text-xs text-muted-foreground">Add More</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleFileInputChange}
-        className="hidden"
-      />
     </div>
   );
 };
