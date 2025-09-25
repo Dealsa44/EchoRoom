@@ -40,7 +40,9 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
       loadPhotosFromStorage();
     } else {
       // Auto-request permission when component mounts
-      requestPhotoAccess();
+      setTimeout(() => {
+        requestPhotoAccess();
+      }, 100);
     }
   }, []);
 
@@ -70,27 +72,28 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const requestPhotoAccess = async () => {
     setIsLoading(true);
     try {
+      // Use the File System Access API if available (Chrome/Edge)
       if ('showDirectoryPicker' in window) {
-        // Modern browsers with File System Access API
-        const dirHandle = await window.showDirectoryPicker({
-          mode: 'read',
-          types: [{
-            description: 'Photos',
-            accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }
-          }]
-        });
-        
-        await loadPhotosFromDirectory(dirHandle);
-        setPermissionGranted(true);
-        localStorage.setItem('echoroom_photo_permission', 'granted');
-      } else {
-        // For browsers without File System Access API, use traditional file picker
-        // but allow selecting multiple files to simulate "all photos"
-        openFilePicker();
+        try {
+          const dirHandle = await window.showDirectoryPicker({
+            mode: 'read'
+          });
+          
+          await loadPhotosFromDirectory(dirHandle);
+          setPermissionGranted(true);
+          localStorage.setItem('echoroom_photo_permission', 'granted');
+          setIsLoading(false);
+          return;
+        } catch (error) {
+          console.log('Directory picker cancelled or failed:', error);
+          // Fall through to file picker
+        }
       }
+      
+      // Fallback to multiple file picker for all browsers
+        openFilePicker();
     } catch (error) {
       console.error('Failed to access photos:', error);
-      // If user cancels or error occurs, show empty state
       setIsLoading(false);
     }
   };
@@ -99,23 +102,38 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const loadPhotosFromDirectory = async (dirHandle: FileSystemDirectoryHandle) => {
     const photoList: PhotoItem[] = [];
     
-    for await (const [name, handle] of dirHandle.entries()) {
-      if (handle.kind === 'file' && handle.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-        try {
-          const file = await handle.getFile();
-          photoList.push({
-            id: `photo-${photoList.length}`,
-            file,
-            url: URL.createObjectURL(file),
-            name: file.name,
-            size: file.size,
-            date: new Date(file.lastModified)
-          });
-        } catch (error) {
-          console.error(`Failed to load ${name}:`, error);
+    // Recursive function to load photos from directory and subdirectories
+    const loadFromDirectory = async (handle: FileSystemDirectoryHandle, depth = 0) => {
+      // Limit depth to avoid infinite recursion
+      if (depth > 3) return;
+      
+      for await (const [name, entry] of handle.entries()) {
+        if (entry.kind === 'file' && entry.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          try {
+            const file = await entry.getFile();
+            photoList.push({
+              id: `photo-${photoList.length}`,
+              file,
+              url: URL.createObjectURL(file),
+              name: file.name,
+              size: file.size,
+              date: new Date(file.lastModified)
+            });
+          } catch (error) {
+            console.error(`Failed to load ${name}:`, error);
+          }
+        } else if (entry.kind === 'directory' && depth < 2) {
+          // Recursively load from subdirectories (limit to 2 levels deep)
+          try {
+            await loadFromDirectory(entry, depth + 1);
+          } catch (error) {
+            console.error(`Failed to access subdirectory ${name}:`, error);
+          }
         }
       }
-    }
+    };
+    
+    await loadFromDirectory(dirHandle);
     
     // Sort by date (newest first)
     photoList.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -180,10 +198,17 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = 'image/*';
+    input.accept = 'image/*,.jpg,.jpeg,.png,.gif,.webp';
     input.style.display = 'none';
     
+    // Add a timeout to detect if user doesn't interact with the picker
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+      setPermissionGranted(false);
+    }, 30000); // 30 second timeout
+    
     input.onchange = async (e) => {
+      clearTimeout(timeout);
       const target = e.target as HTMLInputElement;
       if (target.files && target.files.length > 0) {
         const files = Array.from(target.files);
@@ -192,9 +217,17 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         localStorage.setItem('echoroom_photo_permission', 'granted');
         setIsLoading(false);
       } else {
-        // User cancelled, stop loading
+        // User cancelled, stop loading and show empty state
         setIsLoading(false);
+        setPermissionGranted(false);
       }
+    };
+    
+    // Handle the case where user cancels without selecting files
+    input.oncancel = () => {
+      clearTimeout(timeout);
+      setIsLoading(false);
+      setPermissionGranted(false);
     };
     
     document.body.appendChild(input);
@@ -364,31 +397,31 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             )}
 
             {/* Photo Grid */}
-            <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2">
               {filteredPhotos.map((photo) => {
                 const isSelected = selectedPhotos.has(photo.id);
-                return (
-                  <div
+              return (
+                <div
                     key={photo.id}
-                    className={cn(
-                      "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
-                      isSelected ? "ring-2 ring-primary" : "hover:opacity-80"
-                    )}
+                  className={cn(
+                    "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
+                    isSelected ? "ring-2 ring-primary" : "hover:opacity-80"
+                  )}
                     onClick={() => togglePhotoSelection(photo.id)}
-                  >
-                    <img
+                >
+                  <img
                       src={photo.url}
                       alt={photo.name}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                          <Check size={14} className="text-primary-foreground" />
-                        </div>
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                        <Check size={14} className="text-primary-foreground" />
                       </div>
-                    )}
+                    </div>
+                  )}
                     
                     {/* Photo info overlay */}
                     <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs opacity-0 hover:opacity-100 transition-opacity">
@@ -397,9 +430,9 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                         {(photo.size / 1024 / 1024).toFixed(1)} MB
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                </div>
+              );
+            })}
             </div>
           </div>
         )}
