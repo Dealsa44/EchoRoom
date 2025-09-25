@@ -32,12 +32,15 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if we have previously granted permission
+  // Check if we have previously granted permission and auto-load photos
   useEffect(() => {
     const hasPermission = localStorage.getItem('echoroom_photo_permission') === 'granted';
     if (hasPermission) {
       setPermissionGranted(true);
       loadPhotosFromStorage();
+    } else {
+      // Auto-request permission when component mounts
+      requestPhotoAccess();
     }
   }, []);
 
@@ -80,29 +83,14 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         await loadPhotosFromDirectory(dirHandle);
         setPermissionGranted(true);
         localStorage.setItem('echoroom_photo_permission', 'granted');
-      } else if ('showOpenFilePicker' in window) {
-        // Fallback for browsers with limited File System Access API
-        const fileHandles = await window.showOpenFilePicker({
-          multiple: true,
-          types: [{
-            description: 'Images',
-            accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'] }
-          }]
-        });
-        
-        const files = await Promise.all(fileHandles.map(handle => handle.getFile()));
-        await loadPhotosFromFiles(files);
-        setPermissionGranted(true);
-        localStorage.setItem('echoroom_photo_permission', 'granted');
       } else {
-        // Fallback to traditional file picker
+        // For browsers without File System Access API, use traditional file picker
+        // but allow selecting multiple files to simulate "all photos"
         openFilePicker();
       }
     } catch (error) {
       console.error('Failed to access photos:', error);
-      // Fallback to traditional file picker
-      openFilePicker();
-    } finally {
+      // If user cancels or error occurs, show empty state
       setIsLoading(false);
     }
   };
@@ -202,6 +190,10 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         await loadPhotosFromFiles(files);
         setPermissionGranted(true);
         localStorage.setItem('echoroom_photo_permission', 'granted');
+        setIsLoading(false);
+      } else {
+        // User cancelled, stop loading
+        setIsLoading(false);
       }
     };
     
@@ -295,61 +287,32 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         onMouseMove={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
-        {!permissionGranted ? (
-          // Show permission request state
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
-              <ImageIcon size={32} className="text-muted-foreground" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium mb-2">Access Your Photos</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Allow EchoRoom to access your photo library to select and share photos easily.
-              </p>
-              <Button 
-                onClick={requestPhotoAccess} 
-                disabled={isLoading}
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon size={20} className="mr-2" />
-                    Grant Access
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        ) : isLoading ? (
+        {isLoading ? (
           // Show loading state
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm text-muted-foreground">Loading photos...</p>
           </div>
-        ) : filteredPhotos.length === 0 ? (
-          // Show empty state when no photos
+        ) : !permissionGranted || filteredPhotos.length === 0 ? (
+          // Show empty state when no photos or permission not granted
           <div className="flex flex-col items-center justify-center h-full space-y-4">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
               <ImageIcon size={32} className="text-muted-foreground" />
             </div>
             <div className="text-center">
               <h3 className="text-lg font-medium mb-2">
-                {galleryPhotos.length === 0 ? 'No Photos Found' : 'No Photos Match Your Search'}
+                {!permissionGranted ? 'Access Your Photos' : 
+                 galleryPhotos.length === 0 ? 'No Photos Found' : 'No Photos Match Your Search'}
               </h3>
               <p className="text-muted-foreground text-sm mb-4">
-                {galleryPhotos.length === 0 
-                  ? 'Try selecting a different folder or use the file picker'
-                  : 'Try adjusting your search terms'
-                }
+                {!permissionGranted ? 'Please allow access to your photo library to continue' :
+                 galleryPhotos.length === 0 ? 'Try selecting a different folder or use the file picker' : 
+                 'Try adjusting your search terms'}
               </p>
               <Button onClick={requestPhotoAccess} size="lg">
                 <ImageIcon size={20} className="mr-2" />
-                {galleryPhotos.length === 0 ? 'Select Photos' : 'Refresh'}
+                {!permissionGranted ? 'Grant Access' : 
+                 galleryPhotos.length === 0 ? 'Select Photos' : 'Refresh'}
               </Button>
             </div>
           </div>
