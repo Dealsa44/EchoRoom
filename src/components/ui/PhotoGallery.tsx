@@ -237,60 +237,79 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
+    <div 
+      className="fixed bottom-0 left-0 right-0 bg-card border-t border-border max-w-md mx-auto w-full z-10 max-h-[60vh] flex flex-col"
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseMove={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="p-2"
+          >
+            <ChevronLeft size={20} />
+          </Button>
+          <h3 className="text-lg font-semibold">Gallery</h3>
+          {permissionGranted && galleryPhotos.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
-              className="p-2"
+              onClick={clearGallery}
+              className="p-2 text-muted-foreground hover:text-destructive"
             >
-              <ChevronLeft size={20} />
+              <X size={16} />
             </Button>
-            <h3 className="text-lg font-semibold">Photo Library</h3>
-            {permissionGranted && galleryPhotos.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearGallery}
-                className="p-2 text-gray-500 hover:text-red-500"
-              >
-                <X size={16} />
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
-              {selectedPhotos.size}/{maxPhotos}
-            </span>
-            <Button
-              onClick={handleSend}
-              disabled={selectedPhotos.size === 0}
-              size="sm"
-              className="px-4"
-            >
-              <Send size={16} className="mr-2" />
-              Send {selectedPhotos.size}
-            </Button>
-          </div>
+          )}
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {selectedPhotos.size}/{maxPhotos}
+          </span>
+          <Button
+            onClick={handleSend}
+            disabled={selectedPhotos.size === 0}
+            size="sm"
+            className="px-4"
+          >
+            <Send size={16} className="mr-2" />
+            Send
+          </Button>
+        </div>
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden">
-          {!permissionGranted ? (
-            <div className="p-6 text-center">
-              <div className="text-4xl mb-4">📸</div>
-              <h4 className="text-lg font-medium mb-2">Access Your Photos</h4>
-              <p className="text-gray-600 mb-4">
+      {/* Gallery Content - Scrollable */}
+      <div 
+        className="flex-1 overflow-y-auto p-4"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseMove={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+      >
+        {!permissionGranted ? (
+          // Show permission request state
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
+              <ImageIcon size={32} className="text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium mb-2">Access Your Photos</h3>
+              <p className="text-muted-foreground text-sm mb-4">
                 Allow EchoRoom to access your photo library to select and share photos easily.
               </p>
-              <Button
-                onClick={requestPhotoAccess}
+              <Button 
+                onClick={requestPhotoAccess} 
                 disabled={isLoading}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+                size="lg"
               >
                 {isLoading ? (
                   <>
@@ -298,137 +317,139 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     Loading...
                   </>
                 ) : (
-                  'Grant Access'
+                  <>
+                    <ImageIcon size={20} className="mr-2" />
+                    Grant Access
+                  </>
                 )}
               </Button>
             </div>
-          ) : (
-            <>
-              {/* Search and Sort Controls */}
-              {galleryPhotos.length > 0 && (
-                <div className="p-4 border-b border-gray-200 space-y-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Search photos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={sortBy === 'date' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSortBy('date')}
-                      className="flex-1"
-                    >
-                      <Calendar size={14} className="mr-1" />
-                      Date
-                    </Button>
-                    <Button
-                      variant={sortBy === 'name' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSortBy('name')}
-                      className="flex-1"
-                    >
-                      <Folder size={14} className="mr-1" />
-                      Name
-                    </Button>
-                    <Button
-                      variant={sortBy === 'size' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSortBy('size')}
-                      className="flex-1"
-                    >
-                      Size
-                    </Button>
-                  </div>
+          </div>
+        ) : isLoading ? (
+          // Show loading state
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-muted-foreground">Loading photos...</p>
+          </div>
+        ) : filteredPhotos.length === 0 ? (
+          // Show empty state when no photos
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
+              <ImageIcon size={32} className="text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium mb-2">
+                {galleryPhotos.length === 0 ? 'No Photos Found' : 'No Photos Match Your Search'}
+              </h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                {galleryPhotos.length === 0 
+                  ? 'Try selecting a different folder or use the file picker'
+                  : 'Try adjusting your search terms'
+                }
+              </p>
+              <Button onClick={requestPhotoAccess} size="lg">
+                <ImageIcon size={20} className="mr-2" />
+                {galleryPhotos.length === 0 ? 'Select Photos' : 'Refresh'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // Show gallery grid with search and sort controls
+          <div className="space-y-4">
+            {/* Search and Sort Controls */}
+            {galleryPhotos.length > 0 && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search photos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background"
+                  />
                 </div>
-              )}
-
-              {/* Photo Grid */}
-              <div className="p-4 flex-1 overflow-y-auto">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center h-full space-y-4">
-                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-600">Loading photos...</p>
-                  </div>
-                ) : filteredPhotos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full space-y-4">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                      <ImageIcon size={32} className="text-gray-400" />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-lg font-medium mb-2">
-                        {galleryPhotos.length === 0 ? 'No Photos Found' : 'No Photos Match Your Search'}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-4">
-                        {galleryPhotos.length === 0 
-                          ? 'Try selecting a different folder or use the file picker'
-                          : 'Try adjusting your search terms'
-                        }
-                      </p>
-                      <Button onClick={requestPhotoAccess} size="lg">
-                        <ImageIcon size={20} className="mr-2" />
-                        {galleryPhotos.length === 0 ? 'Select Photos' : 'Refresh'}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {filteredPhotos.map((photo) => {
-                      const isSelected = selectedPhotos.has(photo.id);
-                      return (
-                        <div
-                          key={photo.id}
-                          className={cn(
-                            "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
-                            isSelected ? "ring-2 ring-blue-500" : "hover:opacity-80"
-                          )}
-                          onClick={() => togglePhotoSelection(photo.id)}
-                        >
-                          <img
-                            src={photo.url}
-                            alt={photo.name}
-                            className="w-full h-full object-cover"
-                          />
-                          
-                          {isSelected && (
-                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                                <Check size={14} className="text-white" />
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Photo info overlay */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs opacity-0 hover:opacity-100 transition-opacity">
-                            <div className="truncate">{photo.name}</div>
-                            <div className="text-xs opacity-75">
-                              {(photo.size / 1024 / 1024).toFixed(1)} MB
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant={sortBy === 'date' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSortBy('date')}
+                    className="flex-1"
+                  >
+                    <Calendar size={14} className="mr-1" />
+                    Date
+                  </Button>
+                  <Button
+                    variant={sortBy === 'name' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSortBy('name')}
+                    className="flex-1"
+                  >
+                    <Folder size={14} className="mr-1" />
+                    Name
+                  </Button>
+                  <Button
+                    variant={sortBy === 'size' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSortBy('size')}
+                    className="flex-1"
+                  >
+                    Size
+                  </Button>
+                </div>
               </div>
-            </>
-          )}
-        </div>
+            )}
 
-        {/* Hidden file input for fallback */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*"
-          className="hidden"
-        />
+            {/* Photo Grid */}
+            <div className="grid grid-cols-3 gap-2">
+              {filteredPhotos.map((photo) => {
+                const isSelected = selectedPhotos.has(photo.id);
+                return (
+                  <div
+                    key={photo.id}
+                    className={cn(
+                      "relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-all",
+                      isSelected ? "ring-2 ring-primary" : "hover:opacity-80"
+                    )}
+                    onClick={() => togglePhotoSelection(photo.id)}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.name}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                          <Check size={14} className="text-primary-foreground" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Photo info overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1 text-xs opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="truncate">{photo.name}</div>
+                      <div className="text-xs opacity-75">
+                        {(photo.size / 1024 / 1024).toFixed(1)} MB
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Hidden file input for fallback */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+      />
     </div>
   );
 };
