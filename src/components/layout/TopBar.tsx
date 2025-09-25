@@ -1,7 +1,6 @@
 import { Bell, Moon, Sun, Bot, ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/hooks/useApp';
-import { useKeyboardAwareClasses } from '@/hooks/useKeyboard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationModal from '@/components/modals/NotificationModal';
@@ -29,7 +28,6 @@ const TopBar = ({
   rightAction
 }: TopBarProps) => {
   const { isDarkMode, toggleDarkMode } = useApp();
-  const { topBarClass } = useKeyboardAwareClasses();
   const navigate = useNavigate();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -45,7 +43,7 @@ const TopBar = ({
 
   return (
     <>
-      <div className={`${topBarClass} bg-background/95 backdrop-blur-lg border-b border-border-soft/50 shadow-medium safe-top`}>
+      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border-soft/50 shadow-medium safe-top">
         <div className="flex items-center justify-between px-4 py-4 max-w-md mx-auto">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {showBack && (

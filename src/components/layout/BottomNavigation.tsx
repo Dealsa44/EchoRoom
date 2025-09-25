@@ -1,12 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Heart, Brain, User, Mail, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useKeyboardAwareClasses } from '@/hooks/useKeyboard';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { bottomNavClass } = useKeyboardAwareClasses();
 
   const navItems = [
     { icon: Mail, label: 'Messages', path: '/chat-inbox' },
@@ -51,7 +49,7 @@ const BottomNavigation = () => {
   };
 
   return (
-    <div className={`${bottomNavClass} glass border-t border-border-soft/50 shadow-large backdrop-blur-lg`}>
+    <div className="fixed bottom-0 left-0 right-0 glass border-t border-border-soft/50 shadow-large z-30 backdrop-blur-lg">
       <div className="flex items-center justify-around py-2 px-3 max-w-md mx-auto">
         {navItems.map(({ icon: Icon, label, path }) => (
           <button
