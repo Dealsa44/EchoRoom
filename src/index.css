@@ -13,7 +13,7 @@
   
   /* Fix for iOS Safari blank screen issue */
   #root {
-    min-height: 100vh;
+    min-height: 100dvh; /* Use dynamic viewport height for keyboard awareness */
     display: flex;
     flex-direction: column;
   }
@@ -23,10 +23,12 @@
     body {
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+      /* Prevent zoom on input focus */
+      touch-action: manipulation;
     }
     
     #root {
-      min-height: 100vh;
+      min-height: 100dvh; /* Use dynamic viewport height */
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
     }
@@ -1075,12 +1077,14 @@
 #root {
   overflow-x: hidden;
   position: relative;
+  min-height: 100dvh; /* Use dynamic viewport height for keyboard awareness */
 }
 
 /* Ensure page containers don't overflow */
 .min-h-screen {
   overflow-x: hidden;
   position: relative;
+  min-height: 100dvh; /* Use dynamic viewport height for keyboard awareness */
 }
 
 /* Enhanced touch targets for mobile */
@@ -1202,6 +1206,48 @@
   .scroll-safe {
     scroll-padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 5rem);
   }
+
+  /* Keyboard-aware fixed positioning utilities */
+  .fixed-top-keyboard-aware {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    /* Use transform to ensure it stays in place when viewport changes */
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  .fixed-bottom-keyboard-aware {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    /* Use transform to ensure it stays in place when viewport changes */
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Mobile-specific keyboard handling */
+  @media screen and (max-width: 768px) {
+    .fixed-top-keyboard-aware {
+      /* Ensure it stays at the top even when keyboard appears */
+      position: fixed;
+      top: 0;
+      /* Use env() for safe area support */
+      top: env(safe-area-inset-top, 0px);
+    }
+    
+    .fixed-bottom-keyboard-aware {
+      /* Ensure it stays at the bottom even when keyboard appears */
+      position: fixed;
+      bottom: 0;
+      /* Use env() for safe area support */
+      bottom: env(safe-area-inset-bottom, 0px);
+    }
+  }
 }
 
 /* iOS Safari specific safe area handling */
@@ -1220,6 +1266,19 @@
   
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
+  }
+
+  /* Enhanced keyboard handling for iOS Safari */
+  .fixed-top-keyboard-aware {
+    /* Use transform3d to force hardware acceleration and prevent movement */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+  
+  .fixed-bottom-keyboard-aware {
+    /* Use transform3d to force hardware acceleration and prevent movement */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
   }
 }
 
