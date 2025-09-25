@@ -17,7 +17,8 @@
     "cap:open:ios": "npx cap open ios",
     "cap:run:android": "npx cap run android",
     "cap:run:ios": "npx cap run ios",
-    "build:ios": "node scripts/build-ios.js"
+    "build:ios": "node scripts/build-ios.js",
+    "prepare:ios": "node scripts/prepare-ios-install.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
