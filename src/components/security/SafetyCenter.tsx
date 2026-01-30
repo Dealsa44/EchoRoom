@@ -519,7 +519,7 @@ const SafetyCenter: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm font-medium">Analytics & Insights</Label>
-                        <p className="text-xs text-muted-foreground">Help improve EchoRoom with usage data</p>
+                        <p className="text-xs text-muted-foreground">Help improve Driftzo with usage data</p>
                       </div>
                       <Switch
                         checked={safetySettings.analyticsOptIn}

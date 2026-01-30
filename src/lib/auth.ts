@@ -49,8 +49,8 @@ interface User {
 }
 import { getRandomProfileQuestions } from '@/data/profileQuestions';
 
-const USERS_STORAGE_KEY = 'echoroom_users';
-const CURRENT_USER_KEY = 'echoroom_current_user';
+const USERS_STORAGE_KEY = 'pulsly_users';
+const CURRENT_USER_KEY = 'pulsly_current_user';
 
 export interface RegisterData {
   username: string;
@@ -326,7 +326,7 @@ export const registerUser = (data: RegisterData): Promise<{ success: boolean; us
       email: data.email,
       password: data.password, // In a real app, this would be hashed
       avatar: '🌱',
-      bio: 'New to EchoRoom, excited to connect!',
+      bio: 'New to Pulsly, excited to connect!',
       interests: data.interests,
       languages: data.languages,
       chatStyle: data.chatStyle,

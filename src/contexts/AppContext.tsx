@@ -103,7 +103,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         // Try sessionStorage fallback for iOS PWA
         if (isPWA && isIOS) {
           try {
-            const sessionUser = sessionStorage.getItem('echoroom_current_user');
+            const sessionUser = sessionStorage.getItem('pulsly_current_user');
             if (sessionUser) {
               const parsedUser = JSON.parse(sessionUser);
               if (parsedUser && typeof parsedUser === 'object' && parsedUser.id) {
@@ -155,8 +155,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to initialize app state from localStorage:', error);
       // Reset corrupted data with enhanced error handling
       try {
-        localStorage.removeItem('echoroom_current_user');
-        sessionStorage.removeItem('echoroom_current_user');
+        localStorage.removeItem('pulsly_current_user');
+        sessionStorage.removeItem('pulsly_current_user');
         localStorage.setItem('joinedRooms', JSON.stringify([]));
         localStorage.setItem('darkMode', 'false');
       } catch (resetError) {
@@ -300,8 +300,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       console.warn('Failed to logout user from storage:', error);
       // Try to clear manually
       try {
-        localStorage.removeItem('echoroom_current_user');
-        sessionStorage.removeItem('echoroom_current_user');
+        localStorage.removeItem('pulsly_current_user');
+        sessionStorage.removeItem('pulsly_current_user');
       } catch (cleanupError) {
         console.warn('Failed to manually clear user data:', cleanupError);
       }

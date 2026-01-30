@@ -1,4 +1,4 @@
-// Shared type definitions for EchoRoom app
+// Shared type definitions for Pulsly app
 
 export interface ProfileQuestion {
   id: string;

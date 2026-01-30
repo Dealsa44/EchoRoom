@@ -1,7 +1,7 @@
-const CACHE_NAME = 'echoroom-v11';
+const CACHE_NAME = 'pulsly-v11';
 const urlsToCache = [
   '/',
-  '/EchoRoom.png',
+  '/Pulsly.png',
   '/manifest.json'
 ];
 

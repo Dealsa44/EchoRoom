@@ -10,12 +10,12 @@ const __dirname = dirname(__filename);
 
 // Function to increment version number
 function incrementVersion(version) {
-  const match = version.match(/echoroom-v(\d+)/);
+  const match = version.match(/pulsly-v(\d+)/);
   if (match) {
     const num = parseInt(match[1]) + 1;
-    return `echoroom-v${num}`;
+    return `pulsly-v${num}`;
   }
-  return 'echoroom-v1';
+  return 'pulsly-v1';
 }
 
 // Function to update service worker version
@@ -40,7 +40,7 @@ function updateServiceWorkerVersion() {
       const manifestPath = path.join(__dirname, '../public/manifest.json');
       if (fs.existsSync(manifestPath)) {
         let manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        manifest.version = newVersion.replace('echoroom-', '');
+        manifest.version = newVersion.replace('pulsly-', '');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
         console.log(`✅ Manifest version updated: ${manifest.version}`);
       }
@@ -73,7 +73,7 @@ function updatePackageVersion() {
 }
 
 // Main execution
-console.log('🚀 Updating EchoRoom version for deployment...\n');
+console.log('🚀 Updating Pulsly version for deployment...\n');
 
 updateServiceWorkerVersion();
 updatePackageVersion();

@@ -33,8 +33,8 @@ export interface CallContextType {
 
 export const CallContext = createContext<CallContextType | undefined>(undefined);
 
-const CALL_HISTORY_STORAGE_KEY = 'echoroom_call_history';
-const CALL_SETTINGS_STORAGE_KEY = 'echoroom_call_settings';
+const CALL_HISTORY_STORAGE_KEY = 'driftzo_call_history';
+const CALL_SETTINGS_STORAGE_KEY = 'driftzo_call_settings';
 
 const defaultCallSettings: CallSettings = {
   videoQuality: 'medium',

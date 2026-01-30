@@ -80,10 +80,10 @@ const Settings = () => {
   // Helper function to clear all app-specific localStorage keys
   const clearAllAppKeys = () => {
     const appKeys = [
-      'echoroom_current_user',
-      'echoroom_users', 
-      'echoroom_call_history',
-      'echoroom_call_settings',
+      'driftzo_current_user',
+      'driftzo_users', 
+      'driftzo_call_history',
+      'driftzo_call_settings',
       'darkMode',
       'joinedRooms',
       'hostedEvents',
@@ -294,13 +294,13 @@ const Settings = () => {
                   onClick={() => {
                     try {
                       // Clear user-related data
-                      safeLocalStorage.removeItem('echoroom_current_user');
-                      safeLocalStorage.removeItem('echoroom_users');
+                      safeLocalStorage.removeItem('driftzo_current_user');
+                      safeLocalStorage.removeItem('driftzo_users');
                       safeLocalStorage.removeItem('darkMode');
                       safeLocalStorage.removeItem('joinedRooms');
                       
                       // Also clear from sessionStorage
-                      sessionStorage.removeItem('echoroom_current_user');
+                      sessionStorage.removeItem('driftzo_current_user');
                       
                       toast({
                         title: "User data cleared",
@@ -409,8 +409,8 @@ const Settings = () => {
                   size="sm"
                   onClick={() => {
                     try {
-                      safeLocalStorage.removeItem('echoroom_call_history');
-                      safeLocalStorage.removeItem('echoroom_call_settings');
+                      safeLocalStorage.removeItem('driftzo_call_history');
+                      safeLocalStorage.removeItem('driftzo_call_settings');
                       
                       toast({
                         title: "Call history cleared",
@@ -654,7 +654,7 @@ const Settings = () => {
         {/* App Version */}
         <div className="text-center py-4">
           <p className="text-sm text-muted-foreground">
-            EchoRoom v1.0.0
+            Driftzo v1.0.0
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Made with 💚 for meaningful connections

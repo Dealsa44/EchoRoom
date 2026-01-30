@@ -573,7 +573,7 @@ const Register = () => {
           }
           
           toast({
-            title: "Welcome to EchoRoom!",
+            title: "Welcome to Driftzo!",
             description: "Your account has been created and verified successfully.",
           });
           
@@ -1848,7 +1848,7 @@ const Register = () => {
 
         <Card className="shadow-medium">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Join EchoRoom</CardTitle>
+            <CardTitle className="text-2xl font-bold">Join Driftzo</CardTitle>
             <p className="text-muted-foreground">Create your safe space account</p>
           </CardHeader>
           

@@ -19,7 +19,7 @@ export const UpdateBanner: React.FC = () => {
         <AlertTitle className="text-green-800 dark:text-green-200">App is up to date</AlertTitle>
         <AlertDescription className="text-green-700 dark:text-green-300">
           <div className="space-y-2">
-            <p>You're running the latest version of EchoRoom.</p>
+            <p>You're running the latest version of Pulsly.</p>
             {isDevelopmentMode && (
               <p className="text-xs text-green-600 dark:text-green-400">
                 🔧 Development mode: Auto-checking every {formatInterval(updateInterval)}
@@ -46,7 +46,7 @@ export const UpdateBanner: React.FC = () => {
       <AlertTitle>Update available</AlertTitle>
       <AlertDescription>
         <div className="space-y-2">
-          <p>A new version of EchoRoom is available with improvements and bug fixes.</p>
+          <p>A new version of Pulsly is available with improvements and bug fixes.</p>
           {isDevelopmentMode && (
             <p className="text-xs text-muted-foreground">
               🚀 Development mode: Updates detected quickly!

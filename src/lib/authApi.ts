@@ -149,7 +149,7 @@ interface LoginData {
 }
 
 // Storage key for current user
-const CURRENT_USER_KEY = 'echoroom_current_user';
+const CURRENT_USER_KEY = 'driftzo_current_user';
 
 // Save user to localStorage
 const saveCurrentUser = (user: User | null): void => {
@@ -188,7 +188,7 @@ export const registerUser = async (data: RegisterData): Promise<{ success: boole
     if (response.success && response.user) {
       // Store the token
       if (response.token) {
-        localStorage.setItem('echoroom_token', response.token);
+        localStorage.setItem('driftzo_token', response.token);
       }
       
       // Convert API user to local user format
@@ -226,7 +226,7 @@ export const loginUser = async (data: LoginData): Promise<{ success: boolean; us
     if (response.success && response.user) {
       // Store the token
       if (response.token) {
-        localStorage.setItem('echoroom_token', response.token);
+        localStorage.setItem('driftzo_token', response.token);
       }
       
       // Convert API user to local user format

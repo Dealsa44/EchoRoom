@@ -172,7 +172,7 @@ const UserProfileActions = () => {
     if (navigator.share) {
       navigator.share({
         title: `${userInfo.name}'s Profile`,
-        text: `Check out ${userInfo.name}'s profile on EchoRoom`,
+        text: `Check out ${userInfo.name}'s profile on Driftzo`,
         url: window.location.origin + `/profile/${userId}`
       });
     } else {

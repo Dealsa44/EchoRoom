@@ -309,8 +309,8 @@ const Profile = () => {
     userId: user?.id,
     loading,
     error: !!error,
-    userDataExists: !!localStorage.getItem('echoroom_current_user'),
-    authTokenExists: !!localStorage.getItem('echoroom_token'),
+    userDataExists: !!localStorage.getItem('driftzo_current_user'),
+    authTokenExists: !!localStorage.getItem('driftzo_token'),
   };
   
   // Log debug info in PWA mode
@@ -528,7 +528,7 @@ const Profile = () => {
             </div>
             <h2 className="mt-2 text-xl font-bold">{displayUser?.username || 'Guest'}</h2>
             <div className="mt-2 h-1 w-24 mx-auto rounded-full bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
-            <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{displayUser?.bio || 'Welcome to EchoRoom'}</p>
+            <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{displayUser?.bio || 'Welcome to Driftzo'}</p>
 
             {/* User Info */}
             <div className="mt-4 text-sm">

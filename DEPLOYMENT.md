@@ -1,4 +1,4 @@
-# EchoRoom PWA Deployment Guide
+# Pulsly PWA Deployment Guide
 
 ## Issue Resolution
 

@@ -1,4 +1,4 @@
-// API service for communicating with EchoRoom backend
+// API service for communicating with Driftzo backend
 const API_BASE_URL = 'https://echoroom-backend-23jb.onrender.com/api';
 
 // Types for API responses
@@ -107,17 +107,17 @@ export interface VerificationData {
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
-  return localStorage.getItem('echoroom_token');
+  return localStorage.getItem('driftzo_token');
 };
 
 // Helper function to set auth token
 const setAuthToken = (token: string): void => {
-  localStorage.setItem('echoroom_token', token);
+  localStorage.setItem('driftzo_token', token);
 };
 
 // Helper function to remove auth token
 const removeAuthToken = (): void => {
-  localStorage.removeItem('echoroom_token');
+  localStorage.removeItem('driftzo_token');
 };
 
 // Generic API request function

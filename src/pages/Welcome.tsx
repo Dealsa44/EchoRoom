@@ -42,7 +42,7 @@ const Welcome = () => {
         {/* Title */}
         <div className="w-full max-w-sm mx-auto">
           <div className="glass-strong rounded-2xl p-6 shadow-large border border-border-soft/50">
-            <h1 className="text-4xl font-bold gradient-text-hero mb-3 animate-fade-in drop-shadow-lg tracking-wide text-center">EchoRoom</h1>
+            <h1 className="text-4xl font-bold gradient-text-hero mb-3 animate-fade-in drop-shadow-lg tracking-wide text-center">Driftzo</h1>
             <div className="w-20 h-0.5 bg-gradient-primary rounded-full mx-auto shadow-glow-primary" />
           </div>
         </div>

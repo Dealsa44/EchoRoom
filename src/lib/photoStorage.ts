@@ -8,7 +8,7 @@ export interface Photo {
   originalFile?: File; // For local storage reference
 }
 
-const PHOTOS_STORAGE_KEY = 'echoroom_user_photos';
+const PHOTOS_STORAGE_KEY = 'driftzo_user_photos';
 
 export const photoStorage = {
   // Save photos to localStorage

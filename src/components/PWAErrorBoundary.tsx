@@ -85,7 +85,7 @@ class PWAErrorBoundary extends Component<Props, State> {
     
     // Check for specific app data
     try {
-      const userData = localStorage.getItem('echoroom_current_user');
+      const userData = localStorage.getItem('driftzo_current_user');
       debugInfo.push(`User Data: ${userData ? `Exists (${userData.length} chars)` : 'Not Found'}`);
       
       if (userData) {
@@ -141,7 +141,7 @@ class PWAErrorBoundary extends Component<Props, State> {
       
       // Check for specific app data
       try {
-        const userData = localStorage.getItem('echoroom_current_user');
+        const userData = localStorage.getItem('driftzo_current_user');
         console.log('User data exists:', !!userData);
         if (userData) {
           console.log('User data length:', userData.length);
@@ -172,8 +172,8 @@ class PWAErrorBoundary extends Component<Props, State> {
       sessionStorage.clear();
       
       // Clear specific app keys
-      localStorage.removeItem('echoroom_current_user');
-      localStorage.removeItem('echoroom_users');
+      localStorage.removeItem('driftzo_current_user');
+      localStorage.removeItem('driftzo_users');
       localStorage.removeItem('joinedRooms');
       localStorage.removeItem('darkMode');
       

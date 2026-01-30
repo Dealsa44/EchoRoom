@@ -1,8 +1,8 @@
-# EchoRoom PWA Automatic Update System
+# Pulsly PWA Automatic Update System
 
 ## Overview
 
-EchoRoom now includes an automatic update system that allows your PWA to update automatically when you deploy new versions to Vercel, without requiring users to manually delete and reinstall the app from their home screen.
+Pulsly now includes an automatic update system that allows your PWA to update automatically when you deploy new versions to Vercel, without requiring users to manually delete and reinstall the app from their home screen.
 
 ## How It Works
 

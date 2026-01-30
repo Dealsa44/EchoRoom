@@ -37,7 +37,7 @@ const MessagesSettings: React.FC = () => {
     
     // Listen for storage changes to update counts in real-time
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'echoRoom_notification_counts') {
+      if (e.key === 'driftzo_notification_counts') {
         updateCounts();
       }
     };

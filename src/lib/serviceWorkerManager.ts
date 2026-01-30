@@ -118,9 +118,9 @@ class ServiceWorkerManager {
   private notifyUpdateAvailable() {
     // Show a notification to the user
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('EchoRoom Update Available', {
+      const notification = new Notification('Pulsly Update Available', {
         body: 'A new version is available. The app will update automatically.',
-        icon: '/EchoRoom.png',
+        icon: '/Pulsly.png',
         tag: 'update-notification'
       });
 

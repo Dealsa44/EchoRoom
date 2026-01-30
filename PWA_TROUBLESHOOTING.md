@@ -1,4 +1,4 @@
-# PWA Troubleshooting Guide for EchoRoom
+# PWA Troubleshooting Guide for Pulsly
 
 ## Common Issues and Solutions
 
@@ -10,12 +10,12 @@ If you're experiencing problems accessing your profile on iPhone/iPad when using
 
 1. **Open in Safari Browser Instead**
    - Remove the app from your home screen
-   - Open Safari and go to the EchoRoom website
+   - Open Safari and go to the Pulsly website
    - Log in normally through the browser
 
 2. **Clear App Data**
    - Go to Settings > Safari > Advanced > Website Data
-   - Find EchoRoom and tap "Remove All Data"
+   - Find Pulsly and tap "Remove All Data"
    - Re-add the app to your home screen
 
 3. **Check Privacy Settings**
@@ -33,7 +33,7 @@ If you're experiencing problems accessing your profile on iPhone/iPad when using
 
 5. **Use Private Browsing**
    - Open Safari in private mode
-   - Navigate to EchoRoom
+   - Navigate to Pulsly
    - Add to home screen from private mode
 
 ### **Why This Happens:**
@@ -55,7 +55,7 @@ If you're experiencing problems accessing your profile on iPhone/iPad when using
 If PWA continues to have issues:
 
 1. **Bookmark Instead**: Add the website as a Safari bookmark
-2. **Use Browser**: Access EchoRoom directly through Safari
+2. **Use Browser**: Access Pulsly directly through Safari
 3. **Desktop Mode**: Use the desktop version on mobile Safari
 
 ### **Technical Details:**

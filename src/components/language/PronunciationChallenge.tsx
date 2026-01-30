@@ -275,11 +275,11 @@ const PronunciationChallenge = () => {
   };
 
   const shareProgress = () => {
-    const message = `Just completed the "${currentChallenge?.name}" pronunciation challenge with ${overallScore.toFixed(1)}% accuracy! 🎯 #LanguageLearning #EchoRoom`;
+    const message = `Just completed the "${currentChallenge?.name}" pronunciation challenge with ${overallScore.toFixed(1)}% accuracy! 🎯 #LanguageLearning #Driftzo`;
     
     if (navigator.share) {
       navigator.share({
-        title: 'EchoRoom Pronunciation Challenge',
+        title: 'Driftzo Pronunciation Challenge',
         text: message,
       });
     } else {

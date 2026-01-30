@@ -34,7 +34,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
   // Check if we have previously granted permission and auto-load photos
   useEffect(() => {
-    const hasPermission = localStorage.getItem('echoroom_photo_permission') === 'granted';
+    const hasPermission = localStorage.getItem('driftzo_photo_permission') === 'granted';
     if (hasPermission) {
       setPermissionGranted(true);
       loadPhotosFromStorage();
@@ -48,7 +48,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
   // Load photos from localStorage if available
   const loadPhotosFromStorage = () => {
-    const savedPhotos = localStorage.getItem('echoroom_gallery_photos');
+    const savedPhotos = localStorage.getItem('driftzo_gallery_photos');
     if (savedPhotos) {
       try {
         const photoData = JSON.parse(savedPhotos);
@@ -81,7 +81,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           
           await loadPhotosFromDirectory(dirHandle);
           setPermissionGranted(true);
-          localStorage.setItem('echoroom_photo_permission', 'granted');
+          localStorage.setItem('driftzo_photo_permission', 'granted');
           setIsLoading(false);
           return;
         } catch (error) {
@@ -167,7 +167,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
       size: photo.size,
       date: photo.date.toISOString()
     }));
-    localStorage.setItem('echoroom_gallery_photos', JSON.stringify(photoData));
+    localStorage.setItem('driftzo_gallery_photos', JSON.stringify(photoData));
   };
 
   // Handle photo selection
@@ -214,7 +214,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         const files = Array.from(target.files);
         await loadPhotosFromFiles(files);
         setPermissionGranted(true);
-        localStorage.setItem('echoroom_photo_permission', 'granted');
+        localStorage.setItem('driftzo_photo_permission', 'granted');
         setIsLoading(false);
       } else {
         // User cancelled, stop loading and show empty state
@@ -257,8 +257,8 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     setGalleryPhotos([]);
     setSelectedPhotos(new Set());
     setPermissionGranted(false);
-    localStorage.removeItem('echoroom_gallery_photos');
-    localStorage.removeItem('echoroom_photo_permission');
+    localStorage.removeItem('driftzo_gallery_photos');
+    localStorage.removeItem('driftzo_photo_permission');
   };
 
   return (

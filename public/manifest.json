@@ -1,7 +1,7 @@
 {
-  "name": "EchoRoom - Thoughtful Conversations & Meaningful Connections",
-  "short_name": "EchoRoom",
-  "description": "A safe and inclusive social platform for meaningful conversations. Connect with like-minded people, learn languages, and engage in thoughtful discussions.",
+  "name": "Driftzo - Drift into conversations. Connect for real.",
+  "short_name": "Driftzo",
+  "description": "A safe and inclusive social platform. Go with the flow—connect with like-minded people, learn languages, and drift into meaningful conversations.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -19,7 +19,7 @@
   ],
   "screenshots": [
     {
-      "src": "/EchoRoom.png",
+      "src": "/Driftzo.png",
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide"
@@ -27,19 +27,19 @@
   ],
   "icons": [
     {
-      "src": "/EchoRoom.png",
+      "src": "/Driftzo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/EchoRoom.png",
+      "src": "/Driftzo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/EchoRoom.png",
+      "src": "/Driftzo.png",
       "sizes": "48x48",
       "type": "image/x-icon"
     }
@@ -53,7 +53,7 @@
       "url": "/match",
       "icons": [
         {
-          "src": "/EchoRoom.png",
+          "src": "/Driftzo.png",
           "sizes": "192x192",
           "type": "image/png"
         }
@@ -66,7 +66,7 @@
       "url": "/matches",
       "icons": [
         {
-          "src": "/EchoRoom.png",
+          "src": "/Driftzo.png",
           "sizes": "192x192",
           "type": "image/png"
         }
@@ -79,7 +79,7 @@
       "url": "/chat-rooms",
       "icons": [
         {
-          "src": "/EchoRoom.png",
+          "src": "/Driftzo.png",
           "sizes": "192x192",
           "type": "image/png"
         }

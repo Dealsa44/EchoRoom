@@ -1,4 +1,4 @@
-package com.echoroom.app;
+package com.pulsly.app;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -24,8 +24,8 @@ interface OfflineState {
   cacheSize: number;
 }
 
-const CACHE_PREFIX = 'echoroom_cache_';
-const OFFLINE_QUEUE_KEY = 'echoroom_offline_queue';
+const CACHE_PREFIX = 'driftzo_cache_';
+const OFFLINE_QUEUE_KEY = 'driftzo_offline_queue';
 const MAX_CACHE_SIZE = 50 * 1024 * 1024; // 50MB
 const DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
