@@ -151,8 +151,8 @@ interface LoginData {
 // Storage key for current user
 const CURRENT_USER_KEY = 'driftzo_current_user';
 
-// Save user to localStorage
-const saveCurrentUser = (user: User | null): void => {
+// Save user to localStorage (exported so Profile/ProfileEdit can sync after API updates)
+export const saveCurrentUser = (user: User | null): void => {
   try {
     if (user) {
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));

@@ -102,6 +102,7 @@ import { LoadingState } from '@/components/ui/LoadingSpinner';
 import { toast } from '@/hooks/use-toast';
 import { calculateAge } from '@/lib/auth';
 import { photoStorage } from '@/lib/photoStorage';
+import { convertApiUserToLocalUser, saveCurrentUser } from '@/lib/authApi';
 
 // Type for display user that can be either User or Profile
 type DisplayUser = UserType | (ProfileType & {
@@ -141,24 +142,20 @@ const Profile = () => {
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
 
-  // Fetch user profile data from backend (only if needed)
+  // Fetch user profile from backend so interests/languages etc. are always from DB
   const fetchUserProfile = async () => {
     if (!isOwnProfile) return;
-    
-    // If user data is already available, don't make unnecessary API calls
-    if (user && user.id) {
-      console.log('User data already available, skipping API call');
-      return;
-    }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await userApi.getProfile();
-      
+
       if (result.success && result.user) {
-        setUser(result.user);
+        const localUser = convertApiUserToLocalUser(result.user);
+        setUser(localUser);
+        saveCurrentUser(localUser);
       } else {
         setError('Failed to load profile data');
       }
