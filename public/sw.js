@@ -1,7 +1,7 @@
-const CACHE_NAME = 'pulsly-v11';
+const CACHE_NAME = 'driftzo-v11';
 const urlsToCache = [
   '/',
-  '/Pulsly.png',
+  '/Driftzo.png',
   '/manifest.json'
 ];
 

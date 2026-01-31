@@ -10,12 +10,12 @@ const __dirname = dirname(__filename);
 
 // Function to increment version number
 function incrementVersion(version) {
-  const match = version.match(/pulsly-v(\d+)/);
+  const match = version.match(/driftzo-v(\d+)/);
   if (match) {
     const num = parseInt(match[1]) + 1;
-    return `pulsly-v${num}`;
+    return `driftzo-v${num}`;
   }
-  return 'pulsly-v1';
+  return 'driftzo-v1';
 }
 
 // Function to update service worker version
@@ -40,7 +40,7 @@ function updateServiceWorkerVersion() {
       const manifestPath = path.join(__dirname, '../public/manifest.json');
       if (fs.existsSync(manifestPath)) {
         let manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        manifest.version = newVersion.replace('pulsly-', '');
+        manifest.version = newVersion.replace('driftzo-', '');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
         console.log(`✅ Manifest version updated: ${manifest.version}`);
       }
@@ -73,7 +73,7 @@ function updatePackageVersion() {
 }
 
 // Main execution
-console.log('🚀 Updating Pulsly version for deployment...\n');
+console.log('🚀 Updating Driftzo version for deployment...\n');
 
 updateServiceWorkerVersion();
 updatePackageVersion();

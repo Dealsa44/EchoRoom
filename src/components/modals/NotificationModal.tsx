@@ -70,7 +70,7 @@ const NotificationModal = ({ isOpen, onClose, onUnreadCountChange }: Notificatio
     {
       id: 5,
       type: 'system',
-      title: 'Welcome to Pulsly!',
+      title: 'Welcome to Driftzo!',
       message: 'Join your first chat room to start meaningful conversations',
       time: '1 day ago',
       unread: false,

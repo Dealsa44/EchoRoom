@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Pulsly</string>
-    <string name="title_activity_main">Pulsly</string>
+    <string name="app_name">Driftzo</string>
+    <string name="title_activity_main">Driftzo</string>
     <string name="package_name">com.pulsly.app</string>
     <string name="custom_url_scheme">com.pulsly.app</string>
 </resources>

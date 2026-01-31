@@ -6,7 +6,7 @@ export interface NotificationCounts {
   callHistory: number;
 }
 
-const NOTIFICATION_STORAGE_KEY = 'pulsly_notification_counts';
+const NOTIFICATION_STORAGE_KEY = 'driftzo_notification_counts';
 
 // Get current notification counts from localStorage
 export const getNotificationCounts = (): NotificationCounts => {

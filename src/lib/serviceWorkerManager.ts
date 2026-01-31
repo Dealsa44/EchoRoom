@@ -118,9 +118,9 @@ class ServiceWorkerManager {
   private notifyUpdateAvailable() {
     // Show a notification to the user
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('Pulsly Update Available', {
+      const notification = new Notification('Driftzo Update Available', {
         body: 'A new version is available. The app will update automatically.',
-        icon: '/Pulsly.png',
+        icon: '/Driftzo.png',
         tag: 'update-notification'
       });
 

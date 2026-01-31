@@ -1,4 +1,4 @@
-// Shared type definitions for Pulsly app
+// Shared type definitions for Driftzo app
 
 export interface ProfileQuestion {
   id: string;

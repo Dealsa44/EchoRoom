@@ -1,4 +1,4 @@
-# Pulsly PWA Deployment Guide
+# Driftzo PWA Deployment Guide
 
 ## Issue Resolution
 

@@ -20,7 +20,7 @@ export const UpdateNotification: React.FC = () => {
             Update Available
           </CardTitle>
           <CardDescription>
-            A new version of Pulsly is available with improvements and bug fixes.
+            A new version of Driftzo is available with improvements and bug fixes.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

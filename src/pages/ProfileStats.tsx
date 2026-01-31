@@ -18,7 +18,7 @@ const ProfileStats = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="w-5 h-5 text-primary" />
-              Your Pulsly Journey
+              Your Driftzo Journey
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -91,7 +91,7 @@ const ProfileStats = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 text-blue-500" />
-                  <span>Days on Pulsly</span>
+                  <span>Days on Driftzo</span>
                 </div>
                 <span className="font-semibold text-blue-600">45</span>
               </div>
