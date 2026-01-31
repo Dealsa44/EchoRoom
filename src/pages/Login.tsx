@@ -77,7 +77,6 @@ const Login = () => {
             </div>
             <CardTitle className="text-display-2 font-bold gradient-text-hero">Welcome Back</CardTitle>
             <p className="text-body-small text-muted-foreground mt-2">Sign in to your safe space for meaningful conversations</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">test</p>
           </CardHeader>
           
           <CardContent className="pt-0">
