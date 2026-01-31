@@ -273,7 +273,8 @@ const Profile = () => {
               occupation: p.occupation,
               religion: p.religion as any,
               politicalViews: p.politicalViews as any,
-              profileQuestions: p.profileQuestions || []
+              profileQuestions: p.profileQuestions || [],
+              photos: Array.isArray(p.photos) ? p.photos : (p.photos ? [p.photos] : [])
             } as ProfileType & {
               username: string;
               email: string;
