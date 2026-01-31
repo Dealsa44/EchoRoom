@@ -1035,7 +1035,10 @@ const Profile = () => {
 
 
         {/* Profile Questions Section */}
-        {(isOwnProfile || (!isOwnProfile && profileData?.profileQuestions && profileData.profileQuestions.some(q => q.answer))) && (
+        {(() => {
+          const allQuestions = isOwnProfile ? user?.profileQuestions : profileData?.profileQuestions;
+          const answeredQuestions = (allQuestions ?? []).filter((q) => q.answer?.trim());
+          return answeredQuestions.length > 0 ? (
           <Card className="relative overflow-hidden animate-float-ambient">
             {/* Floating background accents */}
             <div
@@ -1061,7 +1064,7 @@ const Profile = () => {
             </CardHeader>
             <CardContent className="p-4 pt-4 space-y-3">
               <div className="space-y-3">
-                {(isOwnProfile ? user?.profileQuestions : profileData?.profileQuestions)?.map((question, index) => (
+                {answeredQuestions.map((question, index) => (
                   <div
                     key={question.id}
                     className={`relative group/item rounded-xl border-2 border-border bg-card/60 hover:bg-card-hover hover:border-primary/40 transition-smooth p-4 shadow-none hover:shadow-large hover:shadow-glow-purple`}
@@ -1075,27 +1078,19 @@ const Profile = () => {
                         </span>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-foreground">{question.question}</p>
-                          {question.answer ? (
-                            <p className="mt-2 text-sm text-muted-foreground bg-muted/70 p-3 rounded-lg leading-relaxed border-l-2 border-primary/30">
-                              {question.answer}
-                            </p>
-                          ) : isOwnProfile ? (
-                            <p className="mt-2 text-sm text-muted-foreground italic">Not answered yet</p>
-                          ) : null}
+                          <p className="mt-2 text-sm text-muted-foreground bg-muted/70 p-3 rounded-lg leading-relaxed border-l-2 border-primary/30">
+                            {question.answer}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
-                {isOwnProfile && (!user?.profileQuestions || user.profileQuestions.length === 0) && (
-                <div className="text-sm text-muted-foreground text-center py-4">
-                  No profile questions yet. Edit your profile to add some!
-                </div>
-                )}
               </div>
             </CardContent>
           </Card>
-        )}
+          ) : null;
+        })()}
 
         {/* Logout Section - Only for own profile */}
         {isOwnProfile && (
