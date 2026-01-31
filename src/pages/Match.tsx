@@ -16,8 +16,9 @@ import SmartConversationStarters from '@/components/chat/SmartConversationStarte
 import { useApp } from '@/hooks/useApp';
 import { getAttractionPreferences } from '@/contexts/app-utils';
 import { toast } from '@/hooks/use-toast';
-import { Profile } from '@/types';
+import { Profile, MatchProfile } from '@/types';
 import { mockProfiles } from '@/data/mockProfiles';
+import { userApi } from '@/services/api';
 
 interface Filters {
   interests: string[];
@@ -124,18 +125,38 @@ const Match = () => {
     "What's your favorite season and why?"
   ];
 
-  // Use centralized mock profiles
-  const profiles = mockProfiles;
+  // Real users from API (discover) first, then mock profiles
+  const [realUsers, setRealUsers] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simulate loading delay
+  // Fetch discover feed (real users), then show real + mocks
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await userApi.getDiscover();
+        if (cancelled) return;
+        if (res.success && res.users && res.users.length > 0) {
+          const withPlaceholderPhotos = res.users.map((u) => ({
+            ...u,
+            id: u.id as string,
+            photos: Array.isArray(u.photos) && u.photos.length > 0 ? u.photos : ['https://picsum.photos/400/400?random=user'],
+          })) as MatchProfile[];
+          setRealUsers(withPlaceholderPhotos);
+        }
+      } catch (_) {
+        // Offline or API error: show mocks only
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
+
+  const profiles: MatchProfile[] = useMemo(
+    () => [...realUsers, ...mockProfiles],
+    [realUsers]
+  );
 
   // Filter profiles based on current filters (memoized to prevent infinite re-renders)
   const filteredProfiles = useMemo(() => {

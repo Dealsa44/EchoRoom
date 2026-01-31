@@ -192,63 +192,110 @@ const Profile = () => {
     }
   }, [isOwnProfile]);
 
-  // Load other user's profile if viewing someone else
+  // Load other user's profile if viewing someone else (mock by id number, or real user by API)
   useEffect(() => {
     if (!isOwnProfile && userId) {
       setLoading(true);
       setError(null);
-      
-      try {
-        // Simulate API call delay
-        const timer = setTimeout(() => {
-          try {
-            const profile = getProfileById(parseInt(userId));
-            if (profile) {
-              // Convert Profile type to User-like structure for display
-              setProfileData({
-                ...profile,
-                username: profile.name,
-                email: `${profile.name.toLowerCase()}@example.com`, // Mock email
-                password: '', // Not needed for display
-                languages: profile.languages || [{ language: 'english', level: 'intermediate' }], // Use actual languages or default
-                safeMode: 'light' as const,
-                anonymousMode: false,
-                aiAssistant: true,
-                customGender: undefined,
-                customOrientation: undefined,
-                ethnicity: profile.ethnicity || 'prefer-not-to-say', // Add ethnicity
-                relationshipType: profile.relationshipType || undefined // Add relationship type
-              } as ProfileType & {
-                username: string;
-                email: string;
-                password: string;
-                languages: Array<{ language: string; level: string }>;
-                safeMode: 'light' | 'medium' | 'strict';
-                anonymousMode: boolean;
-                aiAssistant: boolean;
-                customGender?: string;
-                customOrientation?: string;
-                ethnicity: string;
-                relationshipType?: string;
-              });
-            } else {
-              // Profile not found - toast removed per user request
-              navigate('/match');
-            }
-          } catch (profileError) {
-            console.error('Error loading profile:', profileError);
-            setError('Failed to load profile data');
-          } finally {
-            setLoading(false);
-          }
-        }, 800);
-        
-        return () => clearTimeout(timer);
-      } catch (error) {
-        console.error('Error in profile loading effect:', error);
-        setError('Failed to initialize profile loading');
-        setLoading(false);
+
+      const numericId = parseInt(userId, 10);
+      const isNumericId = !Number.isNaN(numericId) && String(numericId) === userId;
+
+      if (isNumericId) {
+        const profile = getProfileById(numericId);
+        if (profile) {
+          setProfileData({
+            ...profile,
+            username: profile.name,
+            email: `${profile.name.toLowerCase()}@example.com`,
+            password: '',
+            languages: profile.languages || [{ language: 'english', level: 'intermediate' }],
+            safeMode: 'light' as const,
+            anonymousMode: false,
+            aiAssistant: true,
+            customGender: undefined,
+            customOrientation: undefined,
+            ethnicity: profile.ethnicity || 'prefer-not-to-say',
+            relationshipType: profile.relationshipType || undefined
+          } as ProfileType & {
+            username: string;
+            email: string;
+            password: string;
+            languages: Array<{ language: string; level: string }>;
+            safeMode: 'light' | 'medium' | 'strict';
+            anonymousMode: boolean;
+            aiAssistant: boolean;
+            customGender?: string;
+            customOrientation?: string;
+            ethnicity: string;
+            relationshipType?: string;
+          });
+          setLoading(false);
+          return;
+        }
       }
+
+      userApi.getPublicProfile(userId)
+        .then((res) => {
+          if (res.success && res.profile) {
+            const p = res.profile;
+            setProfileData({
+              id: p.id as unknown as number,
+              name: p.name,
+              username: p.name,
+              email: '',
+              password: '',
+              avatar: p.avatar,
+              bio: p.bio,
+              about: p.about,
+              age: p.age,
+              location: p.location,
+              hometown: p.hometown,
+              relationshipStatus: p.relationshipStatus,
+              interests: p.interests,
+              languages: p.languages,
+              chatStyle: p.chatStyle as 'introvert' | 'ambievert' | 'extrovert',
+              safeMode: 'light' as const,
+              anonymousMode: false,
+              aiAssistant: true,
+              customGender: undefined,
+              customOrientation: undefined,
+              ethnicity: p.ethnicity,
+              relationshipType: p.relationshipType,
+              genderIdentity: p.genderIdentity as any,
+              orientation: p.orientation as any,
+              lookingForRelationship: p.lookingForRelationship,
+              lookingForFriendship: p.lookingForFriendship,
+              smoking: p.smoking as any,
+              drinking: p.drinking as any,
+              hasChildren: p.hasChildren as any,
+              education: p.education as any,
+              occupation: p.occupation,
+              religion: p.religion as any,
+              politicalViews: p.politicalViews as any,
+              profileQuestions: p.profileQuestions || []
+            } as ProfileType & {
+              username: string;
+              email: string;
+              password: string;
+              languages: Array<{ language: string; level: string }>;
+              safeMode: 'light' | 'medium' | 'strict';
+              anonymousMode: boolean;
+              aiAssistant: boolean;
+              customGender?: string;
+              customOrientation?: string;
+              ethnicity: string;
+              relationshipType?: string;
+            });
+          } else {
+            navigate('/match');
+          }
+        })
+        .catch(() => {
+          setError('Failed to load profile data');
+          navigate('/match');
+        })
+        .finally(() => setLoading(false));
     }
   }, [userId, isOwnProfile, navigate]);
 

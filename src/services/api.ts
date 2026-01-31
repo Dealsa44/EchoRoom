@@ -250,7 +250,56 @@ export const userApi = {
   searchUsers: async (query: string, limit = 20, offset = 0): Promise<ApiResponse<User[]>> => {
     return apiRequest<User[]>(`/user/search?query=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
   },
+
+  // Discover feed for Match page (compatible real users only)
+  getDiscover: async (): Promise<{ success: boolean; users?: DiscoverProfile[]; message?: string }> => {
+    return apiRequest<any>('/user/discover');
+  },
+
+  // Public profile by id (for viewing another user's profile)
+  getPublicProfile: async (id: string): Promise<{ success: boolean; profile?: DiscoverProfile; message?: string }> => {
+    return apiRequest<any>(`/user/${id}`);
+  },
 };
+
+// Profile shape returned by discover and getPublicProfile (Match card / other's profile)
+export interface DiscoverProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  age: number;
+  location: string;
+  hometown?: string;
+  relationshipStatus?: string;
+  distance: number;
+  bio: string;
+  about: string;
+  interests: string[];
+  languages: Array<{ language: string; level: string }>;
+  languageLevel: string;
+  chatStyle: string;
+  lastActive: string;
+  isOnline: boolean;
+  sharedInterests: number;
+  genderIdentity: string;
+  orientation: string;
+  ethnicity: string;
+  lookingForRelationship: boolean;
+  lookingForFriendship: boolean;
+  relationshipType?: string;
+  smoking: string;
+  drinking: string;
+  hasChildren: string;
+  education: string;
+  occupation: string;
+  religion: string;
+  politicalViews: string;
+  photos: string[];
+  isVerified: boolean;
+  profileCompletion: number;
+  iceBreakerAnswers: Record<string, string>;
+  profileQuestions: Array<{ id: string; question: string; category?: string; answer?: string }>;
+}
 
 // Chat API functions
 export const chatApi = {
