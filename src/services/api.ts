@@ -171,7 +171,7 @@ export const authApi = {
 
   // Register user
   register: async (data: RegisterData): Promise<ApiResponse<User>> => {
-    const response = await apiRequest<{ user: User; token: string }>('/auth/register', {
+    const response = await apiRequest<User>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -194,7 +194,7 @@ export const authApi = {
 
   // Login user
   login: async (data: LoginData): Promise<ApiResponse<User>> => {
-    const response = await apiRequest<{ user: User; token: string }>('/auth/login', {
+    const response = await apiRequest<User>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
