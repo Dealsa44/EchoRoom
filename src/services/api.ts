@@ -367,6 +367,10 @@ export const forumApi = {
     return apiRequest<any>(`/forum/posts/${id}`);
   },
 
+  getPostCount: async (): Promise<{ success: boolean; count?: number; message?: string }> => {
+    return apiRequest<any>('/forum/posts/count');
+  },
+
   createPost: async (data: { title: string; content: string; category: string; tags?: string[] }): Promise<{ success: boolean; post?: ForumPostListItem; message?: string }> => {
     return apiRequest<any>('/forum/posts', {
       method: 'POST',

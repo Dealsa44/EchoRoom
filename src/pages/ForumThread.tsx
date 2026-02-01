@@ -143,6 +143,10 @@ const ForumThread = () => {
     return total;
   };
 
+  const countAllComments = (list: ForumCommentNode[]): number => {
+    return list.reduce((sum, c) => sum + 1 + countAllComments(c.replies || []), 0);
+  };
+
   const showMoreReplies = (commentId: string) => {
     setVisibleReplyCount((prev) => ({
       ...prev,
@@ -381,7 +385,7 @@ const ForumThread = () => {
               </Button>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <MessageCircle size={16} />
-                <span>{post.replyCount ?? comments.length} replies</span>
+                <span>{post.replyCount ?? countAllComments(comments)} comments</span>
               </div>
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground transition-colors duration-200">
                 <Share size={16} />
@@ -425,7 +429,7 @@ const ForumThread = () => {
         <div className="space-y-4">
           {/* Comments title on first row */}
           <div>
-            <h3 className="font-semibold text-lg">Comments ({comments.length})</h3>
+            <h3 className="font-semibold text-lg">Comments ({post.replyCount ?? countAllComments(comments)})</h3>
           </div>
           
           {/* Sort controls and show all toggle on second row */}
@@ -489,7 +493,7 @@ const ForumThread = () => {
                 ) : (
                   <>
                     <ChevronDown size={12} className="mr-1" />
-                    All {comments.length}
+                    All {(post?.replyCount ?? countAllComments(comments))}
                   </>
                 )}
               </Button>

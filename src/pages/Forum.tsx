@@ -120,15 +120,12 @@ const Forum = () => {
             <div className="w-full">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full glass border-border-soft transition-smooth h-12 rounded-xl shadow-soft animate-breathe-slow">
-                  <SelectValue />
+                  <SelectValue placeholder="Topic" />
                 </SelectTrigger>
                 <SelectContent className="glass border-border-soft shadow-large">
                   {categories.map(cat => (
                     <SelectItem key={cat.value} value={cat.value} className="hover:bg-primary/10 transition-smooth">
-                      <span className="flex items-center gap-2">
-                        <span className="text-lg">{cat.icon}</span>
-                        {cat.label}
-                      </span>
+                      {cat.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -139,7 +136,7 @@ const Forum = () => {
             <div className="flex gap-3">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="flex-1 glass border-border-soft transition-smooth h-12 rounded-xl shadow-soft animate-breathe-slow">
-                  <SelectValue />
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent className="glass border-border-soft shadow-large">
                   <SelectItem value="recent" className="hover:bg-primary/10 transition-smooth">Recent</SelectItem>

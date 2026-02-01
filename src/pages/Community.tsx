@@ -7,16 +7,23 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { chatRooms } from '@/data/chatRooms';
-import { Button } from '@/components/ui/button';
+import { forumApi } from '@/services/api';
 
 const Community = () => {
   const navigate = useNavigate();
   const { user, joinedRooms } = useApp();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [forumPostCount, setForumPostCount] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    forumApi.getPostCount().then((res) => {
+      if (res.success && typeof res.count === 'number') setForumPostCount(res.count);
+    }).catch(() => {});
   }, []);
 
   const getGreeting = () => {
@@ -29,7 +36,7 @@ const Community = () => {
   const communityStats = {
     activeRooms: chatRooms.length,
     activeUsers: 1247,
-    totalDiscussions: 89,
+    totalDiscussions: forumPostCount ?? 0,
     newToday: 12
   };
 
