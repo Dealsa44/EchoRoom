@@ -223,63 +223,67 @@ const ForumThread = () => {
               )}
             </div>
             
-            <div className={`transition-all duration-300 ease-in-out ${isCollapsed && !isReplying ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-none opacity-100'}`}>
-              <p className="text-sm mt-3 mb-3 leading-relaxed">{comment.content}</p>
+            {/* Comment content and actions always visible */}
+            <p className="text-sm mt-3 mb-3 leading-relaxed">{comment.content}</p>
+            
+            <div className="flex items-center gap-4 text-xs">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => handleLikeComment(comment.id)}
+                className={`h-auto p-1 transition-colors duration-200 ${comment.userLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+              >
+                <Heart size={14} className={comment.userLiked ? 'fill-current' : ''} />
+                <span className="ml-1">{comment.upvotes}</span>
+              </Button>
               
-              <div className="flex items-center gap-4 text-xs">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => handleLikeComment(comment.id)}
-                  className={`h-auto p-1 transition-colors duration-200 ${comment.userLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
-                >
-                  <Heart size={14} className={comment.userLiked ? 'fill-current' : ''} />
-                  <span className="ml-1">{comment.upvotes}</span>
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setReplyingTo(isReplying ? null : comment.id)}
-                  className="h-auto p-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
-                >
-                  <Reply size={14} />
-                  <span className="ml-1">Reply</span>
-                </Button>
-                
-                <Button variant="ghost" size="sm" className="h-auto p-1 text-muted-foreground hover:text-foreground transition-colors duration-200">
-                  <MoreHorizontal size={14} />
-                </Button>
-              </div>
-
-              {isReplying && (
-                <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
-                  <Textarea
-                    id={`reply-${comment.id}`}
-                    placeholder={`Reply to ${comment.author}...`}
-                    value={replyDraft}
-                    onChange={(e) => setReplyDraft(e.target.value)}
-                    autoComplete="off"
-                    className="min-h-[80px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleReply(comment.id, replyDraft).then((ok) => ok && setReplyDraft(''))} disabled={!replyDraft.trim() || submittingComment}>
-                      {submittingComment ? 'Posting...' : 'Post Reply'}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => { setReplyingTo(null); setReplyDraft(''); }}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setReplyingTo(isReplying ? null : comment.id)}
+                className="h-auto p-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                <Reply size={14} />
+                <span className="ml-1">Reply</span>
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="h-auto p-1 text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <MoreHorizontal size={14} />
+              </Button>
             </div>
+
+            {isReplying && (
+              <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                <Textarea
+                  id={`reply-${comment.id}`}
+                  placeholder={`Reply to ${comment.author}...`}
+                  value={replyDraft}
+                  onChange={(e) => setReplyDraft(e.target.value)}
+                  autoComplete="off"
+                  className="min-h-[80px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleReply(comment.id, replyDraft).then((ok) => ok && setReplyDraft(''))} disabled={!replyDraft.trim() || submittingComment}>
+                    {submittingComment ? 'Posting...' : 'Post Reply'}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { setReplyingTo(null); setReplyDraft(''); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {hasReplies && !isCollapsed && (
           <div className="space-y-3 mt-3">
+            <div className="space-y-3">
+              {visibleReplies.map((r) => (
+                <Comment key={r.id} comment={r} depth={depth + 1} />
+              ))}
+            </div>
             {(hasMoreReplies || visibleCount > 2) && (
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-1">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -294,11 +298,6 @@ const ForumThread = () => {
                 </Button>
               </div>
             )}
-            <div className="space-y-3">
-              {visibleReplies.map((r) => (
-                <Comment key={r.id} comment={r} depth={depth + 1} />
-              ))}
-            </div>
           </div>
         )}
       </div>
