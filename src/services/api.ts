@@ -301,6 +301,95 @@ export interface DiscoverProfile {
   profileQuestions: Array<{ id: string; question: string; category?: string; answer?: string }>;
 }
 
+// Forum types (list + thread)
+export interface ForumPostListItem {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  categoryLabel?: string;
+  tags: string[];
+  isStickied: boolean;
+  author: string;
+  authorId: string;
+  authorAvatar: string;
+  replies: number;
+  upvotes: number;
+  lastActivity: string;
+  createdAt: string;
+}
+
+export interface ForumCommentNode {
+  id: string;
+  author: string;
+  authorId: string;
+  authorAvatar: string;
+  authorLevel: string;
+  content: string;
+  createdAt: string;
+  upvotes: number;
+  userLiked: boolean;
+  replies: ForumCommentNode[];
+}
+
+export interface ForumPostDetail {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  categoryLabel?: string;
+  tags: string[];
+  isStickied: boolean;
+  author: string;
+  authorId: string;
+  authorAvatar: string;
+  authorLevel: string;
+  createdAt: string;
+  updatedAt: string;
+  upvotes: number;
+  userLiked: boolean;
+  comments: ForumCommentNode[];
+  replyCount: number;
+}
+
+// Forum API
+export const forumApi = {
+  getPosts: async (params?: { category?: string; search?: string; sort?: string }): Promise<{ success: boolean; posts?: ForumPostListItem[]; message?: string }> => {
+    const q = new URLSearchParams();
+    if (params?.category && params.category !== 'all') q.set('category', params.category);
+    if (params?.search) q.set('search', params.search);
+    if (params?.sort) q.set('sort', params.sort);
+    const query = q.toString();
+    return apiRequest<any>(`/forum/posts${query ? `?${query}` : ''}`);
+  },
+
+  getPost: async (id: string): Promise<{ success: boolean; post?: ForumPostDetail; message?: string }> => {
+    return apiRequest<any>(`/forum/posts/${id}`);
+  },
+
+  createPost: async (data: { title: string; content: string; category: string; tags?: string[] }): Promise<{ success: boolean; post?: ForumPostListItem; message?: string }> => {
+    return apiRequest<any>('/forum/posts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  reactPost: async (postId: string): Promise<{ success: boolean; liked?: boolean; count?: number; message?: string }> => {
+    return apiRequest<any>(`/forum/posts/${postId}/react`, { method: 'PUT' });
+  },
+
+  addComment: async (postId: string, content: string, parentId?: string): Promise<{ success: boolean; comment?: ForumCommentNode; message?: string }> => {
+    return apiRequest<any>(`/forum/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content, parentId: parentId || undefined }),
+    });
+  },
+
+  reactComment: async (commentId: string): Promise<{ success: boolean; liked?: boolean; count?: number; message?: string }> => {
+    return apiRequest<any>(`/forum/comments/${commentId}/react`, { method: 'PUT' });
+  },
+};
+
 // Chat API functions
 export const chatApi = {
   // Get all chat rooms
@@ -356,6 +445,7 @@ export default {
   authApi,
   userApi,
   chatApi,
+  forumApi,
   getAuthToken,
   setAuthToken,
   removeAuthToken,

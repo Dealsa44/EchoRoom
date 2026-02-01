@@ -3,235 +3,59 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Share, MoreHorizontal, Reply, Calendar, Clock, User, ChevronDown, ChevronUp, Minus, Plus, Filter, SortAsc, SortDesc, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Reply, Calendar, Clock, ChevronDown, ChevronUp, Minus, Plus, SortAsc, SortDesc, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import TopBar from '@/components/layout/TopBar';
 import BottomNavigation from '@/components/layout/BottomNavigation';
+import { forumApi, type ForumPostDetail, type ForumCommentNode } from '@/services/api';
+
+function formatRelativeTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 60) return diffMins <= 1 ? 'Just now' : `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  return d.toLocaleDateString();
+}
 
 const ForumThread = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [post, setPost] = useState<ForumPostDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [reply, setReply] = useState('');
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
-  const [threadLiked, setThreadLiked] = useState(false);
-  const [collapsedComments, setCollapsedComments] = useState<Set<number>>(new Set());
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [collapsedComments, setCollapsedComments] = useState<Set<string>>(new Set());
   const [showAllComments, setShowAllComments] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState<Set<string>>(new Set());
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'popular'>('newest');
-  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
-  const thread = {
-    id: 1,
-    title: 'How do you practice self-compassion during difficult times?',
-    author: 'MindfulSoul',
-    authorAvatar: '🌸',
-    authorLevel: 'Community Helper',
-    authorJoined: 'Joined 8 months ago',
-    content: 'I\'ve been struggling with being kind to myself lately. What practices help you show yourself the same compassion you\'d give a friend?\n\nI notice I\'m much harder on myself than I would ever be on someone I care about. When friends make mistakes, I remind them that they\'re human and that growth takes time. But when I make mistakes, my inner voice becomes critical and harsh.\n\nI\'m curious about your experiences and any gentle practices that have helped you develop a kinder relationship with yourself.',
-    upvotes: 67,
-    replies: 24,
-    createdAt: '2 days ago',
-    category: 'mental-health',
-    tags: ['Self-Care', 'Mindfulness', 'Support']
-  };
+  const fetchPost = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await forumApi.getPost(id);
+      if (res.success && res.post) setPost(res.post);
+      else setError('Post not found');
+    } catch {
+      setError('Failed to load discussion');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-  const getThreadData = (threadId: string) => {
-    const threads = {
-      '1': {
-        id: 1,
-    title: 'How do you practice self-compassion during difficult times?',
-    author: 'MindfulSoul',
-        authorAvatar: '🌸',
-        authorLevel: 'Community Helper',
-        authorJoined: 'Joined 8 months ago',
-        content: 'I\'ve been struggling with being kind to myself lately. What practices help you show yourself the same compassion you\'d give a friend?\n\nI notice I\'m much harder on myself than I would ever be on someone I care about. When friends make mistakes, I remind them that they\'re human and that growth takes time. But when I make mistakes, my inner voice becomes critical and harsh.\n\nI\'m curious about your experiences and any gentle practices that have helped you develop a kinder relationship with yourself.',
-    upvotes: 67,
-        replies: 24,
-        createdAt: '2 days ago',
-        category: 'mental-health',
-        tags: ['Self-Care', 'Mindfulness', 'Support'],
-        comments: [
-          {
-            id: 1,
-            author: 'GentleWisdom',
-            authorAvatar: '🕊️',
-            authorLevel: 'Frequent Contributor',
-            content: 'I\'ve found that talking to myself as I would to my best friend has been transformative. When I catch myself being self-critical, I pause and ask: "What would I say to my friend in this situation?"',
-            upvotes: 23,
-            createdAt: '1 day ago',
-            replies: [
-              {
-                id: '1-1',
-                author: 'MindfulSoul',
-                authorAvatar: '🌸',
-                authorLevel: 'Community Helper',
-                content: 'This is such a beautiful approach! I\'m going to try this today. Thank you for sharing.',
-                upvotes: 8,
-                createdAt: '18 hours ago',
-                replies: [
-                  {
-                    id: '1-1-1',
-                    author: 'GentleWisdom',
-                    authorAvatar: '🕊️',
-                    authorLevel: 'Frequent Contributor',
-                    content: 'You\'re so welcome! Remember to be patient with yourself as you practice this. It takes time to rewire those inner voices.',
-                    upvotes: 3,
-                    createdAt: '16 hours ago',
-                    replies: []
-                  }
-                ]
-              },
-              {
-                id: '1-2',
-                author: 'CompassionateHeart',
-                authorAvatar: '💚',
-                authorLevel: 'New Member',
-                content: 'I love this perspective. It\'s amazing how much easier it is to be kind to others than to ourselves.',
-                upvotes: 5,
-                createdAt: '12 hours ago',
-                replies: [
-                  {
-                    id: '1-2-1',
-                    author: 'WiseSoul',
-                    authorAvatar: '🦋',
-                    authorLevel: 'Regular Contributor',
-                    content: 'Exactly! We have this double standard where we expect perfection from ourselves but offer grace to everyone else.',
-                    upvotes: 7,
-                    createdAt: '10 hours ago',
-                    replies: [
-                      {
-                        id: '1-2-1-1',
-                        author: 'CompassionateHeart',
-                        authorAvatar: '💚',
-                        authorLevel: 'New Member',
-                        content: 'Yes! It\'s like we think being harsh will motivate us, but it usually just makes us feel worse.',
-                        upvotes: 2,
-                        createdAt: '8 hours ago',
-                        replies: []
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            id: 2,
-            author: 'ThoughtfulJourney',
-            authorAvatar: '📝',
-            authorLevel: 'Regular Contributor',
-            content: 'Journaling has been my sanctuary. I write myself letters of encouragement, especially after difficult days. Reading them later reminds me of my own capacity for growth and resilience.',
-            upvotes: 19,
-            createdAt: '1 day ago',
-            replies: [
-              {
-                id: '2-1',
-                author: 'CreativeSpirit',
-                authorAvatar: '✨',
-                authorLevel: 'New Member',
-                content: 'What a beautiful practice! Do you have any prompts you use when you\'re feeling stuck?',
-                upvotes: 6,
-                createdAt: '20 hours ago',
-                replies: [
-                  {
-                    id: '2-1-1',
-                    author: 'ThoughtfulJourney',
-                    authorAvatar: '📝',
-                    authorLevel: 'Regular Contributor',
-                    content: 'I often start with "Dear friend," and then write what I would tell my best friend in my situation. It immediately shifts my tone.',
-                    upvotes: 9,
-                    createdAt: '18 hours ago',
-                    replies: []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            id: 3,
-            author: 'ZenMoments',
-            authorAvatar: '🧘',
-            authorLevel: 'Meditation Guide',
-            content: 'The loving-kindness meditation specifically focusing on yourself can be powerful. Starting with "May I be happy, may I be at peace, may I be free from suffering" and really meaning it.',
-            upvotes: 31,
-            createdAt: '20 hours ago',
-            replies: [
-              {
-                id: '3-1',
-                author: 'SeekerOfPeace',
-                authorAvatar: '🌅',
-                authorLevel: 'New Member',
-                content: 'I\'ve never tried this before. Do you have any recommendations for guided versions?',
-                upvotes: 4,
-                createdAt: '15 hours ago',
-                replies: []
-              }
-            ]
-          }
-        ]
-      },
-      '2': {
-        id: 2,
-        title: 'The paradox of choice in modern life - thoughts?',
-        author: 'DeepThinker',
-        authorAvatar: '🤔',
-        authorLevel: 'Philosophy Enthusiast',
-        authorJoined: 'Joined 1 year ago',
-        content: 'Barry Schwartz\'s ideas about how too many options can lead to anxiety and paralysis. How do you navigate decision-making in our choice-rich world?\n\nI find myself overwhelmed by simple decisions like what to watch on Netflix or which restaurant to order from. The abundance of choices, meant to give us freedom, sometimes feels like a burden.',
-        upvotes: 43,
-        replies: 18,
-        createdAt: '4 hours ago',
-        category: 'philosophy',
-        tags: ['Philosophy', 'Psychology', 'Modern Life'],
-        comments: [
-          {
-            id: 1,
-            author: 'MinimalistMind',
-            authorAvatar: '🎯',
-            authorLevel: 'Regular Contributor',
-            content: 'I\'ve started using the "good enough" principle. Instead of trying to find the perfect choice, I look for the first option that meets my basic needs.',
-            upvotes: 15,
-            createdAt: '3 hours ago',
-            replies: []
-          }
-        ]
-      },
-      '3': {
-        id: 3,
-        title: 'Learning languages as an adult - motivation tips?',
-        author: 'PolyglotDreamer',
-        authorAvatar: '📚',
-        authorLevel: 'Language Learner',
-        authorJoined: 'Joined 6 months ago',
-        content: 'I\'m 28 and learning Georgian. Some days I feel motivated, others I want to give up. How do you maintain consistency in language learning?\n\nThe grammar is so different from English, and I feel like I\'m making slow progress despite studying daily.',
-        upvotes: 89,
-        replies: 31,
-        createdAt: '6 hours ago',
-        category: 'education',
-        tags: ['Languages', 'Learning', 'Motivation'],
-        comments: [
-          {
-            id: 1,
-            author: 'LanguageLover',
-            authorAvatar: '🌍',
-            authorLevel: 'Polyglot',
-            content: 'Georgian is beautiful but challenging! I found that connecting with native speakers through language exchange really helped maintain motivation.',
-            upvotes: 22,
-            createdAt: '5 hours ago',
-            replies: []
-          }
-        ]
-      }
-    };
-    return threads[threadId as keyof typeof threads] || threads['1'];
-  };
+  useEffect(() => {
+    fetchPost();
+  }, [fetchPost]);
 
-  const threadData = getThreadData(id || '1');
-  
-  // Sort comments based on selected order
-  const sortComments = (commentsToSort: Array<{ createdAt: string; upvotes: number; [key: string]: unknown }>) => {
+  const sortCommentsList = (commentsToSort: ForumCommentNode[]): ForumCommentNode[] => {
     return [...commentsToSort].sort((a, b) => {
       switch (sortOrder) {
         case 'oldest':
@@ -245,47 +69,58 @@ const ForumThread = () => {
     });
   };
 
-  const comments = sortComments(threadData.comments);
+  const comments = post ? sortCommentsList(post.comments) : [];
 
-  const handleLikeThread = () => {
-    setThreadLiked(!threadLiked);
+  const handleLikeThread = async () => {
+    if (!id || !post) return;
+    try {
+      const res = await forumApi.reactPost(id);
+      if (res.success) setPost(prev => prev ? { ...prev, userLiked: res.liked ?? !prev.userLiked, upvotes: res.count ?? prev.upvotes } : null);
+    } catch {}
   };
 
-  const handleLikeComment = (commentId: number) => {
-    const newLikedComments = new Set(likedComments);
-    if (newLikedComments.has(commentId)) {
-      newLikedComments.delete(commentId);
-    } else {
-      newLikedComments.add(commentId);
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      const res = await forumApi.reactComment(commentId);
+      if (res.success && post) {
+        const updateComment = (list: ForumCommentNode[]): ForumCommentNode[] =>
+          list.map(c => c.id === commentId
+            ? { ...c, userLiked: res.liked ?? !c.userLiked, upvotes: res.count ?? c.upvotes }
+            : { ...c, replies: updateComment(c.replies || []) }
+          );
+        setPost(prev => prev ? { ...prev, comments: updateComment(prev.comments) } : null);
+      }
+    } catch {}
+  };
+
+  const toggleCollapse = (commentId: string) => {
+    setCollapsedComments(prev => {
+      const next = new Set(prev);
+      if (next.has(commentId)) next.delete(commentId);
+      else next.add(commentId);
+      return next;
+    });
+  };
+
+  const handleReply = async (commentId?: string) => {
+    if (!reply.trim() || !id) return;
+    setSubmittingComment(true);
+    try {
+      const res = await forumApi.addComment(id, reply.trim(), commentId);
+      if (res.success) {
+        setReply('');
+        setReplyingTo(null);
+        fetchPost();
+      }
+    } finally {
+      setSubmittingComment(false);
     }
-    setLikedComments(newLikedComments);
   };
 
-  const toggleCollapse = (commentId: number) => {
-    const newCollapsed = new Set(collapsedComments);
-    if (newCollapsed.has(commentId)) {
-      newCollapsed.delete(commentId);
-    } else {
-      newCollapsed.add(commentId);
-    }
-    setCollapsedComments(newCollapsed);
-  };
-
-  const handleReply = (commentId?: number) => {
-    if (reply.trim()) {
-      // Handle posting reply
-      console.log('Posting reply:', reply, commentId ? `to comment ${commentId}` : 'to thread');
-      setReply('');
-      setReplyingTo(null);
-    }
-  };
-
-  const countReplies = (comment: { replies?: Array<{ replies?: unknown[] }> }): number => {
+  const countReplies = (comment: ForumCommentNode): number => {
     if (!comment.replies || comment.replies.length === 0) return 0;
     let total = comment.replies.length;
-    comment.replies.forEach((reply) => {
-      total += countReplies(reply);
-    });
+    comment.replies.forEach((r) => { total += countReplies(r); });
     return total;
   };
 
@@ -299,14 +134,15 @@ const ForumThread = () => {
     setShowAllReplies(newShowAllReplies);
   };
 
-  const UserInfo = ({ user, level, timeStamp, showJoinDate = false }: { 
+  const UserInfo = ({ user, level, timeStamp, avatar, showJoinDate = false }: { 
     user: string; 
     level: string; 
-    timeStamp: string; 
+    timeStamp: string;
+    avatar?: string;
     showJoinDate?: boolean;
   }) => (
     <div className="flex items-start gap-3">
-      <div className="text-2xl">{user === 'MindfulSoul' ? '🌸' : user === 'GentleWisdom' ? '🕊️' : user === 'ThoughtfulJourney' ? '📝' : user === 'ZenMoments' ? '🧘' : user === 'CompassionateHeart' ? '💚' : '🌅'}</div>
+      <div className="text-2xl">{avatar || '💬'}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium text-sm">{user}</span>
@@ -330,16 +166,16 @@ const ForumThread = () => {
     </div>
   );
 
-  const Comment = ({ comment, depth = 0 }: { comment: { id: number; author: string; authorLevel: string; createdAt: string; content: string; upvotes: number; replies?: unknown[]; [key: string]: unknown }; depth?: number }) => {
+  const Comment = ({ comment, depth = 0 }: { comment: ForumCommentNode; depth?: number }) => {
     const isCollapsed = collapsedComments.has(comment.id);
     const hasReplies = comment.replies && comment.replies.length > 0;
     const totalReplies = countReplies(comment);
-    const marginLeft = Math.min(depth * 16, 48); // Max indent of 48px (3 levels)
-    const commentKey = `${comment.id}`;
+    const marginLeft = Math.min(depth * 16, 48);
+    const commentKey = comment.id;
     const showingAllReplies = showAllReplies.has(commentKey);
-    const maxVisibleReplies = 2; // Show only first 2 replies by default
+    const maxVisibleReplies = 2;
     const visibleReplies = showingAllReplies ? comment.replies : comment.replies?.slice(0, maxVisibleReplies) || [];
-    const hasMoreReplies = hasReplies && comment.replies.length > maxVisibleReplies;
+    const hasMoreReplies = hasReplies && comment.replies!.length > maxVisibleReplies;
 
     return (
       <div style={{ marginLeft: `${marginLeft}px` }}>
@@ -348,8 +184,9 @@ const ForumThread = () => {
             <div className="flex items-start justify-between">
               <UserInfo 
                 user={comment.author} 
-                level={comment.authorLevel}
-                timeStamp={comment.createdAt}
+                level={comment.authorLevel || 'Member'}
+                timeStamp={formatRelativeTime(comment.createdAt)}
+                avatar={comment.authorAvatar}
               />
               
               {hasReplies && (
@@ -359,11 +196,7 @@ const ForumThread = () => {
                   onClick={() => toggleCollapse(comment.id)}
                   className="h-auto p-1 text-muted-foreground hover:text-foreground transition-all duration-200"
                 >
-                  {isCollapsed ? (
-                    <Plus size={14} />
-                  ) : (
-                    <Minus size={14} />
-                  )}
+                  {isCollapsed ? <Plus size={14} /> : <Minus size={14} />}
                   <span className="ml-1 text-xs">{totalReplies}</span>
                 </Button>
               )}
@@ -377,10 +210,10 @@ const ForumThread = () => {
                   variant="ghost" 
                   size="sm"
                   onClick={() => handleLikeComment(comment.id)}
-                  className={`h-auto p-1 transition-colors duration-200 ${likedComments.has(comment.id) ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+                  className={`h-auto p-1 transition-colors duration-200 ${comment.userLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
                 >
-                  <Heart size={14} className={likedComments.has(comment.id) ? 'fill-current' : ''} />
-                  <span className="ml-1">{comment.upvotes + (likedComments.has(comment.id) ? 1 : 0)}</span>
+                  <Heart size={14} className={comment.userLiked ? 'fill-current' : ''} />
+                  <span className="ml-1">{comment.upvotes}</span>
                 </Button>
                 
                 <Button 
@@ -402,7 +235,6 @@ const ForumThread = () => {
                 <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
                   <Textarea
                     id={`reply-${comment.id}`}
-                    name={`reply-${comment.id}`}
                     placeholder={`Reply to ${comment.author}...`}
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
@@ -410,23 +242,10 @@ const ForumThread = () => {
                     className="min-h-[80px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleReply(comment.id)}
-                      disabled={!reply.trim()}
-                      className="transition-all duration-200"
-                    >
-                      Post Reply
+                    <Button size="sm" onClick={() => handleReply(comment.id)} disabled={!reply.trim() || submittingComment}>
+                      {submittingComment ? 'Posting...' : 'Post Reply'}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setReplyingTo(null);
-                        setReply('');
-                      }}
-                      className="transition-all duration-200"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => { setReplyingTo(null); setReply(''); }}>
                       Cancel
                     </Button>
                   </div>
@@ -436,37 +255,23 @@ const ForumThread = () => {
           </CardContent>
         </Card>
 
-        {/* Nested Replies */}
         {hasReplies && !isCollapsed && (
           <div className="space-y-3 mt-3">
-            {/* Show All/Less Button for Replies */}
             {hasMoreReplies && (
               <div className="flex justify-center">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => toggleShowAllReplies(commentKey)}
-                  className="h-auto px-3 py-1 text-xs text-primary hover:text-primary-dark transition-colors duration-200 bg-primary/5 hover:bg-primary/10 rounded-full"
+                  className="h-auto px-3 py-1 text-xs text-primary hover:bg-primary/10 rounded-full"
                 >
-                  {showingAllReplies ? (
-                    <>
-                      <ChevronUp size={12} className="mr-1" />
-                      Show less replies
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={12} className="mr-1" />
-                      Show {comment.replies.length - maxVisibleReplies} more replies
-                    </>
-                  )}
+                  {showingAllReplies ? <><ChevronUp size={12} className="mr-1" />Show less replies</> : <><ChevronDown size={12} className="mr-1" />Show {comment.replies!.length - maxVisibleReplies} more replies</>}
                 </Button>
               </div>
             )}
-
-            {/* Render Visible Replies */}
-            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-                              {visibleReplies.map((reply: { id: number; author: string; authorLevel: string; createdAt: string; content: string; upvotes: number; replies?: unknown[]; [key: string]: unknown }) => (
-                <Comment key={reply.id} comment={reply} depth={depth + 1} />
+            <div className="space-y-3">
+              {visibleReplies.map((r) => (
+                <Comment key={r.id} comment={r} depth={depth + 1} />
               ))}
             </div>
           </div>
@@ -474,6 +279,31 @@ const ForumThread = () => {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="Deep Discussions" showBack onBack={() => navigate('/forum')} />
+        <div className="px-4 py-6 max-w-md mx-auto content-safe-top pb-24 flex items-center justify-center min-h-[40vh]">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="Deep Discussions" showBack onBack={() => navigate('/forum')} />
+        <div className="px-4 py-6 max-w-md mx-auto content-safe-top pb-24 flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <p className="text-muted-foreground">{error || 'Post not found'}</p>
+          <Button variant="outline" onClick={() => navigate('/forum')}>Back to Forum</Button>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -489,25 +319,28 @@ const ForumThread = () => {
           <CardContent className="p-6">
             <div className="mb-4">
               <UserInfo 
-                user={threadData.author}
-                level={threadData.authorLevel}
-                timeStamp={threadData.createdAt}
-                showJoinDate={true}
+                user={post.author}
+                level={post.authorLevel || 'Member'}
+                timeStamp={formatRelativeTime(post.createdAt)}
+                avatar={post.authorAvatar}
+                showJoinDate={false}
               />
             </div>
 
-            <h1 className="text-xl font-bold mb-4 leading-tight">{threadData.title}</h1>
+            <h1 className="text-xl font-bold mb-4 leading-tight">{post.title}</h1>
             
-            <div className="flex flex-wrap gap-1 mb-4">
-              {threadData.tags.map(tag => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-4">
+                {post.tags.map(tag => (
+                  <Badge key={tag} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
             
             <div className="prose prose-sm max-w-none text-sm leading-relaxed mb-4">
-              {threadData.content.split('\n').map((paragraph, index) => (
+              {post.content.split('\n').map((paragraph, index) => (
                 <p key={index} className="mb-3 last:mb-0">{paragraph}</p>
               ))}
             </div>
@@ -517,14 +350,14 @@ const ForumThread = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={handleLikeThread}
-                className={`transition-colors duration-200 ${threadLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+                className={`transition-colors duration-200 ${post.userLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
               >
-                <Heart size={16} className={threadLiked ? 'fill-current' : ''} />
-                <span className="ml-1">{threadData.upvotes + (threadLiked ? 1 : 0)}</span>
+                <Heart size={16} className={post.userLiked ? 'fill-current' : ''} />
+                <span className="ml-1">{post.upvotes}</span>
               </Button>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <MessageCircle size={16} />
-                <span>{comments.length} replies</span>
+                <span>{post.replyCount ?? comments.length} replies</span>
               </div>
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground transition-colors duration-200">
                 <Share size={16} />
@@ -533,7 +366,7 @@ const ForumThread = () => {
           </CardContent>
         </Card>
 
-        {/* Comment Form - Moved to top after post */}
+        {/* Comment Form */}
         <Card>
           <CardContent className="p-4">
             <h4 className="font-medium mb-3 flex items-center gap-2">
@@ -543,7 +376,6 @@ const ForumThread = () => {
             <div className="space-y-3">
               <Textarea
                 id="mainComment"
-                name="mainComment"
                 placeholder="Share your thoughtful response..."
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
@@ -554,11 +386,11 @@ const ForumThread = () => {
                 <Button 
                   variant="default" 
                   onClick={() => handleReply()}
-                  disabled={!reply.trim()}
+                  disabled={!reply.trim() || submittingComment}
                   className="flex-1 transition-all duration-200"
                 >
                   <MessageCircle size={16} className="mr-2" />
-                  Post Comment
+                  {submittingComment ? 'Posting...' : 'Post Comment'}
                 </Button>
               </div>
             </div>
@@ -642,7 +474,7 @@ const ForumThread = () => {
           
           <div className="space-y-4">
             {(showAllComments ? comments : comments.slice(0, 3)).map((comment) => (
-              <Comment key={String(comment.id)} comment={comment as any} depth={0} />
+              <Comment key={comment.id} comment={comment} depth={0} />
             ))}
           </div>
 

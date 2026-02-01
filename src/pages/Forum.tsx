@@ -1,15 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, MessageCircle, Heart, TrendingUp, Clock, Shield } from 'lucide-react';
+import { Search, Plus, MessageCircle, Heart, Clock } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import CreateThreadModal from '@/components/modals/CreateThreadModal';
+import { forumApi, type ForumPostListItem } from '@/services/api';
 
+function formatLastActivity(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 60) return diffMins <= 1 ? 'Just now' : `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  return d.toLocaleDateString();
+}
 
 const Forum = () => {
   const navigate = useNavigate();
@@ -18,15 +31,28 @@ const Forum = () => {
   const [sortBy, setSortBy] = useState('recent');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [threads, setThreads] = useState<ForumPostListItem[]>([]);
 
-  // Simulate loading delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await forumApi.getPosts({
+        category: selectedCategory,
+        search: searchTerm.trim() || undefined,
+        sort: sortBy,
+      });
+      if (res.success && res.posts) setThreads(res.posts);
+      else setThreads([]);
+    } catch {
+      setThreads([]);
+    } finally {
       setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [selectedCategory, searchTerm, sortBy]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const categories = [
     { value: 'all', label: 'All Topics', icon: '💬' },
@@ -38,96 +64,7 @@ const Forum = () => {
     { value: 'creativity', label: 'Creativity', icon: '🎨' }
   ];
 
-  const threads = [
-    {
-      id: 1,
-      title: 'How do you practice self-compassion during difficult times?',
-      author: 'MindfulSoul',
-      authorAvatar: '🌸',
-      category: 'mental-health',
-      replies: 24,
-      upvotes: 67,
-      lastActivity: '2 hours ago',
-      excerpt: 'I\'ve been struggling with being kind to myself lately. What practices help you show yourself the same compassion you\'d give a friend?',
-      tags: ['Self-Care', 'Mindfulness', 'Support'],
-      isStickied: false,
-      hasNewReplies: true
-    },
-    {
-      id: 2,
-      title: 'The paradox of choice in modern life - thoughts?',
-      author: 'DeepThinker',
-      authorAvatar: '🤔',
-      category: 'philosophy',
-      replies: 18,
-      upvotes: 43,
-      lastActivity: '4 hours ago',
-      excerpt: 'Barry Schwartz\'s ideas about how too many options can lead to anxiety and paralysis. How do you navigate decision-making in our choice-rich world?',
-      tags: ['Philosophy', 'Psychology', 'Modern Life'],
-      isStickied: true,
-      hasNewReplies: false
-    },
-    {
-      id: 3,
-      title: 'Learning languages as an adult - motivation tips?',
-      author: 'PolyglotDreamer',
-      authorAvatar: '📚',
-      category: 'education',
-      replies: 31,
-      upvotes: 89,
-      lastActivity: '6 hours ago',
-      excerpt: 'I\'m 28 and learning Georgian. Some days I feel motivated, others I want to give up. How do you maintain consistency in language learning?',
-      tags: ['Languages', 'Learning', 'Motivation'],
-      isStickied: false,
-      hasNewReplies: true
-    },
-    {
-      id: 4,
-      title: 'The beauty of slow living in a fast world',
-      author: 'QuietMoments',
-      authorAvatar: '🍃',
-      category: 'wellness',
-      replies: 15,
-      upvotes: 52,
-      lastActivity: '1 day ago',
-      excerpt: 'In our hustle culture, I\'ve found peace in intentionally slowing down. Making tea mindfully, reading without rushing, walking without destination...',
-      tags: ['Slow Living', 'Mindfulness', 'Lifestyle'],
-      isStickied: false,
-      hasNewReplies: false
-    },
-    {
-      id: 5,
-      title: 'Creative block: when inspiration feels impossible',
-      author: 'ArtisticSoul',
-      authorAvatar: '🎨',
-      category: 'creativity',
-      replies: 22,
-      upvotes: 38,
-      lastActivity: '1 day ago',
-      excerpt: 'Been staring at blank canvases for weeks. How do you push through creative blocks while being gentle with yourself?',
-      tags: ['Art', 'Creativity', 'Inspiration'],
-      isStickied: false,
-      hasNewReplies: true
-    }
-  ];
-
-  const filteredThreads = threads.filter(thread => {
-    const matchesSearch = thread.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         thread.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || thread.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const sortedThreads = [...filteredThreads].sort((a, b) => {
-    switch (sortBy) {
-      case 'popular':
-        return b.upvotes - a.upvotes;
-      case 'replies':
-        return b.replies - a.replies;
-      default:
-        return a.isStickied === b.isStickied ? 0 : a.isStickied ? -1 : 1;
-    }
-  });
+  const sortedThreads = threads;
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -311,9 +248,6 @@ const Forum = () => {
                         <span className="absolute left-0 -bottom-0.5 h-0.5 w-20 bg-gradient-to-r from-primary to-secondary rounded-full" />
                       </h3>
                     </div>
-                    {thread.hasNewReplies && (
-                      <div className="w-3 h-3 bg-gradient-primary rounded-full flex-shrink-0 mt-2 animate-ping shadow-glow-primary/30"></div>
-                    )}
                   </div>
 
                   {/* Excerpt */}
@@ -322,24 +256,26 @@ const Forum = () => {
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 border-t border-border-soft pt-3">
-                    {thread.tags.map(tag => (
-                      <Badge key={tag} variant="ghost" size="sm">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  {thread.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 border-t border-border-soft pt-3">
+                      {thread.tags.map(tag => (
+                        <Badge key={tag} variant="ghost" size="sm">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Footer */}
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="text-2xl p-2 bg-gradient-primary/10 rounded-xl shadow-inner-soft">
-                          {thread.authorAvatar}
+                          {thread.authorAvatar || '💬'}
                         </div>
                         <div>
                           <div className="text-body font-medium text-foreground">{thread.author}</div>
-                          <div className="text-caption text-muted-foreground">Community Helper</div>
+                          <div className="text-caption text-muted-foreground">Member</div>
                         </div>
                       </div>
                       
@@ -356,7 +292,7 @@ const Forum = () => {
                     </div>
                     <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
                       <Clock size={12} />
-                      <span>Last activity {thread.lastActivity}</span>
+                      <span>Last activity {formatLastActivity(thread.lastActivity)}</span>
                     </div>
                   </div>
                 </div>
@@ -385,6 +321,7 @@ const Forum = () => {
       <CreateThreadModal 
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchPosts}
       />
     </div>
   );

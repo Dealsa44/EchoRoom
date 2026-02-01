@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,18 +7,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { forumApi } from '@/services/api';
 
 interface CreateThreadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
+const CreateThreadModal = ({ isOpen, onClose, onSuccess }: CreateThreadModalProps) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const categories = [
     { value: 'mental-health', label: 'Mental Health', icon: '💚' },
@@ -28,27 +33,30 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
     { value: 'creativity', label: 'Creativity', icon: '🎨' }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate that category is selected
-    if (!formData.category) {
-      // Category required - toast removed per user request
-      return;
+    if (!formData.category || !formData.title.trim() || !formData.content.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await forumApi.createPost({
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        category: formData.category,
+        tags: []
+      });
+      if (res.success && res.post) {
+        setFormData({ title: '', content: '', category: '' });
+        onClose();
+        onSuccess?.();
+        navigate(`/forum/thread/${res.post.id}`);
+      } else {
+        toast({ title: 'Error', description: res.message || 'Failed to create discussion', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to create discussion', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
-    
-    // Simulate thread creation
-    const selectedCategory = categories.find(cat => cat.value === formData.category);
-    // Discussion started - toast removed per user request
-    
-    // Reset form and close modal
-    setFormData({
-      title: '',
-      content: '',
-      category: ''
-    });
-    
-    onClose();
   };
 
   return (
@@ -133,9 +141,9 @@ const CreateThreadModal = ({ isOpen, onClose }: CreateThreadModalProps) => {
               type="submit" 
               variant="cozy" 
               className="flex-1"
-              disabled={!formData.title.trim() || !formData.content.trim() || !formData.category}
+              disabled={!formData.title.trim() || !formData.content.trim() || !formData.category || submitting}
             >
-              Post Discussion
+              {submitting ? 'Posting...' : 'Post Discussion'}
             </Button>
           </div>
         </form>
