@@ -32,9 +32,25 @@ const ForumThread = () => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [collapsedComments, setCollapsedComments] = useState<Set<string>>(new Set());
   const [showAllComments, setShowAllComments] = useState(false);
-  const [showAllReplies, setShowAllReplies] = useState<Set<string>>(new Set());
+  const [visibleReplyCount, setVisibleReplyCount] = useState<Record<string, number>>({});
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'popular'>('newest');
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  // When post loads, collapse all reply sections (only main comments visible; replies hidden by default)
+  useEffect(() => {
+    if (!post?.comments) return;
+    const collectIdsWithReplies = (list: ForumCommentNode[]): string[] => {
+      const ids: string[] = [];
+      list.forEach((c) => {
+        if (c.replies && c.replies.length > 0) {
+          ids.push(c.id);
+          ids.push(...collectIdsWithReplies(c.replies));
+        }
+      });
+      return ids;
+    };
+    setCollapsedComments(new Set(collectIdsWithReplies(post.comments)));
+  }, [post?.id]);
 
   const fetchPost = useCallback(async () => {
     if (!id) return;
@@ -102,16 +118,19 @@ const ForumThread = () => {
     });
   };
 
-  const handleReply = async (commentId?: string) => {
-    if (!reply.trim() || !id) return;
+  const handleReply = async (commentId?: string, text?: string): Promise<boolean> => {
+    const body = text !== undefined ? text.trim() : reply.trim();
+    if (!body || !id) return false;
     setSubmittingComment(true);
     try {
-      const res = await forumApi.addComment(id, reply.trim(), commentId);
+      const res = await forumApi.addComment(id, body, commentId);
       if (res.success) {
         setReply('');
         setReplyingTo(null);
         fetchPost();
+        return true;
       }
+      return false;
     } finally {
       setSubmittingComment(false);
     }
@@ -124,14 +143,15 @@ const ForumThread = () => {
     return total;
   };
 
-  const toggleShowAllReplies = (commentId: string) => {
-    const newShowAllReplies = new Set(showAllReplies);
-    if (newShowAllReplies.has(commentId)) {
-      newShowAllReplies.delete(commentId);
-    } else {
-      newShowAllReplies.add(commentId);
-    }
-    setShowAllReplies(newShowAllReplies);
+  const showMoreReplies = (commentId: string) => {
+    setVisibleReplyCount((prev) => ({
+      ...prev,
+      [commentId]: (prev[commentId] ?? 2) + 4,
+    }));
+  };
+
+  const showLessReplies = (commentId: string) => {
+    setVisibleReplyCount((prev) => ({ ...prev, [commentId]: 2 }));
   };
 
   const UserInfo = ({ user, level, timeStamp, avatar, showJoinDate = false }: { 
@@ -167,15 +187,16 @@ const ForumThread = () => {
   );
 
   const Comment = ({ comment, depth = 0 }: { comment: ForumCommentNode; depth?: number }) => {
+    const [replyDraft, setReplyDraft] = useState('');
     const isCollapsed = collapsedComments.has(comment.id);
     const hasReplies = comment.replies && comment.replies.length > 0;
     const totalReplies = countReplies(comment);
     const marginLeft = Math.min(depth * 16, 48);
     const commentKey = comment.id;
-    const showingAllReplies = showAllReplies.has(commentKey);
-    const maxVisibleReplies = 2;
-    const visibleReplies = showingAllReplies ? comment.replies : comment.replies?.slice(0, maxVisibleReplies) || [];
-    const hasMoreReplies = hasReplies && comment.replies!.length > maxVisibleReplies;
+    const visibleCount = visibleReplyCount[commentKey] ?? 2;
+    const visibleReplies = comment.replies?.slice(0, visibleCount) || [];
+    const hasMoreReplies = hasReplies && comment.replies!.length > visibleCount;
+    const isReplying = replyingTo === comment.id;
 
     return (
       <div style={{ marginLeft: `${marginLeft}px` }}>
@@ -189,7 +210,7 @@ const ForumThread = () => {
                 avatar={comment.authorAvatar}
               />
               
-              {hasReplies && (
+              {hasReplies && !isReplying && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -202,7 +223,7 @@ const ForumThread = () => {
               )}
             </div>
             
-            <div className={`transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-none opacity-100'}`}>
+            <div className={`transition-all duration-300 ease-in-out ${isCollapsed && !isReplying ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-none opacity-100'}`}>
               <p className="text-sm mt-3 mb-3 leading-relaxed">{comment.content}</p>
               
               <div className="flex items-center gap-4 text-xs">
@@ -219,7 +240,7 @@ const ForumThread = () => {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                  onClick={() => setReplyingTo(isReplying ? null : comment.id)}
                   className="h-auto p-1 text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   <Reply size={14} />
@@ -231,21 +252,21 @@ const ForumThread = () => {
                 </Button>
               </div>
 
-              {replyingTo === comment.id && (
+              {isReplying && (
                 <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
                   <Textarea
                     id={`reply-${comment.id}`}
                     placeholder={`Reply to ${comment.author}...`}
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
+                    value={replyDraft}
+                    onChange={(e) => setReplyDraft(e.target.value)}
                     autoComplete="off"
                     className="min-h-[80px] transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleReply(comment.id)} disabled={!reply.trim() || submittingComment}>
+                    <Button size="sm" onClick={() => handleReply(comment.id, replyDraft).then((ok) => ok && setReplyDraft(''))} disabled={!replyDraft.trim() || submittingComment}>
                       {submittingComment ? 'Posting...' : 'Post Reply'}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => { setReplyingTo(null); setReply(''); }}>
+                    <Button variant="outline" size="sm" onClick={() => { setReplyingTo(null); setReplyDraft(''); }}>
                       Cancel
                     </Button>
                   </div>
@@ -257,15 +278,19 @@ const ForumThread = () => {
 
         {hasReplies && !isCollapsed && (
           <div className="space-y-3 mt-3">
-            {hasMoreReplies && (
+            {(hasMoreReplies || visibleCount > 2) && (
               <div className="flex justify-center">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => toggleShowAllReplies(commentKey)}
+                  onClick={() => (visibleCount >= comment.replies!.length ? showLessReplies(commentKey) : showMoreReplies(commentKey))}
                   className="h-auto px-3 py-1 text-xs text-primary hover:bg-primary/10 rounded-full"
                 >
-                  {showingAllReplies ? <><ChevronUp size={12} className="mr-1" />Show less replies</> : <><ChevronDown size={12} className="mr-1" />Show {comment.replies!.length - maxVisibleReplies} more replies</>}
+                  {visibleCount >= comment.replies!.length ? (
+                    <><ChevronUp size={12} className="mr-1" />Show less</>
+                  ) : (
+                    <><ChevronDown size={12} className="mr-1" />See more ({comment.replies!.length - visibleCount} more)</>
+                  )}
                 </Button>
               </div>
             )}
