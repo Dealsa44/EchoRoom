@@ -151,24 +151,6 @@ const CreateEvent = () => {
   const [newDocumentType, setNewDocumentType] = useState<'pdf' | 'doc' | 'image'>('pdf');
   const [openInBrowserUrl, setOpenInBrowserUrl] = useState<string | null>(null);
 
-  // Debug: Log initial form data
-  useEffect(() => {
-    console.log('Initial form data:', formData);
-    console.log('User data:', user);
-    
-    // Check if there's any sample data in localStorage
-    const sampleData = localStorage.getItem('sampleEventData');
-    if (sampleData) {
-      console.log('Found sample data in localStorage:', sampleData);
-    }
-    
-    // Check if there are any hosted events that might have sample data
-    const hostedEvents = localStorage.getItem('hostedEvents');
-    if (hostedEvents) {
-      console.log('Found hosted events in localStorage:', hostedEvents);
-    }
-  }, []);
-
   const categories = [
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
     { value: 'language', label: 'Language Exchange', icon: '🌍' },

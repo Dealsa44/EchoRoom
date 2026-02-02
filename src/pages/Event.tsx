@@ -7,26 +7,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
-  ArrowLeft, 
   MapPin, 
   Calendar, 
   Clock, 
   Users, 
   Heart, 
-  Share2, 
   MoreVertical, 
-  Star, 
   MessageCircle, 
   Phone, 
   Mail, 
   Globe, 
   Lock, 
-  Shield, 
-  Flag, 
   Camera,
   Video,
-  FileText,
-  Download,
   ExternalLink,
   ChevronDown,
   ChevronUp,
@@ -35,19 +28,18 @@ import {
   AlertCircle,
   Info,
   Clock3,
-  Map,
+  FileText,
+  Star,
   Navigation,
   Car,
-  Bus,
-  Train,
-  Plane
+  Shield,
+  Download
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
@@ -148,8 +140,6 @@ const Event = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showParticipantList, setShowParticipantList] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -247,20 +237,6 @@ const Event = () => {
       console.error('Failed to leave event', e);
     } finally {
       setIsLeaving(false);
-    }
-  };
-
-  const handleShareEvent = () => {
-    if (!event) return;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: event.description,
-        url: window.location.href,
-      });
-    } else {
-      setShowShareModal(true);
     }
   };
 
@@ -495,7 +471,7 @@ const Event = () => {
                </div>
              </div>
              
-             {/* Action Buttons: heart with count, share, three-dot (only View organizer profile when not me, Visit website) */}
+             {/* Action Buttons: heart with count, three-dot (View organizer profile, Visit website) */}
              <div className="flex items-center gap-1">
                <Button
                  variant="ghost"
@@ -511,14 +487,6 @@ const Event = () => {
                {(event.reactionCount ?? 0) > 0 && (
                  <span className="text-sm text-muted-foreground">{event.reactionCount}</span>
                )}
-               <Button
-                 variant="ghost"
-                 size="icon"
-                 onClick={handleShareEvent}
-                 className="hover:scale-110 transition-spring hover:bg-primary/10"
-               >
-                 <Share2 size={20} className="text-muted-foreground" />
-               </Button>
                <DropdownMenu>
                  <DropdownMenuTrigger asChild>
                    <Button
@@ -608,17 +576,25 @@ const Event = () => {
             </div>
           )}
 
-          {/* Join / Leave: only show when not organizer */}
+          {/* Join / Leave: only show when not organizer; Sign in to join when not logged in */}
            {!event.isOrganizer && (
              <div className="flex gap-2">
                {event.isJoined ? (
                  <Button
                    variant="outline"
                    onClick={handleLeaveEvent}
-                   disabled={isLeaving}
+                   disabled={isLeaving || !user}
                    className="flex-1"
                  >
                    {isLeaving ? 'Leaving...' : 'Leave Event'}
+                 </Button>
+               ) : !user ? (
+                 <Button
+                   variant="default"
+                   onClick={() => navigate('/login', { state: { from: `/event/${event.id}` } })}
+                   className="flex-1"
+                 >
+                   Sign in to join
                  </Button>
                ) : (
                  <Button
@@ -1165,6 +1141,32 @@ const Event = () => {
         url={openInBrowserUrl ?? ''}
         title="Open in browser"
       />
+
+      {/* Photo gallery modal */}
+      <Dialog open={showAllPhotos} onOpenChange={setShowAllPhotos}>
+        <DialogContent className="max-w-[100vw] w-full sm:max-w-lg p-0 gap-0 overflow-hidden rounded-xl">
+          <div className="px-4 pt-4 pb-2 border-b border-border-soft">
+            <DialogTitle className="text-base font-semibold">Event photos</DialogTitle>
+          </div>
+          <div className="max-h-[70vh] sm:max-h-[75vh] overflow-y-auto overscroll-contain p-4">
+            {event.photos && event.photos.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                {event.photos.map((photo, index) => (
+                  <div key={index} className="aspect-square rounded-xl overflow-hidden bg-muted">
+                    <img
+                      src={photo}
+                      alt={`${event.title} photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">No photos</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Leave Event Confirmation Modal */}
       <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>

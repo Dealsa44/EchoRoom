@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Plus, MapPin, Calendar, Clock, Users, Star, Filter, Globe, Lock } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
@@ -143,6 +142,10 @@ const Events = () => {
   }, [selectedCategory, selectedType, selectedDate, selectedPrice, sortBy, searchQuery]);
 
   const handleJoinEvent = async (eventId: string) => {
+    if (!user) {
+      navigate('/login', { state: { from: '/events' } });
+      return;
+    }
     setJoiningId(eventId);
     try {
       await eventsApi.join(eventId);
@@ -608,7 +611,7 @@ const Events = () => {
                         }}
                         className="rounded-full h-8 px-4"
                       >
-                        {joiningId === event.id ? 'Joining...' : leavingId === event.id ? 'Leaving...' : event.isJoined ? 'Leave' : 'Join'}
+                        {joiningId === event.id ? 'Joining...' : leavingId === event.id ? 'Leaving...' : !user ? 'Sign in to join' : event.isJoined ? 'Leave' : 'Join'}
                       </Button>
                     </div>
                   </div>

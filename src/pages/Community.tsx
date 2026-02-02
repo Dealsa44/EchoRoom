@@ -7,13 +7,14 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { chatRooms } from '@/data/chatRooms';
-import { forumApi } from '@/services/api';
+import { forumApi, eventsApi } from '@/services/api';
 
 const Community = () => {
   const navigate = useNavigate();
   const { user, joinedRooms } = useApp();
   const [isLoaded, setIsLoaded] = useState(false);
   const [forumPostCount, setForumPostCount] = useState<number | null>(null);
+  const [upcomingEventsCount, setUpcomingEventsCount] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -25,6 +26,26 @@ const Community = () => {
       if (res.success && typeof res.count === 'number') setForumPostCount(res.count);
     }).catch(() => {});
   }, []);
+
+  // Real count of upcoming events (browse list + my hosted + my joined)
+  useEffect(() => {
+    eventsApi.list().then((res) => {
+      const browse = res.success && res.events ? res.events.length : 0;
+      if (user) {
+        eventsApi.getMy().then((myRes) => {
+          if (myRes.success) {
+            const hosted = (myRes.hosted ?? []).length;
+            const joined = (myRes.joined ?? []).length;
+            setUpcomingEventsCount(browse + hosted + joined);
+          } else {
+            setUpcomingEventsCount(browse);
+          }
+        }).catch(() => setUpcomingEventsCount(browse));
+      } else {
+        setUpcomingEventsCount(browse);
+      }
+    }).catch(() => setUpcomingEventsCount(null));
+  }, [user]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -202,7 +223,7 @@ const Community = () => {
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-16 bg-orange-500/70 rounded-full" />
                     </h3>
                     <Badge variant="glass" size="sm" className="bg-orange-500/20 text-orange-700 w-fit">
-                      {communityStats.newToday} upcoming
+                      {upcomingEventsCount !== null ? upcomingEventsCount : '—'} upcoming
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">

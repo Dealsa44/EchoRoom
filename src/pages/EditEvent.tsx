@@ -98,6 +98,7 @@ const EditEvent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle');
 
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
@@ -195,8 +196,12 @@ const EditEvent = () => {
   // Load existing event from API
   useEffect(() => {
     if (!eventId) return;
+    setLoadState('loading');
     eventsApi.get(eventId).then((res) => {
-      if (!res.success || !res.event) return;
+      if (!res.success || !res.event) {
+        setLoadState('not_found');
+        return;
+      }
       const e = res.event as any;
       const agendaForm = Array.isArray(e.agenda)
         ? e.agenda.map((item: any) =>
@@ -243,7 +248,10 @@ const EditEvent = () => {
         documents: Array.isArray(e.documents) ? e.documents : [],
         rules: Array.isArray(e.rules) ? e.rules : []
       });
-    }).catch(() => {});
+      setLoadState('success');
+    }).catch(() => {
+      setLoadState('error');
+    });
   }, [eventId]);
 
   // Get minimum time (current time + 1 hour)
@@ -1276,6 +1284,57 @@ const EditEvent = () => {
   };
 
 
+
+  // Loading state
+  if (loadState === 'loading' || (eventId && loadState === 'idle')) {
+    return (
+      <div className="min-h-screen app-gradient-bg relative">
+        <TopBar title="Edit Event" showBack={true} onBack={() => navigate(-1)} />
+        <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24 flex items-center justify-center min-h-[50vh]">
+          <div className="animate-pulse space-y-4 w-full max-w-sm">
+            <div className="h-8 bg-muted rounded w-3/4" />
+            <div className="h-4 bg-muted rounded w-1/2" />
+            <div className="h-4 bg-muted rounded w-2/3" />
+            <div className="h-12 bg-muted rounded" />
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  // Error states: not found or load error
+  if (loadState === 'not_found' || loadState === 'error') {
+    return (
+      <div className="min-h-screen app-gradient-bg relative">
+        <TopBar title="Edit Event" showBack={true} onBack={() => navigate(-1)} />
+        <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
+          <Card className="shadow-medium border-border-soft">
+            <CardContent className="p-8 text-center">
+              <div className="text-4xl mb-4">{loadState === 'not_found' ? '❌' : '⚠️'}</div>
+              <h3 className="font-semibold mb-2">
+                {loadState === 'not_found' ? 'Event not found' : 'Something went wrong'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {loadState === 'not_found'
+                  ? "The event you're looking for doesn't exist or has been removed."
+                  : "We couldn't load this event. Please try again later."}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button onClick={() => navigate('/events')} variant="default" className="rounded-full">
+                  Browse Events
+                </Button>
+                <Button onClick={() => navigate('/my-events')} variant="outline" className="rounded-full">
+                  My Events
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen app-gradient-bg relative">
