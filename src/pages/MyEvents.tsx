@@ -89,10 +89,10 @@ const MyEvents = () => {
   const [joinedEvents, setJoinedEvents] = useState<Event[]>([]);
 
   useEffect(() => {
-    // Initialize with mock data if localStorage is empty
-    let existingHostedEvents = [];
-    let existingJoinedEvents = [];
-    
+    // Load only from localStorage – no mock events
+    let existingHostedEvents: Event[] = [];
+    let existingJoinedEvents: Event[] = [];
+
     try {
       existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
     } catch (error) {
@@ -100,7 +100,7 @@ const MyEvents = () => {
       localStorage.removeItem('hostedEvents');
       existingHostedEvents = [];
     }
-    
+
     try {
       existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
     } catch (error) {
@@ -108,125 +108,8 @@ const MyEvents = () => {
       localStorage.removeItem('joinedEvents');
       existingJoinedEvents = [];
     }
-    
-    if (existingHostedEvents.length === 0) {
-      // Add initial mock events
-      const initialMockEvents: Event[] = [
-        {
-          id: 'hosted-1',
-          title: 'Georgian Language Exchange Meetup',
-          description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
-          category: 'language',
-          type: 'in-person',
-          location: 'Tbilisi, Georgia',
-          address: 'Rustaveli Avenue 15, Tbilisi',
-          date: '2024-01-15',
-          time: '18:00',
-          duration: 120,
-          maxParticipants: 25,
-          currentParticipants: 18,
-          price: 0,
-          currency: 'GEL',
-          organizer: {
-            id: user?.id || 'user1',
-            name: user?.username || 'You',
-            avatar: user?.avatar || '👤',
-            isVerified: true
-          },
-          tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-          isPrivate: false,
-          isFeatured: true,
-          image: 'https://picsum.photos/400/300?random=1',
-          language: 'Georgian',
-          skillLevel: 'all-levels',
-          ageRestriction: '18+',
-          highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-          isBookmarked: false,
-          isJoined: true,
-          createdAt: '2024-01-10T10:00:00Z',
-          lastUpdated: '2024-01-10T10:00:00Z',
-          status: 'upcoming'
-        },
-        {
-          id: 'hosted-2',
-          title: 'Art & Wine Evening',
-          description: 'Unleash your creativity while enjoying fine wines. Professional artists will guide you through painting techniques in a relaxed atmosphere.',
-          category: 'culture',
-          type: 'in-person',
-          location: 'Tbilisi, Georgia',
-          address: 'Art Gallery, Old Town, Tbilisi',
-          date: '2024-01-25',
-          time: '19:00',
-          duration: 180,
-          maxParticipants: 20,
-          currentParticipants: 15,
-          price: 75,
-          currency: 'GEL',
-          organizer: {
-            id: user?.id || 'user2',
-            name: user?.username || 'You',
-            avatar: user?.avatar || '👤',
-            isVerified: true
-          },
-          tags: ['Art', 'Wine', 'Creative', 'Social'],
-          isPrivate: false,
-          isFeatured: true,
-          image: 'https://picsum.photos/400/300?random=10',
-          language: 'English',
-          skillLevel: 'all-levels',
-          ageRestriction: '21+',
-          requirements: ['No experience needed', 'Comfortable clothing'],
-          highlights: ['Professional art instruction', 'Wine tasting included', 'Take home your artwork'],
-          isBookmarked: false,
-          isJoined: true,
-          createdAt: '2024-01-02T11:00:00Z',
-          lastUpdated: '2024-01-02T11:00:00Z',
-          status: 'upcoming'
-        },
-        {
-          id: 'hosted-3',
-          title: 'Yoga & Meditation Retreat',
-          description: 'A peaceful weekend retreat combining yoga, meditation, and mindfulness practices in the beautiful Georgian countryside.',
-          category: 'wellness',
-          type: 'in-person',
-          location: 'Kakheti Region, Georgia',
-          address: 'Mountain Retreat Center, Kakheti',
-          date: '2024-01-28',
-          time: '09:00',
-          duration: 1440,
-          maxParticipants: 15,
-          currentParticipants: 12,
-          price: 200,
-          currency: 'GEL',
-          organizer: {
-            id: user?.id || 'user3',
-            name: user?.username || 'You',
-            avatar: user?.avatar || '👤',
-            isVerified: true
-          },
-          tags: ['Yoga', 'Meditation', 'Wellness', 'Retreat'],
-          isPrivate: false,
-          isFeatured: false,
-          image: 'https://picsum.photos/400/300?random=11',
-          language: 'English',
-          skillLevel: 'all-levels',
-          ageRestriction: '18+',
-          requirements: ['Yoga mat (provided)', 'Comfortable clothing', 'Open mind'],
-          highlights: ['Certified instructors', 'Accommodation included', 'Organic meals', 'Scenic location'],
-          isBookmarked: false,
-          isJoined: true,
-          createdAt: '2024-01-01T08:00:00Z',
-          lastUpdated: '2024-01-01T08:00:00Z',
-          status: 'upcoming'
-        }
-      ];
-      
-      localStorage.setItem('hostedEvents', JSON.stringify(initialMockEvents));
-      setHostedEvents(initialMockEvents);
-    } else {
-      setHostedEvents(existingHostedEvents);
-    }
-    
+
+    setHostedEvents(existingHostedEvents);
     setJoinedEvents(existingJoinedEvents);
     setLoading(false);
   }, [user]);
