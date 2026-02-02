@@ -189,57 +189,62 @@ const EditEvent = () => {
     { number: 7, title: 'Review', description: 'Preview and save changes', icon: '👁️' }
   ];
 
-  // Load existing event data immediately
+  // Load existing event from hostedEvents in localStorage
   useEffect(() => {
-    if (eventId) {
-      // TODO: Replace with actual API call
-      // For now, use mock data immediately
-      const mockEventData: EventFormData = {
-        title: 'Sample Event Title',
-        description: 'This is a sample event description',
-        aboutEvent: 'This is a detailed description of the sample event',
-        category: 'language',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Sample Address 123',
-        virtualMeetingLink: '',
-        date: '2024-02-15',
-        time: '18:00',
-        duration: 120,
-        maxParticipants: 25,
-        price: 0,
-        currency: 'GEL',
-        isPrivate: false,
-        language: 'English',
-        ageRestriction: '18+',
-        dressCode: 'Casual',
-        requirements: ['Bring enthusiasm', 'Basic knowledge'],
-        highlights: ['Great networking', 'Free coffee'],
-        tags: ['networking', 'learning'],
-        image: '',
-        agenda: [
-          { time: '18:00', activity: 'Welcome', description: 'Introduction and welcome' },
-          { time: '18:30', activity: 'Main Activity', description: 'Main event activities' }
-        ],
-        additionalInfo: 'Additional information about the event',
-        contactEmail: 'organizer@example.com',
-        contactPhone: '+995 123 456 789',
-        website: 'https://example.com',
-        socialMedia: {
-          facebook: 'https://facebook.com/example',
-          instagram: 'https://instagram.com/example'
-        },
-        cancellationPolicy: 'Free cancellation up to 24 hours before',
-        refundPolicy: 'Full refund available',
-        transportation: ['Metro line 1', 'Bus 37'],
-        parking: 'limited',
-        accessibility: ['Wheelchair accessible'],
-        photos: [],
-        documents: []
-      };
-
-      setFormData(mockEventData);
+    if (!eventId) return;
+    let hosted: any[] = [];
+    try {
+      hosted = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+    } catch {
+      hosted = [];
     }
+    const found = hosted.find((ev: any) => ev.id === eventId);
+    if (!found) return;
+    const e = found;
+    const agendaForm = Array.isArray(e.agenda)
+      ? e.agenda.map((item: any) =>
+          typeof item === 'string'
+            ? { time: '', activity: item, description: '' }
+            : { time: item.time ?? '', activity: item.activity ?? '', description: item.description ?? '' }
+        )
+      : [];
+    setFormData({
+      title: e.title ?? '',
+      description: e.description ?? '',
+      aboutEvent: e.aboutEvent ?? '',
+      category: e.category ?? 'language',
+      type: e.type ?? 'in-person',
+      location: e.location ?? '',
+      address: e.address ?? '',
+      virtualMeetingLink: e.virtualMeetingLink ?? '',
+      date: e.date ?? '',
+      time: e.time ?? '',
+      duration: typeof e.duration === 'number' ? e.duration : 60,
+      maxParticipants: typeof e.maxParticipants === 'number' ? e.maxParticipants : 20,
+      price: typeof e.price === 'number' ? e.price : 0,
+      currency: e.currency ?? 'GEL',
+      isPrivate: !!e.isPrivate,
+      language: e.language ?? '',
+      ageRestriction: e.ageRestriction ?? '18+',
+      dressCode: e.dressCode ?? '',
+      requirements: Array.isArray(e.requirements) ? e.requirements : [],
+      highlights: Array.isArray(e.highlights) ? e.highlights : [],
+      tags: Array.isArray(e.tags) ? e.tags : [],
+      image: e.image ?? '',
+      agenda: agendaForm,
+      additionalInfo: e.additionalInfo ?? '',
+      contactEmail: e.contactEmail ?? '',
+      contactPhone: e.contactPhone ?? '',
+      website: e.website ?? '',
+      socialMedia: e.socialMedia && typeof e.socialMedia === 'object' ? e.socialMedia : {},
+      cancellationPolicy: e.cancellationPolicy ?? '',
+      refundPolicy: e.refundPolicy ?? '',
+      transportation: Array.isArray(e.transportation) ? e.transportation : [],
+      parking: e.parking === 'yes' || e.parking === 'no' || e.parking === 'limited' || e.parking === 'paid' ? e.parking : 'no',
+      accessibility: Array.isArray(e.accessibility) ? e.accessibility : [],
+      photos: Array.isArray(e.photos) ? e.photos : [],
+      documents: Array.isArray(e.documents) ? e.documents : []
+    });
   }, [eventId]);
 
   // Get minimum time (current time + 1 hour)

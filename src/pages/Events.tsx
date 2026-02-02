@@ -117,326 +117,65 @@ const Events = () => {
     { value: 'distance', label: 'Nearest First' }
   ];
 
-  // Load events from localStorage and add more mock events
+  // Load events from localStorage only (hosted + joined; no mock events)
   const [events, setEvents] = useState<Event[]>([]);
 
-  useEffect(() => {
-            // Load joined events from localStorage with safe fallback
-        let joinedEvents = [];
-        try {
-          joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-        } catch (error) {
-          console.warn('Failed to parse joinedEvents from localStorage:', error);
-          // Clear corrupted data and start fresh
-          localStorage.removeItem('joinedEvents');
-          joinedEvents = [];
+  // Normalize organizer so card never shows "unknown" (events from CreateEvent have hostName/organizer; legacy may have only hostName)
+  const normalizeEventOrganizer = (e: any): Event => {
+    const rawName = (e.organizer?.name ?? e.hostName ?? '').trim();
+    const displayName = !rawName || /^unknown$/i.test(rawName) ? 'Event host' : rawName;
+    const organizer = e.organizer && (e.organizer.id != null || e.organizer.name)
+      ? {
+          id: e.organizer.id ?? e.hostId ?? '',
+          name: displayName,
+          avatar: e.organizer.avatar ?? '👤',
+          isVerified: !!e.organizer.isVerified
         }
-    
-    // Base mock events with proper isJoined status from localStorage
-    const baseMockEvents: Event[] = [
-      {
-        id: '1',
-        title: 'Georgian Language Exchange Meetup',
-        description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
-        category: 'language',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Rustaveli Avenue 15, Tbilisi',
-        date: '2024-01-15',
-        time: '18:00',
-        duration: 120,
-        maxParticipants: 25,
-        currentParticipants: 18,
-        price: 0,
-        currency: 'GEL',
-        organizer: {
-          id: 'user1',
-          name: 'Tbilisi Language Club',
-          avatar: '🌍',
-          isVerified: true
-        },
-        tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-        isPrivate: false,
-        isFeatured: true,
-        image: 'https://picsum.photos/400/300?random=1',
-        language: 'Georgian',
-        skillLevel: 'all-levels',
-        ageRestriction: '18+',
-        highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '1'),
-        createdAt: '2024-01-10T10:00:00Z',
-        lastUpdated: '2024-01-10T10:00:00Z'
-      },
-      {
-        id: '2',
-        title: 'Electronic Music Night at Bass Club',
-        description: 'Join us for an electrifying night of electronic music, featuring local DJs and international artists. Dress to impress!',
-        category: 'music',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Vake District, Tbilisi',
-        date: '2024-01-16',
-        time: '22:00',
-        duration: 300,
-        maxParticipants: 200,
-        currentParticipants: 156,
-        price: 50,
-        currency: 'GEL',
-        organizer: {
-          id: 'user2',
-          name: 'Bass Club Tbilisi',
-          avatar: '🎵',
-          isVerified: true
-        },
-        tags: ['Electronic Music', 'Nightlife', 'DJs'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=2',
-        language: 'English',
-        ageRestriction: '21+',
-        dressCode: 'Smart casual to formal',
-        highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
-        isBookmarked: true,
-        isJoined: joinedEvents.some((e: any) => e.id === '2'),
-        createdAt: '2024-01-08T15:00:00Z',
-        lastUpdated: '2024-01-08T15:00:00Z'
-      },
-      {
-        id: '3',
-        title: 'Philosophy & Coffee Discussion Group',
-        description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society". All perspectives welcome.',
-        category: 'education',
-        type: 'hybrid',
-        location: 'Tbilisi, Georgia',
-        address: 'Coffee Lab, Old Town, Tbilisi',
-        date: '2024-01-14',
-        time: '14:00',
-        duration: 90,
-        maxParticipants: 15,
-        currentParticipants: 8,
-        price: 15,
-        currency: 'GEL',
-        organizer: {
-          id: 'user3',
-          name: 'Philosophy Circle',
-          avatar: '🤔',
+      : {
+          id: e.hostId ?? '',
+          name: displayName,
+          avatar: '👤',
           isVerified: false
-        },
-        tags: ['Philosophy', 'Discussion', 'Coffee'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=3',
-        language: 'English',
-        skillLevel: 'all-levels',
-        ageRestriction: '18+',
-        highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '3'),
-        createdAt: '2024-01-12T09:00:00Z',
-        lastUpdated: '2024-01-12T09:00:00Z'
-      },
-      {
-        id: '4',
-        title: 'Weekend Hiking Adventure',
-        description: 'Explore the beautiful trails around Tbilisi with experienced guides. Suitable for all fitness levels.',
-        category: 'outdoor',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Meeting point: Liberty Square',
-        date: '2024-01-20',
-        time: '08:00',
-        duration: 360,
-        maxParticipants: 20,
-        currentParticipants: 12,
-        price: 25,
-        currency: 'GEL',
-        organizer: {
-          id: 'user4',
-          name: 'Tbilisi Hiking Club',
-          avatar: '🏔️',
-          isVerified: true
-        },
-        tags: ['Hiking', 'Nature', 'Adventure'],
-        isPrivate: false,
-        isFeatured: true,
-        image: 'https://picsum.photos/400/300?random=4',
-        language: 'English',
-        ageRestriction: '18+',
-        requirements: ['Comfortable shoes', 'Water bottle', 'Weather-appropriate clothing'],
-        highlights: ['Professional guides', 'Beautiful scenery', 'Group bonding'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '4'),
-        createdAt: '2024-01-05T10:00:00Z',
-        lastUpdated: '2024-01-05T10:00:00Z'
-      },
-      {
-        id: '5',
-        title: 'Cooking Masterclass: Georgian Cuisine',
-        description: 'Learn to cook traditional Georgian dishes from a master chef. All ingredients and equipment provided.',
-        category: 'food',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Culinary Institute, Old Town',
-        date: '2024-01-18',
-        time: '16:00',
-        duration: 180,
-        maxParticipants: 15,
-        currentParticipants: 10,
-        price: 80,
-        currency: 'GEL',
-        organizer: {
-          id: 'user5',
-          name: 'Georgian Culinary Arts',
-          avatar: '👨‍🍳',
-          isVerified: true
-        },
-        tags: ['Cooking', 'Georgian Cuisine', 'Workshop'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=5',
-        language: 'Georgian',
-        skillLevel: 'beginner',
-        ageRestriction: '18+',
-        requirements: ['No experience needed', 'Comfortable clothing'],
-        highlights: ['Master chef instruction', 'All materials included', 'Take home your creations'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '5'),
-        createdAt: '2024-01-03T14:00:00Z',
-        lastUpdated: '2024-01-03T14:00:00Z'
-      },
-      {
-        id: '6',
-        title: 'Virtual Book Club: Modern Literature',
-        description: 'Join our online book club discussing contemporary literature. This month: "The Midnight Library" by Matt Haig. Connect with readers worldwide!',
-        category: 'education',
-        type: 'virtual',
-        location: 'Online',
-        date: '2024-01-18',
-        time: '19:00',
-        duration: 60,
-        maxParticipants: 50,
-        currentParticipants: 23,
-        price: 0,
-        currency: 'USD',
-        organizer: {
-          id: 'user5',
-          name: 'Global Book Club',
-          avatar: '📚',
-          isVerified: true
-        },
-        tags: ['Book Club', 'Literature', 'Online Discussion'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=6',
-        language: 'English',
-        skillLevel: 'all-levels',
-        ageRestriction: '18+',
-        highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '6'),
-        createdAt: '2024-01-03T14:00:00Z',
-        lastUpdated: '2024-01-03T14:00:00Z'
-      },
-      {
-        id: '7',
-        title: 'Weekend Photography Workshop',
-        description: 'Learn photography basics and advanced techniques from professional photographers. Bring your camera and enthusiasm!',
-        category: 'education',
-        type: 'in-person',
-        location: 'Tbilisi, Georgia',
-        address: 'Photography Studio, Vake District',
-        date: '2024-01-22',
-        time: '10:00',
-        duration: 240,
-        maxParticipants: 12,
-        currentParticipants: 8,
-        price: 120,
-        currency: 'GEL',
-        organizer: {
-          id: 'user6',
-          name: 'Tbilisi Photography School',
-          avatar: '📸',
-          isVerified: true
-        },
-        tags: ['Photography', 'Workshop', 'Creative'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=7',
-        language: 'English',
-        skillLevel: 'beginner',
-        ageRestriction: '18+',
-        requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
-        highlights: ['Professional instructors', 'Hands-on practice', 'Equipment provided'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '7'),
-        createdAt: '2024-01-02T11:00:00Z',
-        lastUpdated: '2024-01-02T11:00:00Z'
-      },
-      {
-        id: '8',
-        title: 'Tech Startup Networking Mixer',
-        description: 'Connect with fellow entrepreneurs, investors, and tech professionals. Share ideas and build meaningful connections.',
-        category: 'business',
-        type: 'hybrid',
-        location: 'Tbilisi, Georgia',
-        address: 'Innovation Hub, Saburtalo',
-        date: '2024-01-19',
-        time: '18:30',
-        duration: 150,
-        maxParticipants: 100,
-        currentParticipants: 67,
-        price: 25,
-        currency: 'GEL',
-        organizer: {
-          id: 'user8',
-          name: 'Tbilisi Tech Community',
-          avatar: '💻',
-          isVerified: true
-        },
-        tags: ['Networking', 'Startups', 'Technology'],
-        isPrivate: false,
-        isFeatured: false,
-        image: 'https://picsum.photos/400/300?random=8',
-        language: 'English',
-        skillLevel: 'all-levels',
-        ageRestriction: '21+',
-        dressCode: 'Business casual',
-        highlights: ['Pitch competition', 'Free drinks', 'Investor meet & greet'],
-        isBookmarked: false,
-        isJoined: joinedEvents.some((e: any) => e.id === '8'),
-        createdAt: '2024-01-04T16:00:00Z',
-        lastUpdated: '2024-01-04T16:00:00Z'
-      }
-    ];
-    
-    // Update isJoined status based on localStorage
-    const eventsWithJoinedStatus = baseMockEvents.map(event => ({
-      ...event,
-      isJoined: joinedEvents.some((e: any) => e.id === event.id)
-    }));
-    
-    setEvents(eventsWithJoinedStatus);
+        };
+    return { ...e, organizer } as Event;
+  };
+
+  useEffect(() => {
+    let hosted: any[] = [];
+    let joined: any[] = [];
+    try {
+      hosted = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
+    } catch {
+      localStorage.removeItem('hostedEvents');
+    }
+    try {
+      joined = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
+    } catch {
+      localStorage.removeItem('joinedEvents');
+    }
+    const joinedIds = new Set(joined.map((x: any) => x.id));
+    const byId = new Map<string, any>();
+    hosted.forEach((e: any) => byId.set(e.id, { ...e, isJoined: joinedIds.has(e.id) }));
+    joined.forEach((e: any) => {
+      if (!byId.has(e.id)) byId.set(e.id, { ...e, isJoined: true });
+    });
+    const merged = Array.from(byId.values()).map(normalizeEventOrganizer);
+    setEvents(merged);
     setLoading(false);
   }, []);
 
 
 
 
-  // Filter events based on selected criteria
+  // Filter events based on selected criteria (show all: hosted + joined)
   const filteredEvents = events.filter(event => {
-    // Filter out joined events - they should not appear on the Events page
-    if (event.isJoined) {
-      return false;
-    }
-    
     // Search filter - check title, description, tags, and organizer name
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || 
                          event.title.toLowerCase().includes(searchLower) ||
                          event.description.toLowerCase().includes(searchLower) ||
                          event.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-                         event.organizer.name.toLowerCase().includes(searchLower) ||
+                         (event.organizer?.name ?? '').toLowerCase().includes(searchLower) ||
                          event.location.toLowerCase().includes(searchLower);
     
     // Category filter
@@ -1009,7 +748,7 @@ const Events = () => {
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Users size={16} />
-                        <span>{event.currentParticipants}/{event.maxParticipants}</span>
+                        <span>{event.currentParticipants ?? 0}/{event.maxParticipants ?? 0}</span>
                       </div>
                       {event.language && (
                         <div className="flex items-center gap-2 text-muted-foreground col-span-2">
@@ -1022,23 +761,25 @@ const Events = () => {
 
 
                     {/* Tags */}
+                    {(event.tags?.length ?? 0) > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      {event.tags.slice(0, 3).map((tag, index) => (
+                      {(event.tags ?? []).slice(0, 3).map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-xs h-6 px-2">
                           {tag}
                         </Badge>
                       ))}
                       {event.tags.length > 3 && (
                         <span className="text-xs text-muted-foreground">
-                          +{event.tags.length - 3} more
+                          +{(event.tags ?? []).length - 3} more
                         </span>
                       )}
                     </div>
+                    )}
                     
                     {/* Highlights */}
-                    {event.highlights.length > 0 && (
+                    {(event.highlights?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {event.highlights.slice(0, 2).map((highlight, index) => (
+                        {(event.highlights ?? []).slice(0, 2).map((highlight, index) => (
                           <Badge key={index} variant="outline" className="text-xs h-6 px-2 bg-green-50 text-green-700 border-green-200">
                             ✨ {highlight}
                           </Badge>
@@ -1048,11 +789,11 @@ const Events = () => {
                     
                     {/* Organizer and Action */}
                     <div className="flex items-center justify-between pt-2 border-t border-border-soft">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{event.organizer.avatar}</span>
-                        <div>
-                          <p className="text-sm font-medium">{event.organizer.name}</p>
-                          {event.organizer.isVerified && (
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl flex-shrink-0">{event.organizer?.avatar ?? '👤'}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium break-words min-w-0" title={event.organizer?.name ?? 'Event host'}>{event.organizer?.name ?? 'Event host'}</p>
+                          {event.organizer?.isVerified && (
                             <Badge variant="outline" className="text-xs h-5 px-1.5 bg-blue-50 text-blue-700 border-blue-200">
                               ✓ Verified
                             </Badge>

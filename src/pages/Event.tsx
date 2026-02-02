@@ -121,8 +121,11 @@ interface Event {
   isJoined: boolean;
   createdAt: string;
   lastUpdated: string;
-  // Additional fields for detailed view
+  // Additional fields from Add Event / detailed view
   longDescription?: string;
+  aboutEvent?: string;
+  virtualMeetingLink?: string;
+  additionalInfo?: string;
   agenda?: string[];
   rules?: string[];
   cancellationPolicy?: string;
@@ -196,544 +199,81 @@ const Event = () => {
       let foundEvent = joinedEvents.find((e: any) => e.id === id) || 
                       hostedEvents.find((e: any) => e.id === id);
       
-      // If not found in joined/hosted events, check if it's a public event from Events page
+      // Only show events from joined or hosted (no mock events)
       if (!foundEvent) {
-        // This would typically come from an API, but for now we'll create a mock event
-        // based on the ID to simulate different events
-        const mockEvents = {
-          '1': {
-            id: '1',
-            title: 'Georgian Language Exchange Meetup',
-            description: 'Practice Georgian with native speakers and fellow learners. All levels welcome! We\'ll have conversation tables, games, and cultural activities.',
-            category: 'language',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Rustaveli Avenue 15, Tbilisi',
-            date: '2024-01-15',
-            time: '18:00',
-            duration: 120,
-            maxParticipants: 25,
-            currentParticipants: 18,
-            price: 0,
-            currency: 'GEL',
-            organizer: {
-              id: 'user1',
-              name: 'Tbilisi Language Club',
-              avatar: '🌍',
-              isVerified: true
-            },
-            tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-            isPrivate: false,
-            isFeatured: true,
-            image: 'https://picsum.photos/400/300?random=1',
-            language: 'Georgian',
-            skillLevel: 'all-levels',
-            ageRestriction: '18+',
-            highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-10T10:00:00Z',
-            lastUpdated: '2024-01-10T10:00:00Z'
-          },
-          '2': {
-            id: '2',
-            title: 'Electronic Music Night at Bass Club',
-            description: 'Join us for an electrifying night of electronic music, featuring local DJs and international artists. Dress to impress!',
-            category: 'music',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Vake District, Tbilisi',
-            date: '2024-01-16',
-            time: '22:00',
-            duration: 300,
-            maxParticipants: 200,
-            currentParticipants: 156,
-            price: 50,
-            currency: 'GEL',
-            organizer: {
-              id: 'user2',
-              name: 'Bass Club Tbilisi',
-              avatar: '🎵',
-              isVerified: true
-            },
-            tags: ['Electronic Music', 'Nightlife', 'DJs'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=2',
-            language: 'English',
-            ageRestriction: '21+',
-            dressCode: 'Smart casual to formal',
-            highlights: ['Live DJs', 'Premium sound system', 'VIP areas'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-08T15:00:00Z',
-            lastUpdated: '2024-01-08T15:00:00Z'
-          },
-          '3': {
-            id: '3',
-            title: 'Philosophy & Coffee Discussion Group',
-            description: 'Deep philosophical discussions over coffee. This week\'s topic: "The Meaning of Happiness in Modern Society". All perspectives welcome.',
-            category: 'education',
-            type: 'hybrid',
-            location: 'Tbilisi, Georgia',
-            address: 'Coffee Lab, Old Town, Tbilisi',
-            date: '2024-01-14',
-            time: '14:00',
-            duration: 90,
-            maxParticipants: 15,
-            currentParticipants: 8,
-            price: 15,
-            currency: 'GEL',
-            organizer: {
-              id: 'user3',
-              name: 'Philosophy Circle',
-              avatar: '🤔',
-              isVerified: false
-            },
-            tags: ['Philosophy', 'Discussion', 'Coffee'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=3',
-            language: 'English',
-            skillLevel: 'all-levels',
-            ageRestriction: '18+',
-            highlights: ['Intellectual discussion', 'Coffee included', 'Small group'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-12T09:00:00Z',
-            lastUpdated: '2024-01-12T09:00:00Z'
-          },
-          '4': {
-            id: '4',
-            title: 'Weekend Hiking Adventure',
-            description: 'Explore the beautiful trails around Tbilisi with experienced guides. Suitable for all fitness levels.',
-            category: 'outdoor',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Meeting point: Liberty Square',
-            date: '2024-01-20',
-            time: '08:00',
-            duration: 360,
-            maxParticipants: 20,
-            currentParticipants: 12,
-            price: 25,
-            currency: 'GEL',
-            organizer: {
-              id: 'user4',
-              name: 'Tbilisi Hiking Club',
-              avatar: '🏔️',
-              isVerified: true
-            },
-            tags: ['Hiking', 'Nature', 'Adventure'],
-            isPrivate: false,
-            isFeatured: true,
-            image: 'https://picsum.photos/400/300?random=4',
-            language: 'English',
-            ageRestriction: '18+',
-            requirements: ['Comfortable shoes', 'Water bottle', 'Weather-appropriate clothing'],
-            highlights: ['Professional guides', 'Beautiful scenery', 'Group bonding'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-04T16:00:00Z',
-            lastUpdated: '2024-01-05T10:00:00Z'
-          },
-          '5': {
-            id: '5',
-            title: 'Cooking Masterclass: Georgian Cuisine',
-            description: 'Learn to cook traditional Georgian dishes from a master chef. All ingredients and equipment provided.',
-            category: 'food',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Culinary Institute, Old Town',
-            date: '2024-01-18',
-            time: '16:00',
-            duration: 180,
-            maxParticipants: 15,
-            currentParticipants: 10,
-            price: 80,
-            currency: 'GEL',
-            organizer: {
-              id: 'user5',
-              name: 'Georgian Culinary Arts',
-              avatar: '👨‍🍳',
-              isVerified: true
-            },
-            tags: ['Cooking', 'Georgian Cuisine', 'Workshop'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=5',
-            language: 'Georgian',
-            skillLevel: 'beginner',
-            ageRestriction: '18+',
-            requirements: ['No experience needed', 'Comfortable clothing'],
-            highlights: ['Master chef instruction', 'All materials included', 'Take home your creations'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-03T14:00:00Z',
-            lastUpdated: '2024-01-03T14:00:00Z'
-          },
-          '6': {
-            id: '6',
-            title: 'Virtual Book Club: Modern Literature',
-            description: 'Join our online book club discussing contemporary literature. This month: "The Midnight Library" by Matt Haig. Connect with readers worldwide!',
-            category: 'education',
-            type: 'virtual',
-            location: 'Online',
-            date: '2024-01-18',
-            time: '19:00',
-            duration: 60,
-            maxParticipants: 50,
-            currentParticipants: 23,
-            price: 0,
-            currency: 'USD',
-            organizer: {
-              id: 'user5',
-              name: 'Global Book Club',
-              avatar: '📚',
-              isVerified: true
-            },
-            tags: ['Book Club', 'Literature', 'Online Discussion'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=6',
-            language: 'English',
-            skillLevel: 'all-levels',
-            ageRestriction: '18+',
-            highlights: ['International community', 'Expert moderators', 'Reading materials provided'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-03T14:00:00Z',
-            lastUpdated: '2024-01-03T14:00:00Z'
-          },
-          '7': {
-            id: '7',
-            title: 'Weekend Photography Workshop',
-            description: 'Learn photography basics and advanced techniques from professional photographers. Bring your camera and enthusiasm!',
-            category: 'education',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Photography Studio, Vake District',
-            date: '2024-01-22',
-            time: '10:00',
-            duration: 240,
-            maxParticipants: 12,
-            currentParticipants: 8,
-            price: 120,
-            currency: 'GEL',
-            organizer: {
-              id: 'user6',
-              name: 'Tbilisi Photography School',
-              avatar: '📸',
-              isVerified: true
-            },
-            tags: ['Photography', 'Workshop', 'Creative'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=7',
-            language: 'English',
-            skillLevel: 'beginner',
-            ageRestriction: '18+',
-            requirements: ['Camera (any type)', 'Comfortable walking shoes', 'Creative spirit'],
-            highlights: ['Professional instructors', 'Hands-on practice', 'Equipment provided'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-02T11:00:00Z',
-            lastUpdated: '2024-01-02T11:00:00Z'
-          },
-          '8': {
-            id: '8',
-            title: 'Tech Startup Networking Mixer',
-            description: 'Connect with fellow entrepreneurs, investors, and tech professionals. Share ideas and build meaningful connections.',
-            category: 'business',
-            type: 'hybrid',
-            location: 'Tbilisi, Georgia',
-            address: 'Innovation Hub, Saburtalo',
-            date: '2024-01-19',
-            time: '18:30',
-            duration: 150,
-            maxParticipants: 100,
-            currentParticipants: 67,
-            price: 25,
-            currency: 'GEL',
-            organizer: {
-              id: 'user8',
-              name: 'Tbilisi Tech Community',
-              avatar: '💻',
-              isVerified: true
-            },
-            tags: ['Networking', 'Startups', 'Technology'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=8',
-            language: 'English',
-            skillLevel: 'all-levels',
-            ageRestriction: '21+',
-            dressCode: 'Business casual',
-            highlights: ['Pitch competition', 'Free drinks', 'Investor meet & greet'],
-            isBookmarked: false,
-            isJoined: false,
-            createdAt: '2024-01-04T16:00:00Z',
-            lastUpdated: '2024-01-04T16:00:00Z'
-          },
-          'hosted-1': {
-            id: 'hosted-1',
-            title: 'Georgian Language Exchange Meetup',
-            description: 'Practice Georgian with native speakers and fellow learners. All levels welcome!',
-            category: 'language',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Rustaveli Avenue 15, Tbilisi',
-            date: '2024-01-15',
-            time: '18:00',
-            duration: 120,
-            maxParticipants: 25,
-            currentParticipants: 18,
-            price: 0,
-            currency: 'GEL',
-            organizer: {
-              id: 'user1',
-              name: 'You',
-              avatar: '👤',
-              isVerified: true
-            },
-            tags: ['Georgian', 'Language Learning', 'Cultural Exchange'],
-            isPrivate: false,
-            isFeatured: true,
-            image: 'https://picsum.photos/400/300?random=1',
-            language: 'Georgian',
-            skillLevel: 'all-levels',
-            ageRestriction: '18+',
-            highlights: ['Native speakers', 'Cultural activities', 'Free coffee'],
-            isBookmarked: false,
-            isJoined: true,
-            createdAt: '2024-01-10T10:00:00Z',
-            lastUpdated: '2024-01-10T10:00:00Z'
-          },
-          'hosted-2': {
-            id: 'hosted-2',
-            title: 'Art & Wine Evening',
-            description: 'Unleash your creativity while enjoying fine wines. Professional artists will guide you through painting techniques in a relaxed atmosphere.',
-            category: 'culture',
-            type: 'in-person',
-            location: 'Tbilisi, Georgia',
-            address: 'Art Gallery, Old Town, Tbilisi',
-            date: '2024-01-25',
-            time: '19:00',
-            duration: 180,
-            maxParticipants: 20,
-            currentParticipants: 15,
-            price: 75,
-            currency: 'GEL',
-            organizer: {
-              id: 'user2',
-              name: 'You',
-              avatar: '👤',
-              isVerified: true
-            },
-            tags: ['Art', 'Wine', 'Creative', 'Social'],
-            isPrivate: false,
-            isFeatured: true,
-            image: 'https://picsum.photos/400/300?random=10',
-            language: 'English',
-            skillLevel: 'all-levels',
-            ageRestriction: '21+',
-            requirements: ['No experience needed', 'Comfortable clothing'],
-            highlights: ['Professional art instruction', 'Wine tasting included', 'Take home your artwork'],
-            isBookmarked: false,
-            isJoined: true,
-            createdAt: '2024-01-02T11:00:00Z',
-            lastUpdated: '2024-01-02T11:00:00Z'
-          },
-          'hosted-3': {
-            id: 'hosted-3',
-            title: 'Yoga & Meditation Retreat',
-            description: 'A peaceful weekend retreat combining yoga, meditation, and mindfulness practices in the beautiful Georgian countryside.',
-            category: 'wellness',
-            type: 'in-person',
-            location: 'Kakheti Region, Georgia',
-            address: 'Mountain Retreat Center, Kakheti',
-            date: '2024-01-28',
-            time: '09:00',
-            duration: 1440,
-            maxParticipants: 15,
-            currentParticipants: 12,
-            price: 200,
-            currency: 'GEL',
-            organizer: {
-              id: 'user3',
-              name: 'You',
-              avatar: '👤',
-              isVerified: true
-            },
-            tags: ['Yoga', 'Meditation', 'Wellness', 'Retreat'],
-            isPrivate: false,
-            isFeatured: false,
-            image: 'https://picsum.photos/400/300?random=11',
-            language: 'English',
-            skillLevel: 'all-levels',
-            ageRestriction: '18+',
-            requirements: ['Yoga mat (provided)', 'Comfortable clothing', 'Open mind'],
-            highlights: ['Certified instructors', 'Accommodation included', 'Organic meals', 'Scenic location'],
-            isBookmarked: false,
-            isJoined: true,
-            createdAt: '2024-01-01T08:00:00Z',
-            lastUpdated: '2024-01-01T08:00:00Z'
-          }
-        };
-        
-        foundEvent = mockEvents[id as keyof typeof mockEvents];
-      }
-      
-      if (foundEvent) {
-        // Convert the basic event to full event format
-        const fullEvent: Event = {
-          ...foundEvent,
-          longDescription: foundEvent.description + `\n\nThis is a detailed description of the ${foundEvent.title} event. Join us for an amazing experience!`,
-          address: foundEvent.address || foundEvent.location,
-          coordinates: { lat: 41.7151, lng: 44.8271 }, // Default Tbilisi coordinates
-          organizer: {
-            ...foundEvent.organizer,
-            bio: foundEvent.organizer?.bio || 'Event organizer with a passion for creating amazing experiences.',
-            contactEmail: foundEvent.organizer?.contactEmail || 'organizer@example.com',
-            website: foundEvent.organizer?.website || 'https://example.com',
-            socialMedia: foundEvent.organizer?.socialMedia || foundEvent.socialMedia
-          },
-          photos: foundEvent.image ? [foundEvent.image] : [],
-          // Use actual agenda from created event, or fallback to default
-          agenda: foundEvent.agenda && foundEvent.agenda.length > 0 ? 
-            foundEvent.agenda.map(item => `${item.time} - ${item.activity}${item.description ? `: ${item.description}` : ''}`) :
-            [
-              '18:00 - Welcome and introductions',
-              '18:15 - Event begins',
-              '19:00 - Main activities',
-              '20:00 - Networking and socializing',
-              '21:00 - Event concludes'
-            ],
-          // Use actual rules from created event, or fallback to default
-          rules: foundEvent.rules && foundEvent.rules.length > 0 ? foundEvent.rules : [
-            'Be respectful of all participants',
-            'Follow the venue\'s rules and regulations',
-            'No discrimination or harassment',
-            'Have fun and make connections!'
-          ],
-          // Use actual policies from created event, or fallback to default
-          cancellationPolicy: foundEvent.cancellationPolicy || 'Free cancellation up to 24 hours before the event.',
-          refundPolicy: foundEvent.refundPolicy || (foundEvent.price === 0 ? 'This is a free event, so no refunds apply.' : 'Standard refund policy applies.'),
-          // Use actual transportation from created event, or fallback to default
-          transportation: foundEvent.transportation && foundEvent.transportation.length > 0 ? foundEvent.transportation : [
-            'Metro: Various stations throughout the city',
-            'Bus: Multiple routes available',
-            'Taxi: Available throughout the city'
-          ],
-          // Use actual parking info from created event, or fallback to default
-          parking: foundEvent.parking || 'Limited street parking available. Recommended to use public transportation.',
-          // Use actual accessibility from created event, or fallback to default
-          accessibility: foundEvent.accessibility && foundEvent.accessibility.length > 0 ? foundEvent.accessibility : [
-            'Wheelchair accessible entrance',
-            'Elevator available',
-            'Accessible restrooms'
-          ],
-          // Use actual documents from created event, or fallback to default
-          documents: foundEvent.documents && foundEvent.documents.length > 0 ? foundEvent.documents : [
-            {
-              name: 'Event Guidelines.pdf',
-              url: '#',
-              type: 'pdf',
-              size: '2.3 MB'
-            }
-          ]
-        };
-        
-        setEvent(fullEvent);
-        
-        // Set isJoined status based on whether user is in joinedEvents
-        const isUserJoined = joinedEvents.some((e: any) => e.id === id);
-        setEvent(prev => prev ? { ...prev, isJoined: isUserJoined } : null);
-      } else {
-        // If event not found, show error
         setEvent(null);
+        setParticipants([]);
+        setMessages([]);
+        return;
       }
 
-      // Mock participants
-      const mockParticipants: EventParticipant[] = [
-        {
-          id: 'user1',
-          name: 'Tbilisi Language Club',
-          avatar: '🌍',
-          isVerified: true,
-          joinedAt: '2024-01-10T10:00:00Z',
-          status: 'confirmed',
-          isOrganizer: true
-        },
-        {
-          id: 'user2',
-          name: 'Maria K.',
-          avatar: '👩',
-          isVerified: true,
-          joinedAt: '2024-01-11T14:30:00Z',
-          status: 'confirmed',
-          isOrganizer: false
-        },
-        {
-          id: 'user3',
-          name: 'David M.',
-          avatar: '👨',
-          isVerified: false,
-          joinedAt: '2024-01-12T09:15:00Z',
-          status: 'confirmed',
-          isOrganizer: false
-        },
-        {
-          id: 'user4',
-          name: 'Anna S.',
-          avatar: '👩‍🦰',
-          isVerified: true,
-          joinedAt: '2024-01-12T16:45:00Z',
-          status: 'maybe',
-          isOrganizer: false
-        }
-      ];
-
-      setParticipants(mockParticipants);
-
-      // Mock messages
-      const mockMessages: EventMessage[] = [
-        {
-          id: '1',
-          user: {
-            id: 'user1',
-            name: 'Tbilisi Language Club',
-            avatar: '🌍'
-          },
-          content: 'Welcome everyone! We\'re excited to see so many people interested in learning Georgian. Don\'t forget to bring your enthusiasm! 🇬🇪',
-          timestamp: '2 hours ago',
-          type: 'text'
-        },
-        {
-          id: '2',
-          user: {
-            id: 'user2',
-            name: 'Maria K.',
-            avatar: '👩'
-          },
-          content: 'I\'m so excited! This will be my first time practicing Georgian with native speakers. Any tips for beginners?',
-          timestamp: '1 hour ago',
-          type: 'text'
-        },
-        {
-          id: '3',
-          user: {
-            id: 'user1',
-            name: 'Tbilisi Language Club',
-            avatar: '🌍'
-          },
-          content: 'Great question Maria! Just come with an open mind and don\'t worry about making mistakes. We\'re all here to learn and help each other! 😊',
-          timestamp: '45 minutes ago',
-          type: 'text'
-        }
-      ];
-
-      setMessages(mockMessages);
+      const f = foundEvent as any;
+      const rawName = (f.organizer?.name ?? f.hostName ?? '').trim();
+      const organizerDisplayName = !rawName || /^unknown$/i.test(rawName) ? 'Event host' : rawName;
+      const hasOrganizer = f.organizer && (f.organizer.id != null || f.organizer.name);
+      const organizer = hasOrganizer
+        ? {
+            id: f.organizer.id ?? f.hostId ?? '',
+            name: organizerDisplayName,
+            avatar: f.organizer.avatar ?? '👤',
+            isVerified: !!f.organizer.isVerified,
+            bio: f.organizer?.bio,
+            contactEmail: f.organizer?.contactEmail ?? f.contactEmail,
+            contactPhone: f.organizer?.contactPhone ?? f.contactPhone,
+            website: (f.organizer?.website ?? f.website)?.trim() || undefined,
+            socialMedia: f.organizer?.socialMedia ?? f.socialMedia
+          }
+        : {
+            id: f.hostId ?? '',
+            name: organizerDisplayName,
+            avatar: '👤',
+            isVerified: false,
+            bio: undefined,
+            contactEmail: f.contactEmail?.trim() || undefined,
+            contactPhone: f.contactPhone?.trim() || undefined,
+            website: f.website?.trim() || undefined,
+            socialMedia: f.socialMedia
+          };
+      const agendaArray = f.agenda && Array.isArray(f.agenda) && f.agenda.length > 0;
+      const agendaStrings = agendaArray
+        ? f.agenda.map((item: any) =>
+            typeof item === 'string' ? item : `${item.time || ''} - ${item.activity || ''}${item.description ? `: ${item.description}` : ''}`.trim()
+          ).filter(Boolean)
+        : [];
+      const fullEvent: Event = {
+        ...f,
+        address: (f.address && String(f.address).trim()) ? String(f.address).trim() : undefined,
+        longDescription: (f.aboutEvent && String(f.aboutEvent).trim()) ? String(f.aboutEvent).trim() : (f.description || ''),
+        virtualMeetingLink: (f.virtualMeetingLink && String(f.virtualMeetingLink).trim()) ? String(f.virtualMeetingLink).trim() : undefined,
+        additionalInfo: (f.additionalInfo && String(f.additionalInfo).trim()) ? String(f.additionalInfo).trim() : undefined,
+        organizer,
+        currentParticipants: typeof f.currentParticipants === 'number' ? f.currentParticipants : (Array.isArray(f.participants) ? f.participants.length : 0),
+        photos: (f.photos && Array.isArray(f.photos) && f.photos.length > 0) ? f.photos : (f.image ? [f.image] : []),
+        agenda: agendaStrings,
+        rules: (f.rules && f.rules.length > 0) ? f.rules : [],
+        transportation: (f.transportation && f.transportation.length > 0) ? f.transportation : [],
+        parking: (f.parking && String(f.parking).trim()) ? String(f.parking).trim() : undefined,
+        accessibility: (f.accessibility && f.accessibility.length > 0) ? f.accessibility : [],
+        documents: (f.documents && f.documents.length > 0) ? f.documents : [],
+        cancellationPolicy: (f.cancellationPolicy && String(f.cancellationPolicy).trim()) ? String(f.cancellationPolicy).trim() : undefined,
+        refundPolicy: (f.refundPolicy && String(f.refundPolicy).trim()) ? String(f.refundPolicy).trim() : undefined
+      };
+      setEvent(fullEvent);
+      const isUserJoined = joinedEvents.some((e: any) => e.id === id);
+      setEvent(prev => prev ? { ...prev, isJoined: isUserJoined } : null);
+      const participantList: EventParticipant[] = Array.isArray(f.participants) && f.participants.length > 0
+        ? f.participants.map((p: any) => ({
+            id: p.id ?? p.userId ?? '',
+            name: p.name ?? p.username ?? 'Participant',
+            avatar: p.avatar ?? '👤',
+            isVerified: !!p.isVerified,
+            joinedAt: p.joinedAt ?? p.createdAt ?? '',
+            status: (p.status as 'confirmed' | 'pending' | 'maybe') ?? 'confirmed',
+            isOrganizer: p.isOrganizer ?? (p.id === f.hostId || p.userId === f.hostId)
+          }))
+        : [];
+      setParticipants(participantList);
+      setMessages([]);
     }
   }, [id]);
 
@@ -1107,29 +647,62 @@ const Event = () => {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
               <Calendar size={16} className="flex-shrink-0" />
-              <span className="truncate">{formatDate(event.date)}</span>
+              <span className="break-words">{formatDate(event.date)}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
               <Clock size={16} className="flex-shrink-0" />
-              <span className="truncate">{formatTime(event.time)} ({formatDuration(event.duration)})</span>
+              <span className="break-words">{formatTime(event.time)} ({formatDuration(event.duration)})</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 col-span-2">
               <MapPin size={16} className="flex-shrink-0" />
-              <span className="truncate">{event.location}</span>
+              <span className="break-words">{event.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {event.address && event.address !== event.location && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 col-span-2">
+                <MapPin size={16} className="flex-shrink-0" />
+                <span className="break-words">{event.address}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
               <Users size={16} className="flex-shrink-0" />
-              <span className="truncate">{event.currentParticipants}/{event.maxParticipants}</span>
+              <span className="break-words">{event.currentParticipants}/{event.maxParticipants} participants</span>
             </div>
           </div>
 
+          {/* Virtual meeting link – only when creator added it */}
+          {event.virtualMeetingLink && (event.type === 'virtual' || event.type === 'hybrid') && (
+            <div className="flex items-center gap-2 text-sm">
+              <Video size={16} className="flex-shrink-0 text-primary" />
+              <Button
+                variant="link"
+                size="sm"
+                className="p-0 h-auto text-primary font-medium"
+                onClick={() => window.open(event.virtualMeetingLink!, '_blank')}
+              >
+                Join online meeting
+              </Button>
+            </div>
+          )}
+
           {/* Primary Language */}
           {event.language && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
               <Globe size={16} className="flex-shrink-0" />
-              <span className="truncate">Primary Language: <span className="font-medium">{event.language}</span></span>
+              <span className="break-words">Primary Language: <span className="font-medium">{event.language}</span></span>
+            </div>
+          )}
+
+          {/* Age restriction & Dress code – from Add Event */}
+          {(event.ageRestriction || event.dressCode) && (
+            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+              {event.ageRestriction && (
+                <span className="break-words">Age: {event.ageRestriction}</span>
+              )}
+              {event.dressCode && (
+                <span className="break-words">Dress: {event.dressCode}</span>
+              )}
             </div>
           )}
 
@@ -1197,10 +770,10 @@ const Event = () => {
                   About this event
                 </h3>
                 <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {showFullDescription ? event.longDescription : event.description}
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
+                    {showFullDescription ? (event.longDescription || event.description) : event.description}
                   </p>
-                  {event.longDescription && (
+                  {event.longDescription && event.longDescription !== event.description && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1214,7 +787,37 @@ const Event = () => {
               </CardContent>
             </Card>
 
+            {/* Additional info – from Add Event */}
+            {event.additionalInfo && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Info size={18} className="text-primary" />
+                    Additional information
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{event.additionalInfo}</p>
+                </CardContent>
+              </Card>
+            )}
 
+            {/* Tags – from Add Event */}
+            {event.tags && event.tags.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Star size={18} className="text-primary" />
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {event.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-sm break-all">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Highlights */}
             {event.highlights && event.highlights.length > 0 && (
@@ -1326,7 +929,7 @@ const Event = () => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia.facebook, '_blank')}
+                        onClick={() => window.open(event.organizer.socialMedia!.facebook, '_blank')}
                       >
                         <span className="text-blue-600">📘</span>
                       </Button>
@@ -1336,7 +939,7 @@ const Event = () => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia.instagram, '_blank')}
+                        onClick={() => window.open(event.organizer.socialMedia!.instagram, '_blank')}
                       >
                         <span className="text-pink-600">📷</span>
                       </Button>
@@ -1346,7 +949,7 @@ const Event = () => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia.twitter, '_blank')}
+                        onClick={() => window.open(event.organizer.socialMedia!.twitter, '_blank')}
                       >
                         <span className="text-blue-400">🐦</span>
                       </Button>
@@ -1356,7 +959,7 @@ const Event = () => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia.linkedin, '_blank')}
+                        onClick={() => window.open(event.organizer.socialMedia!.linkedin, '_blank')}
                       >
                         <span className="text-blue-700">💼</span>
                       </Button>
@@ -1365,6 +968,22 @@ const Event = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Visit website – only when creator added website (three-dot and overview bottom) */}
+            {event.organizer.website && (
+              <Card>
+                <CardContent className="p-4">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center gap-2"
+                    onClick={() => window.open(event.organizer.website!, '_blank')}
+                  >
+                    <ExternalLink size={18} />
+                    Visit website
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Details Tab */}
@@ -1409,7 +1028,7 @@ const Event = () => {
               </Card>
             )}
 
-            {/* Transportation */}
+            {/* Transportation – only when creator added it */}
             {event.transportation && event.transportation.length > 0 && (
               <Card>
                 <CardContent className="p-4">
@@ -1420,19 +1039,52 @@ const Event = () => {
                   <div className="space-y-2">
                     {event.transportation.map((transport, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <Navigation size={16} className="text-blue-600" />
-                        <span className="text-sm text-muted-foreground">{transport}</span>
+                        <Navigation size={16} className="text-blue-600 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground break-words">{transport}</span>
                       </div>
                     ))}
                   </div>
                   {event.parking && (
                     <div className="mt-3 pt-3 border-t">
                       <div className="flex items-center gap-2">
-                        <Car size={16} className="text-gray-600" />
-                        <span className="text-sm text-muted-foreground">{event.parking}</span>
+                        <Car size={16} className="text-gray-600 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground break-words">{event.parking}</span>
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Parking only – when creator added parking but no transportation */}
+            {event.parking && (!event.transportation || event.transportation.length === 0) && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Car size={18} className="text-primary" />
+                    Parking
+                  </h3>
+                  <p className="text-sm text-muted-foreground break-words">{event.parking}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Accessibility – only when creator added it */}
+            {event.accessibility && event.accessibility.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Info size={18} className="text-primary" />
+                    Accessibility
+                  </h3>
+                  <ul className="space-y-2">
+                    {event.accessibility.map((item, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground break-words">
+                        <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             )}
@@ -1483,29 +1135,31 @@ const Event = () => {
               </Card>
             )}
 
-            {/* Policies */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Info size={18} className="text-primary" />
-                  Policies
-                </h3>
-                <div className="space-y-3">
-                  {event.cancellationPolicy && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1">Cancellation Policy</h4>
-                      <p className="text-sm text-muted-foreground">{event.cancellationPolicy}</p>
-                    </div>
-                  )}
-                  {event.refundPolicy && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1">Refund Policy</h4>
-                      <p className="text-sm text-muted-foreground">{event.refundPolicy}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Policies – only when creator added them */}
+            {(event.cancellationPolicy || event.refundPolicy) && (
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Info size={18} className="text-primary" />
+                    Policies
+                  </h3>
+                  <div className="space-y-3">
+                    {event.cancellationPolicy && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-1">Cancellation Policy</h4>
+                        <p className="text-sm text-muted-foreground break-words">{event.cancellationPolicy}</p>
+                      </div>
+                    )}
+                    {event.refundPolicy && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-1">Refund Policy</h4>
+                        <p className="text-sm text-muted-foreground break-words">{event.refundPolicy}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Participants Tab */}
@@ -1515,7 +1169,7 @@ const Event = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold flex items-center gap-2 text-base">
                     <Users size={18} className="text-primary flex-shrink-0" />
-                    <span className="truncate">Participants ({participants.length})</span>
+                    <span className="break-words">Participants ({participants.length})</span>
                   </h3>
                   <Button
                     variant="ghost"
@@ -1535,7 +1189,7 @@ const Event = () => {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-medium text-sm truncate">{participant.name}</p>
+                          <p className="font-medium text-sm break-words min-w-0">{participant.name}</p>
                           {participant.isVerified && (
                             <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0">
                               ✓

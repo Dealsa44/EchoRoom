@@ -346,8 +346,8 @@ const MyEvents = () => {
   };
 
   const handleManageParticipants = (eventId: string) => {
-    // Navigate to participant management page (to be implemented)
-    navigate(`/event/${eventId}/participants`);
+    // Open event detail page; user can switch to People tab there
+    navigate(`/event/${eventId}`);
   };
 
   const handleSendAnnouncement = (eventId: string) => {

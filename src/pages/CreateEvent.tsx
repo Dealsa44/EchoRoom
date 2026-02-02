@@ -415,15 +415,30 @@ const CreateEvent = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Create new event with unique ID
+      // Create new event with unique ID (organizer + currentParticipants so Events list and detail show real data)
       const newEvent = {
         ...formData,
         id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
         hostId: user?.id || 'user_1',
         hostName: user?.username || 'You',
         participants: [],
-        isHosted: true
+        currentParticipants: 0,
+        isHosted: true,
+        isBookmarked: false,
+        isJoined: false,
+        isFeatured: false,
+        organizer: {
+          id: user?.id || 'user_1',
+          name: user?.username || 'You',
+          avatar: user?.avatar || '👤',
+          isVerified: false,
+          contactEmail: formData.contactEmail || undefined,
+          contactPhone: formData.contactPhone || undefined,
+          website: formData.website || undefined,
+          socialMedia: formData.socialMedia || undefined
+        }
       };
       
               // Save to localStorage with safe fallback
