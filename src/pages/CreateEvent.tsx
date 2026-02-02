@@ -37,6 +37,7 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { eventsApi } from '@/services/api';
+import { OpenInBrowserDialog } from '@/components/OpenInBrowserDialog';
 
 interface EventFormData {
   title: string;
@@ -148,6 +149,7 @@ const CreateEvent = () => {
   const [newDocumentName, setNewDocumentName] = useState('');
   const [newDocumentUrl, setNewDocumentUrl] = useState('');
   const [newDocumentType, setNewDocumentType] = useState<'pdf' | 'doc' | 'image'>('pdf');
+  const [openInBrowserUrl, setOpenInBrowserUrl] = useState<string | null>(null);
 
   // Debug: Log initial form data
   useEffect(() => {
@@ -1302,7 +1304,7 @@ const CreateEvent = () => {
                         variant="link"
                         size="sm"
                         className="p-0 h-auto text-muted-foreground hover:text-foreground"
-                        onClick={() => window.open(formData.website, '_blank')}
+                        onClick={() => setOpenInBrowserUrl(formData.website)}
                       >
                         Visit website
                       </Button>
@@ -1318,7 +1320,7 @@ const CreateEvent = () => {
                             variant="outline" 
                             size="sm" 
                             className="h-8 px-3 text-xs"
-                            onClick={() => window.open(formData.socialMedia.facebook, '_blank')}
+                            onClick={() => setOpenInBrowserUrl(formData.socialMedia.facebook!)}
                           >
                             Facebook
                           </Button>
@@ -1328,7 +1330,7 @@ const CreateEvent = () => {
                             variant="outline" 
                             size="sm" 
                             className="h-8 px-3 text-xs"
-                            onClick={() => window.open(formData.socialMedia.instagram, '_blank')}
+                            onClick={() => setOpenInBrowserUrl(formData.socialMedia.instagram!)}
                           >
                             Instagram
                           </Button>
@@ -1338,7 +1340,7 @@ const CreateEvent = () => {
                             variant="outline" 
                             size="sm" 
                             className="h-8 px-3 text-xs"
-                            onClick={() => window.open(formData.socialMedia.twitter, '_blank')}
+                            onClick={() => setOpenInBrowserUrl(formData.socialMedia.twitter!)}
                           >
                             Twitter
                           </Button>
@@ -1348,7 +1350,7 @@ const CreateEvent = () => {
                             variant="outline" 
                             size="sm" 
                             className="h-8 px-3 text-xs"
-                            onClick={() => window.open(formData.socialMedia.linkedin, '_blank')}
+                            onClick={() => setOpenInBrowserUrl(formData.socialMedia.linkedin!)}
                           >
                             LinkedIn
                           </Button>
@@ -1622,6 +1624,13 @@ const CreateEvent = () => {
           )}
         </div>
       </div>
+
+      <OpenInBrowserDialog
+        open={!!openInBrowserUrl}
+        onOpenChange={(o) => !o && setOpenInBrowserUrl(null)}
+        url={openInBrowserUrl ?? ''}
+        title="Open in browser"
+      />
 
       <BottomNavigation />
     </div>

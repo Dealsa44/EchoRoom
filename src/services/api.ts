@@ -151,6 +151,46 @@ const apiRequest = async <T>(
   }
 };
 
+// Generic cache: fast reads, stale-while-revalidate, invalidate on mutations
+const CACHE_TTL_MS = 60 * 1000; // 1 minute
+const apiCache: Record<string, { data: any; ts: number }> = {};
+
+function getCached<T>(key: string): T | null {
+  const ent = apiCache[key];
+  if (!ent || Date.now() - ent.ts > CACHE_TTL_MS) return null;
+  return ent.data as T;
+}
+function setCached(key: string, data: any) {
+  apiCache[key] = { data, ts: Date.now() };
+}
+export function invalidateApiCache(keyOrKeys: string | string[] | ((k: string) => boolean)) {
+  if (typeof keyOrKeys === 'string') {
+    delete apiCache[keyOrKeys];
+    return;
+  }
+  if (Array.isArray(keyOrKeys)) {
+    keyOrKeys.forEach((k) => delete apiCache[k]);
+    return;
+  }
+  Object.keys(apiCache).forEach((k) => {
+    if (keyOrKeys(k)) delete apiCache[k];
+  });
+}
+
+/** Return cached data if fresh; else fetch. When returning cached, revalidate in background so next read is up to date. */
+async function cachedOrFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const cached = getCached<T>(key);
+  if (cached != null) {
+    fetcher().then((fresh) => {
+      setCached(key, fresh);
+    }).catch(() => {});
+    return cached;
+  }
+  const data = await fetcher();
+  setCached(key, data);
+  return data;
+}
+
 // Authentication API functions
 export const authApi = {
   // Send verification code to email
@@ -201,6 +241,7 @@ export const authApi = {
 
     if (response.success && response.user) {
       setAuthToken(response.token);
+      invalidateApiCache(['auth/me', 'user/profile']);
       return {
         success: true,
         user: response.user,
@@ -222,44 +263,47 @@ export const authApi = {
     });
 
     removeAuthToken();
+    invalidateApiCache('auth/me');
     return response;
   },
 
-  // Get current user
+  // Get current user (cached; revalidate in background)
   getCurrentUser: async (): Promise<ApiResponse<User>> => {
-    return apiRequest<User>('/auth/me');
+    return cachedOrFetch('auth/me', () => apiRequest<User>('/auth/me'));
   },
 };
 
 // User API functions
 export const userApi = {
-  // Get user profile
   getProfile: async (): Promise<ApiResponse<User>> => {
-    return apiRequest<User>('/user/profile');
+    return cachedOrFetch('user/profile', () => apiRequest<User>('/user/profile'));
   },
 
-  // Update user profile
   updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return apiRequest<User>('/user/profile', {
+    const res = await apiRequest<User>('/user/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    if (res.success) invalidateApiCache('user/profile');
+    return res;
   },
 
-  // Search users
   searchUsers: async (query: string, limit = 20, offset = 0): Promise<ApiResponse<User[]>> => {
-    return apiRequest<User[]>(`/user/search?query=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
+    return cachedOrFetch(`user/search/${encodeURIComponent(query)}/${limit}/${offset}`, () =>
+      apiRequest<User[]>(`/user/search?query=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`)
+    );
   },
 
-  // Discover feed for Match page (compatible real users only). intent=relationship|friendship|both|all aligns backend with filter.
   getDiscover: async (intent?: string): Promise<{ success: boolean; users?: DiscoverProfile[]; message?: string }> => {
-    const query = intent && intent !== 'all' ? `?intent=${encodeURIComponent(intent)}` : '';
-    return apiRequest<any>(`/user/discover${query}`);
+    const key = `user/discover/${intent ?? 'all'}`;
+    return cachedOrFetch(key, async () => {
+      const q = intent && intent !== 'all' ? `?intent=${encodeURIComponent(intent)}` : '';
+      return apiRequest<any>(`/user/discover${q}`);
+    });
   },
 
-  // Public profile by id (for viewing another user's profile)
   getPublicProfile: async (id: string): Promise<{ success: boolean; profile?: DiscoverProfile; message?: string }> => {
-    return apiRequest<any>(`/user/${id}`);
+    return cachedOrFetch(`user/profile/${id}`, () => apiRequest<any>(`/user/${id}`));
   },
 };
 
@@ -361,33 +405,40 @@ export const forumApi = {
     if (params?.search) q.set('search', params.search);
     if (params?.sort) q.set('sort', params.sort);
     const query = q.toString();
-    return apiRequest<any>(`/forum/posts${query ? `?${query}` : ''}`);
+    const key = `forum/posts/${query || '_'}`;
+    return cachedOrFetch(key, () => apiRequest<any>(`/forum/posts${query ? `?${query}` : ''}`));
   },
 
   getPost: async (id: string): Promise<{ success: boolean; post?: ForumPostDetail; message?: string }> => {
-    return apiRequest<any>(`/forum/posts/${id}`);
+    return cachedOrFetch(`forum/post/${id}`, () => apiRequest<any>(`/forum/posts/${id}`));
   },
 
   getPostCount: async (): Promise<{ success: boolean; count?: number; message?: string }> => {
-    return apiRequest<any>('/forum/posts/count');
+    return cachedOrFetch('forum/posts/count', () => apiRequest<any>('/forum/posts/count'));
   },
 
   createPost: async (data: { title: string; content: string; category: string; tags?: string[] }): Promise<{ success: boolean; post?: ForumPostListItem; message?: string }> => {
-    return apiRequest<any>('/forum/posts', {
+    const res = await apiRequest<any>('/forum/posts', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (res.success) invalidateApiCache((k) => k.startsWith('forum/'));
+    return res;
   },
 
   reactPost: async (postId: string): Promise<{ success: boolean; liked?: boolean; count?: number; message?: string }> => {
-    return apiRequest<any>(`/forum/posts/${postId}/react`, { method: 'PUT' });
+    const res = await apiRequest<any>(`/forum/posts/${postId}/react`, { method: 'PUT' });
+    if (res.success) invalidateApiCache([`forum/post/${postId}`, 'forum/posts/count']);
+    return res;
   },
 
   addComment: async (postId: string, content: string, parentId?: string): Promise<{ success: boolean; comment?: ForumCommentNode; message?: string }> => {
-    return apiRequest<any>(`/forum/posts/${postId}/comments`, {
+    const res = await apiRequest<any>(`/forum/posts/${postId}/comments`, {
       method: 'POST',
       body: JSON.stringify({ content, parentId: parentId || undefined }),
     });
+    if (res.success) invalidateApiCache([`forum/post/${postId}`]);
+    return res;
   },
 
   reactComment: async (commentId: string): Promise<{ success: boolean; liked?: boolean; count?: number; message?: string }> => {
@@ -469,6 +520,43 @@ export interface EventMessageItem {
   type: string;
 }
 
+// Simple in-memory cache for events (avoid refetch when navigating back quickly)
+const EVENTS_CACHE_TTL_MS = 60 * 1000; // 1 minute
+const eventsCache: {
+  event: Record<string, { data: { success: boolean; event?: EventDetail }; ts: number }>;
+  my: { data: { success: boolean; hosted?: EventListItem[]; joined?: EventListItem[] }; ts: number } | null;
+  list: Record<string, { data: { success: boolean; events?: EventListItem[] }; ts: number }>;
+} = { event: {}, my: null, list: {} };
+
+function getCachedEvent(id: string): { success: boolean; event?: EventDetail } | null {
+  const ent = eventsCache.event[id];
+  if (!ent || Date.now() - ent.ts > EVENTS_CACHE_TTL_MS) return null;
+  return ent.data;
+}
+function setCachedEvent(id: string, data: { success: boolean; event?: EventDetail }) {
+  eventsCache.event[id] = { data, ts: Date.now() };
+}
+function getCachedMy(): { success: boolean; hosted?: EventListItem[]; joined?: EventListItem[] } | null {
+  if (!eventsCache.my || Date.now() - eventsCache.my.ts > EVENTS_CACHE_TTL_MS) return null;
+  return eventsCache.my.data;
+}
+function setCachedMy(data: { success: boolean; hosted?: EventListItem[]; joined?: EventListItem[] }) {
+  eventsCache.my = { data, ts: Date.now() };
+}
+function getCachedList(key: string): { success: boolean; events?: EventListItem[] } | null {
+  const ent = eventsCache.list[key];
+  if (!ent || Date.now() - ent.ts > EVENTS_CACHE_TTL_MS) return null;
+  return ent.data;
+}
+function setCachedList(key: string, data: { success: boolean; events?: EventListItem[] }) {
+  eventsCache.list[key] = { data, ts: Date.now() };
+}
+function invalidateEventsCache(opts?: { eventId?: string; my?: boolean; list?: boolean }) {
+  if (opts?.eventId) delete eventsCache.event[opts.eventId];
+  if (opts?.my) eventsCache.my = null;
+  if (opts?.list) eventsCache.list = {};
+}
+
 // Events API
 export const eventsApi = {
   list: async (params?: { category?: string; type?: string; date?: string; price?: string; search?: string; sort?: string }): Promise<{ success: boolean; events?: EventListItem[]; message?: string }> => {
@@ -480,35 +568,67 @@ export const eventsApi = {
     if (params?.search) q.set('search', params.search);
     if (params?.sort) q.set('sort', params.sort);
     const query = q.toString();
-    return apiRequest<any>(`/events${query ? `?${query}` : ''}`);
+    const key = query || '_';
+    const cached = getCachedList(key);
+    if (cached) {
+      apiRequest<any>(`/events${query ? `?${query}` : ''}`).then((res) => { if (res.success) setCachedList(key, res); }).catch(() => {});
+      return cached;
+    }
+    const res = await apiRequest<any>(`/events${query ? `?${query}` : ''}`);
+    if (res.success) setCachedList(key, res);
+    return res;
   },
 
   getMy: async (): Promise<{ success: boolean; hosted?: EventListItem[]; joined?: EventListItem[]; message?: string }> => {
-    return apiRequest<any>('/events/my');
+    const cached = getCachedMy();
+    if (cached) {
+      apiRequest<any>('/events/my').then((res) => { if (res.success) setCachedMy(res); }).catch(() => {});
+      return cached;
+    }
+    const res = await apiRequest<any>('/events/my');
+    if (res.success) setCachedMy(res);
+    return res;
   },
 
   get: async (id: string): Promise<{ success: boolean; event?: EventDetail; message?: string }> => {
-    return apiRequest<any>(`/events/${id}`);
+    const cached = getCachedEvent(id);
+    if (cached) {
+      apiRequest<any>(`/events/${id}`).then((res) => { if (res.success && res.event) setCachedEvent(id, res); }).catch(() => {});
+      return cached;
+    }
+    const res = await apiRequest<any>(`/events/${id}`);
+    if (res.success && res.event) setCachedEvent(id, res);
+    return res;
   },
 
   create: async (data: Record<string, unknown>): Promise<{ success: boolean; event?: EventListItem; message?: string }> => {
-    return apiRequest<any>('/events', { method: 'POST', body: JSON.stringify(data) });
+    const res = await apiRequest<any>('/events', { method: 'POST', body: JSON.stringify(data) });
+    if (res.success) invalidateEventsCache({ my: true, list: true });
+    return res;
   },
 
   update: async (id: string, data: Record<string, unknown>): Promise<{ success: boolean; message?: string }> => {
-    return apiRequest<any>(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    const res = await apiRequest<any>(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    if (res.success) invalidateEventsCache({ eventId: id, my: true, list: true });
+    return res;
   },
 
   delete: async (id: string): Promise<{ success: boolean; message?: string }> => {
-    return apiRequest<any>(`/events/${id}`, { method: 'DELETE' });
+    const res = await apiRequest<any>(`/events/${id}`, { method: 'DELETE' });
+    if (res.success) invalidateEventsCache({ eventId: id, my: true, list: true });
+    return res;
   },
 
   join: async (id: string): Promise<{ success: boolean; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/join`, { method: 'POST' });
+    const res = await apiRequest<any>(`/events/${id}/join`, { method: 'POST' });
+    if (res.success) invalidateEventsCache({ eventId: id, my: true, list: true });
+    return res;
   },
 
   leave: async (id: string): Promise<{ success: boolean; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/leave`, { method: 'POST' });
+    const res = await apiRequest<any>(`/events/${id}/leave`, { method: 'POST' });
+    if (res.success) invalidateEventsCache({ eventId: id, my: true, list: true });
+    return res;
   },
 
   react: async (id: string): Promise<{ success: boolean; reacted?: boolean; count?: number; message?: string }> => {
@@ -534,43 +654,40 @@ export const eventsApi = {
 
 // Chat API functions
 export const chatApi = {
-  // Get all chat rooms
   getChatRooms: async (category?: string, limit = 20, offset = 0): Promise<ApiResponse<any[]>> => {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     params.append('limit', limit.toString());
     params.append('offset', offset.toString());
-    
-    return apiRequest<any[]>(`/chat/rooms?${params.toString()}`);
+    const key = `chat/rooms/${category ?? '_'}/${limit}/${offset}`;
+    return cachedOrFetch(key, () => apiRequest<any[]>(`/chat/rooms?${params.toString()}`));
   },
 
-  // Get single chat room
   getChatRoom: async (id: string): Promise<ApiResponse<any>> => {
-    return apiRequest<any>(`/chat/rooms/${id}`);
+    return cachedOrFetch(`chat/room/${id}`, () => apiRequest<any>(`/chat/rooms/${id}`));
   },
 
-  // Join chat room
   joinChatRoom: async (id: string): Promise<ApiResponse> => {
-    return apiRequest(`/chat/rooms/${id}/join`, {
-      method: 'POST',
-    });
+    const res = await apiRequest(`/chat/rooms/${id}/join`, { method: 'POST' });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
   },
 
-  // Leave chat room
   leaveChatRoom: async (id: string): Promise<ApiResponse> => {
-    return apiRequest(`/chat/rooms/${id}/leave`, {
-      method: 'POST',
-    });
+    const res = await apiRequest(`/chat/rooms/${id}/leave`, { method: 'POST' });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
   },
 
-  // Get room messages
   getRoomMessages: async (id: string, limit = 50, offset = 0): Promise<ApiResponse<any[]>> => {
-    return apiRequest<any[]>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`);
+    const key = `chat/room/${id}/messages/${limit}/${offset}`;
+    return cachedOrFetch(key, () =>
+      apiRequest<any[]>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`)
+    );
   },
 
-  // Send message
   sendMessage: async (roomId: string, content: string, type = 'text', imageUrl?: string, fileData?: any, voiceData?: any): Promise<ApiResponse<any>> => {
-    return apiRequest<any>(`/chat/rooms/${roomId}/messages`, {
+    const res = await apiRequest<any>(`/chat/rooms/${roomId}/messages`, {
       method: 'POST',
       body: JSON.stringify({
         content,
@@ -580,6 +697,8 @@ export const chatApi = {
         voiceData,
       }),
     });
+    if (res.success) invalidateApiCache((k) => k.startsWith(`chat/room/${roomId}/`));
+    return res;
   },
 };
 

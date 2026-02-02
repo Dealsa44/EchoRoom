@@ -53,6 +53,7 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { eventsApi } from '@/services/api';
+import { OpenInBrowserDialog } from '@/components/OpenInBrowserDialog';
 
 interface EventParticipant {
   id: string;
@@ -154,7 +155,15 @@ const Event = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [openInBrowserUrl, setOpenInBrowserUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // When Chat tab is hidden (not joined), switch away from chat
+  useEffect(() => {
+    if (event && !event.isJoined && !event.isOrganizer && activeTab === 'chat') {
+      setActiveTab('overview');
+    }
+  }, [event?.isJoined, event?.isOrganizer, activeTab]);
 
   // Fetch event, participants, and messages from API
   useEffect(() => {
@@ -528,7 +537,7 @@ const Event = () => {
                      </DropdownMenuItem>
                    )}
                    {event.organizer.website && (
-                     <DropdownMenuItem onClick={() => window.open(event.organizer.website!, '_blank')}>
+                     <DropdownMenuItem onClick={() => setOpenInBrowserUrl(event.organizer.website!)}>
                        <ExternalLink size={16} className="mr-2" />
                        Visit Website
                      </DropdownMenuItem>
@@ -572,7 +581,7 @@ const Event = () => {
                 variant="link"
                 size="sm"
                 className="p-0 h-auto text-primary font-medium"
-                onClick={() => window.open(event.virtualMeetingLink!, '_blank')}
+                onClick={() => setOpenInBrowserUrl(event.virtualMeetingLink!)}
               >
                 Join online meeting
               </Button>
@@ -626,9 +635,9 @@ const Event = () => {
            )}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs: Chat only when joined or organizer */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 gap-1 p-1 bg-muted/30 rounded-lg">
+          <TabsList className={`grid w-full gap-1 p-1 bg-muted/30 rounded-lg ${(event.isJoined || event.isOrganizer) ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger 
               value="overview" 
               className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -647,12 +656,14 @@ const Event = () => {
             >
               People
             </TabsTrigger>
-            <TabsTrigger 
-              value="chat" 
-              className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              Chat
-            </TabsTrigger>
+            {(event.isJoined || event.isOrganizer) && (
+              <TabsTrigger 
+                value="chat" 
+                className="text-xs px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                Chat
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Overview Tab */}
@@ -816,7 +827,7 @@ const Event = () => {
                       variant="link"
                       size="sm"
                       className="p-0 h-auto text-muted-foreground hover:text-foreground"
-                      onClick={() => window.open(event.organizer.website!, '_blank')}
+                      onClick={() => setOpenInBrowserUrl(event.organizer.website!)}
                     >
                       Visit website
                     </Button>
@@ -833,7 +844,7 @@ const Event = () => {
                             variant="link"
                             size="sm"
                             className="p-0 h-auto text-primary font-normal"
-                            onClick={() => window.open(url, '_blank')}
+                            onClick={() => setOpenInBrowserUrl(url)}
                           >
                             {url}
                           </Button>
@@ -1083,100 +1094,77 @@ const Event = () => {
             </Card>
           </TabsContent>
 
-          {/* Chat Tab */}
-          <TabsContent value="chat" className="space-y-4 mt-4">
-            <Card className="min-h-96 max-h-96">
-              <CardContent className="p-4 h-full flex flex-col">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <MessageCircle size={18} className="text-primary" />
-                  Event Chat
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Chat with other participants about this event. Only visible to event participants.
-                </p>
-                
-                {!event.isJoined ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                      <MessageCircle size={48} className="text-muted-foreground mx-auto mb-3" />
-                      <p className="text-sm font-medium mb-2">Join the event to participate in chat</p>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Once you join, you can chat with other participants and ask questions about the event.
-                      </p>
-                      <Button
-                        onClick={handleJoinEvent}
-                        disabled={isJoining || event.currentParticipants >= event.maxParticipants}
-                        className="rounded-full"
-                      >
-                        {isJoining ? 'Joining...' : 'Join Event to Chat'}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-                      {messages.length === 0 ? (
-                        <div className="text-center py-8">
-                          <MessageCircle size={32} className="text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">No messages yet</p>
-                          <p className="text-xs text-muted-foreground">Be the first to start the conversation!</p>
-                        </div>
-                      ) : (
-                        messages.map((message) => (
-                          <div key={message.id} className="flex gap-3">
-                            <button
-                              type="button"
-                              onClick={() => navigate(message.user.id === user?.id ? '/profile' : `/profile/${message.user.id}`)}
-                              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
-                            >
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-sm">{message.user.avatar}</AvatarFallback>
-                              </Avatar>
-                            </button>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="text-sm font-medium">{message.user.name}</p>
-                                <span className="text-xs text-muted-foreground">
-                                  {message.timestamp ? new Date(message.timestamp).toLocaleString() : ''}
-                                </span>
-                              </div>
-                              <p className="text-sm text-muted-foreground bg-muted p-2 rounded-lg">
-                                {message.content}
-                              </p>
+          {/* Chat Tab – only rendered when joined or organizer; just messages + input */}
+          {(event.isJoined || event.isOrganizer) && (
+            <TabsContent value="chat" className="space-y-4 mt-4">
+              <Card className="min-h-96 max-h-96">
+                <CardContent className="p-4 h-full flex flex-col">
+                  <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                    {messages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <MessageCircle size={32} className="text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No messages yet</p>
+                        <p className="text-xs text-muted-foreground">Be the first to start the conversation!</p>
+                      </div>
+                    ) : (
+                      messages.map((message) => (
+                        <div key={message.id} className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => navigate(message.user.id === user?.id ? '/profile' : `/profile/${message.user.id}`)}
+                            className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-sm">{message.user.avatar}</AvatarFallback>
+                            </Avatar>
+                          </button>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="text-sm font-medium">{message.user.name}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {message.timestamp ? new Date(message.timestamp).toLocaleString() : ''}
+                              </span>
                             </div>
+                            <p className="text-sm text-muted-foreground bg-muted p-2 rounded-lg">
+                              {message.content}
+                            </p>
                           </div>
-                        ))
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                    
-                    {/* Message Input */}
-                    <div className="flex gap-2 mt-auto">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Ask a question or share something about the event..."
-                        className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
-                        size="sm"
-                        className="px-4 flex-shrink-0"
-                      >
-                        Send
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                        </div>
+                      ))
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                  <div className="flex gap-2 mt-auto">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Ask a question or share something about the event..."
+                      className="flex-1 px-3 py-2 border border-border-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim()}
+                      size="sm"
+                      className="px-4 flex-shrink-0"
+                    >
+                      Send
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
+
+      <OpenInBrowserDialog
+        open={!!openInBrowserUrl}
+        onOpenChange={(o) => !o && setOpenInBrowserUrl(null)}
+        url={openInBrowserUrl ?? ''}
+        title="Open in browser"
+      />
 
       {/* Leave Event Confirmation Modal */}
       <Dialog open={showLeaveConfirmation} onOpenChange={setShowLeaveConfirmation}>

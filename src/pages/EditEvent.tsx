@@ -37,6 +37,7 @@ import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { eventsApi } from '@/services/api';
+import { OpenInBrowserDialog } from '@/components/OpenInBrowserDialog';
 
 interface EventFormData {
   title: string;
@@ -144,6 +145,7 @@ const EditEvent = () => {
   const [newAgendaDescription, setNewAgendaDescription] = useState('');
   const [newTransportation, setNewTransportation] = useState('');
   const [newAccessibility, setNewAccessibility] = useState('');
+  const [openInBrowserUrl, setOpenInBrowserUrl] = useState<string | null>(null);
 
   const categories = [
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
@@ -1141,7 +1143,7 @@ const EditEvent = () => {
                         variant="link"
                         size="sm"
                         className="p-0 h-auto text-muted-foreground hover:text-foreground"
-                        onClick={() => window.open(formData.website, '_blank')}
+                        onClick={() => setOpenInBrowserUrl(formData.website)}
                       >
                         Visit website
                       </Button>
@@ -1389,6 +1391,13 @@ const EditEvent = () => {
           )}
         </Button>
       </div>
+
+      <OpenInBrowserDialog
+        open={!!openInBrowserUrl}
+        onOpenChange={(o) => !o && setOpenInBrowserUrl(null)}
+        url={openInBrowserUrl ?? ''}
+        title="Open in browser"
+      />
 
       <BottomNavigation />
     </div>
