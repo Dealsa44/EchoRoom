@@ -4,30 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Users, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Star,
-  Settings,
-  MessageCircle,
-  Share2,
-  MoreVertical,
-  Search,
-  Filter,
-  Eye,
-  Globe
-} from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, Edit, Trash2, Users, Calendar, Clock, MapPin, Star, Search, Eye, Globe } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { eventsApi } from '@/services/api';
 
 interface Event {
   id: string;
@@ -70,86 +52,42 @@ interface Event {
 const MyEvents = () => {
   const navigate = useNavigate();
   const { user } = useApp();
-  const [activeTab, setActiveTab] = useState(() => {
-      // Get the last active tab from localStorage, default to 'hosting'
-  try {
-    return localStorage.getItem('myEventsActiveTab') || 'hosting';
-  } catch (error) {
-    console.warn('Failed to get myEventsActiveTab from localStorage:', error);
-    return 'hosting';
-  }
-  });
+  const [activeTab, setActiveTab] = useState('hosting');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
 
-  // Load events from localStorage
   const [hostedEvents, setHostedEvents] = useState<Event[]>([]);
   const [joinedEvents, setJoinedEvents] = useState<Event[]>([]);
 
-  useEffect(() => {
-    // Load only from localStorage – no mock events
-    let existingHostedEvents: Event[] = [];
-    let existingJoinedEvents: Event[] = [];
-
-    try {
-      existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-    } catch (error) {
-      console.warn('Failed to parse hostedEvents from localStorage:', error);
-      localStorage.removeItem('hostedEvents');
-      existingHostedEvents = [];
-    }
-
-    try {
-      existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-    } catch (error) {
-      console.warn('Failed to parse joinedEvents from localStorage:', error);
-      localStorage.removeItem('joinedEvents');
-      existingJoinedEvents = [];
-    }
-
-    setHostedEvents(existingHostedEvents);
-    setJoinedEvents(existingJoinedEvents);
-    setLoading(false);
-  }, [user]);
-
-  // Refresh events when component becomes visible (e.g., returning from other pages)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshEvents();
-      }
-    };
-
-    const handleFocus = () => {
-      refreshEvents();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  // Function to refresh events from localStorage
   const refreshEvents = () => {
-    const existingHostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-    const existingJoinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-    setHostedEvents(existingHostedEvents);
-    setJoinedEvents(existingJoinedEvents);
+    setLoading(true);
+    eventsApi
+      .getMy()
+      .then((res) => {
+        if (res.success) {
+          setHostedEvents((res.hosted ?? []) as Event[]);
+          setJoinedEvents((res.joined ?? []) as Event[]);
+        }
+      })
+      .catch(() => {
+        setHostedEvents([]);
+        setJoinedEvents([]);
+      })
+      .finally(() => setLoading(false));
   };
 
-  // Simulate loading delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
+    refreshEvents();
+  }, [user]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refreshEvents();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const getCategoryIcon = (category: string) => {
@@ -220,33 +158,17 @@ const MyEvents = () => {
     navigate(`/edit-event/${eventId}`);
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    // Show confirmation dialog and delete event
-    if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
-      // Delete event logic here
-      console.log('Deleting event:', eventId);
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+    try {
+      await eventsApi.delete(eventId);
+      setHostedEvents(prev => prev.filter(e => e.id !== eventId));
+    } catch (e) {
+      console.error('Failed to delete event', e);
     }
   };
 
-  const handleManageParticipants = (eventId: string) => {
-    // Open event detail page; user can switch to People tab there
-    navigate(`/event/${eventId}`);
-  };
-
-  const handleSendAnnouncement = (eventId: string) => {
-    // Open announcement modal (to be implemented)
-    console.log('Send announcement for event:', eventId);
-  };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-          // Save the active tab to localStorage
-      try {
-        localStorage.setItem('myEventsActiveTab', value);
-      } catch (error) {
-        console.warn('Failed to save myEventsActiveTab to localStorage:', error);
-      }
-  };
+  const handleTabChange = (value: string) => setActiveTab(value);
 
   const handleLeaveEvent = (eventId: string) => {
     // Find the event to leave
@@ -257,23 +179,16 @@ const MyEvents = () => {
     }
   };
 
-  const confirmLeaveEvent = () => {
+  const confirmLeaveEvent = async () => {
     if (!eventToLeave) return;
-    
-    // Remove from joinedEvents
-    const updatedJoinedEvents = joinedEvents.filter(e => e.id !== eventToLeave.id);
-    setJoinedEvents(updatedJoinedEvents);
-    
-    // Update localStorage with safe fallback
     try {
-      localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
-    } catch (error) {
-      console.warn('Failed to update joinedEvents localStorage:', error);
+      await eventsApi.leave(eventToLeave.id);
+      setJoinedEvents(prev => prev.filter(e => e.id !== eventToLeave.id));
+      setShowLeaveConfirmation(false);
+      setEventToLeave(null);
+    } catch (e) {
+      console.error('Failed to leave event', e);
     }
-    
-    // Close modal and reset state
-    setShowLeaveConfirmation(false);
-    setEventToLeave(null);
   };
 
   const filteredHostedEvents = hostedEvents.filter(event =>
@@ -371,31 +286,20 @@ const MyEvents = () => {
               </Card>
             ) : (
               filteredHostedEvents.map((event) => (
-                <Card key={event.id} className="shadow-medium border-border-soft">
+                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`)}>
                   <CardContent className="p-0">
-                    {/* Event Image */}
                     {event.image && (
                       <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={event.image}
-                          alt={event.title}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                        
-                        {/* Event Type Badge */}
                         <div className="absolute top-3 left-3">
                           <Badge variant="glass" className="bg-white/90 text-black border-black/20">
                             {getEventTypeIcon(event.type)} {event.type}
                           </Badge>
                         </div>
-                        
-                        {/* Status Badge */}
                         <div className="absolute top-3 right-3">
-                          {getStatusBadge(event.status)}
+                          {getStatusBadge(event.status ?? 'upcoming')}
                         </div>
-                        
-                        {/* Price Badge */}
                         <div className="absolute bottom-3 right-3">
                           <Badge variant="glass" className="bg-white/90 text-black font-semibold">
                             {formatPrice(event.price, event.currency)}
@@ -403,67 +307,19 @@ const MyEvents = () => {
                         </div>
                       </div>
                     )}
-                    
-                    {/* Event Content */}
                     <div className="p-4 space-y-3">
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-xs h-6 px-2">
-                              {getCategoryIcon(event.category)} {event.category}
-                            </Badge>
-                            {event.isPrivate && (
-                              <Badge variant="outline" className="text-xs h-6 px-2 bg-red-50 text-red-700 border-red-200">
-                                Private
-                              </Badge>
-                            )}
-                          </div>
-                          <h3 className="font-semibold text-lg leading-tight mb-1">{event.title}</h3>
-                        </div>
-                        
-                        {/* Action Menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/event/${event.id}`)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Event
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditEvent(event.id)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Event
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleManageParticipants(event.id)}>
-                              <Users className="mr-2 h-4 w-4" />
-                              Manage Participants
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSendAnnouncement(event.id)}>
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Send Announcement
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteEvent(event.id)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Event
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs h-6 px-2">
+                          {getCategoryIcon(event.category)} {event.category}
+                        </Badge>
+                        {event.isPrivate && (
+                          <Badge variant="outline" className="text-xs h-6 px-2 bg-red-50 text-red-700 border-red-200">
+                            Private
+                          </Badge>
+                        )}
                       </div>
-                      
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                        {event.description}
-                      </p>
-                      
-                      {/* Event Details */}
+                      <h3 className="font-semibold text-lg leading-tight mb-1">{event.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{event.description}</p>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar size={16} />
@@ -488,26 +344,14 @@ const MyEvents = () => {
                           </div>
                         )}
                       </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2 border-t border-border-soft">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleManageParticipants(event.id)}
-                          className="flex-1"
-                        >
-                          <Users className="mr-2 h-4 w-4" />
-                          Participants
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditEvent(event.id)}
-                          className="flex-1"
-                        >
+                      <div className="flex gap-2 pt-2 border-t border-border-soft" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="outline" size="sm" onClick={() => handleEditEvent(event.id)} className="flex-1">
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteEvent(event.id)} className="flex-1">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
                         </Button>
                       </div>
                     </div>
@@ -551,33 +395,22 @@ const MyEvents = () => {
               </Card>
             ) : (
               filteredJoinedEvents.map((event) => (
-                <Card key={event.id} className="shadow-medium border-border-soft">
+                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`)}>
                   <CardContent className="p-0">
-                    {/* Event Image */}
                     {event.image && (
                       <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={event.image}
-                          alt={event.title}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                        
-                        {/* Event Type Badge */}
                         <div className="absolute top-3 left-3">
                           <Badge variant="glass" className="bg-white/90 text-black border-black/20">
                             {getEventTypeIcon(event.type)} {event.type}
                           </Badge>
                         </div>
-                        
-                        {/* Organizer Badge */}
                         <div className="absolute top-3 right-3">
                           <Badge variant="glass" className="bg-white/90 text-black border-black/20">
-                            {event.organizer.avatar} {event.organizer.name}
+                            {event.organizer?.avatar ?? '👤'} {event.organizer?.name ?? 'Host'}
                           </Badge>
                         </div>
-                        
-                        {/* Price Badge */}
                         <div className="absolute bottom-3 right-3">
                           <Badge variant="glass" className="bg-white/90 text-black font-semibold">
                             {formatPrice(event.price, event.currency)}
@@ -585,59 +418,19 @@ const MyEvents = () => {
                         </div>
                       </div>
                     )}
-                    
-                    {/* Event Content */}
                     <div className="p-4 space-y-3">
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-xs h-6 px-2">
-                              {getCategoryIcon(event.category)} {event.category}
-                            </Badge>
-                            {event.isPrivate && (
-                              <Badge variant="outline" className="text-xs h-6 px-2 bg-red-50 text-red-700 border-red-200">
-                                Private
-                              </Badge>
-                            )}
-                          </div>
-                          <h3 className="font-semibold text-lg leading-tight mb-1">{event.title}</h3>
-                        </div>
-                        
-                        {/* Action Menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/event/${event.id}`)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Event
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSendAnnouncement(event.id)}>
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Contact Organizer
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleLeaveEvent(event.id)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Users className="mr-2 h-4 w-4" />
-                              Leave Event
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs h-6 px-2">
+                          {getCategoryIcon(event.category)} {event.category}
+                        </Badge>
+                        {event.isPrivate && (
+                          <Badge variant="outline" className="text-xs h-6 px-2 bg-red-50 text-red-700 border-red-200">
+                            Private
+                          </Badge>
+                        )}
                       </div>
-                      
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                        {event.description}
-                      </p>
-                      
-                      {/* Event Details */}
+                      <h3 className="font-semibold text-lg leading-tight mb-1">{event.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{event.description}</p>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar size={16} />
@@ -662,25 +455,12 @@ const MyEvents = () => {
                           </div>
                         )}
                       </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2 border-t border-border-soft">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/event/${event.id}`)}
-                          className="flex-1"
-                        >
+                      <div className="flex gap-2 pt-2 border-t border-border-soft" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/event/${event.id}`)} className="flex-1">
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleLeaveEvent(event.id)}
-                          className="flex-1"
-                        >
-                          <Users className="mr-2 h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => handleLeaveEvent(event.id)} className="flex-1">
                           Leave Event
                         </Button>
                       </div>

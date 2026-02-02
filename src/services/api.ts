@@ -395,6 +395,143 @@ export const forumApi = {
   },
 };
 
+// Events API types
+export interface EventListItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  type: 'in-person' | 'virtual' | 'hybrid';
+  location: string;
+  address?: string;
+  date: string;
+  time: string;
+  duration: number;
+  maxParticipants: number;
+  currentParticipants: number;
+  price: number;
+  currency: string;
+  organizer: { id: string; name: string; avatar: string; isVerified: boolean };
+  tags: string[];
+  isPrivate: boolean;
+  isFeatured: boolean;
+  image?: string;
+  language?: string;
+  highlights: string[];
+  isJoined: boolean;
+  isBookmarked: boolean;
+  reactionCount?: number;
+  createdAt: string;
+  lastUpdated: string;
+}
+
+export interface EventDetail extends EventListItem {
+  longDescription?: string;
+  aboutEvent?: string;
+  virtualMeetingLink?: string;
+  additionalInfo?: string;
+  agenda?: string[];
+  rules?: string[];
+  cancellationPolicy?: string;
+  refundPolicy?: string;
+  transportation?: string[];
+  parking?: string;
+  accessibility?: string[];
+  photos?: string[];
+  documents?: Array<{ name: string; url: string; type: string; size: string }>;
+  organizer: EventListItem['organizer'] & {
+    bio?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+    socialMedia?: Record<string, string>;
+  };
+  isOrganizer?: boolean;
+  reactionCount: number;
+  userReacted?: boolean;
+}
+
+export interface EventParticipantItem {
+  id: string;
+  name: string;
+  avatar: string;
+  isVerified: boolean;
+  joinedAt: string;
+  status: string;
+  isOrganizer: boolean;
+}
+
+export interface EventMessageItem {
+  id: string;
+  user: { id: string; name: string; avatar: string };
+  content: string;
+  timestamp: string;
+  type: string;
+}
+
+// Events API
+export const eventsApi = {
+  list: async (params?: { category?: string; type?: string; date?: string; price?: string; search?: string; sort?: string }): Promise<{ success: boolean; events?: EventListItem[]; message?: string }> => {
+    const q = new URLSearchParams();
+    if (params?.category && params.category !== 'all') q.set('category', params.category);
+    if (params?.type && params.type !== 'all') q.set('type', params.type);
+    if (params?.date && params.date !== 'all') q.set('date', params.date);
+    if (params?.price && params.price !== 'all') q.set('price', params.price);
+    if (params?.search) q.set('search', params.search);
+    if (params?.sort) q.set('sort', params.sort);
+    const query = q.toString();
+    return apiRequest<any>(`/events${query ? `?${query}` : ''}`);
+  },
+
+  getMy: async (): Promise<{ success: boolean; hosted?: EventListItem[]; joined?: EventListItem[]; message?: string }> => {
+    return apiRequest<any>('/events/my');
+  },
+
+  get: async (id: string): Promise<{ success: boolean; event?: EventDetail; message?: string }> => {
+    return apiRequest<any>(`/events/${id}`);
+  },
+
+  create: async (data: Record<string, unknown>): Promise<{ success: boolean; event?: EventListItem; message?: string }> => {
+    return apiRequest<any>('/events', { method: 'POST', body: JSON.stringify(data) });
+  },
+
+  update: async (id: string, data: Record<string, unknown>): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest<any>(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest<any>(`/events/${id}`, { method: 'DELETE' });
+  },
+
+  join: async (id: string): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/join`, { method: 'POST' });
+  },
+
+  leave: async (id: string): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/leave`, { method: 'POST' });
+  },
+
+  react: async (id: string): Promise<{ success: boolean; reacted?: boolean; count?: number; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/react`, { method: 'PUT' });
+  },
+
+  getParticipants: async (id: string): Promise<{ success: boolean; participants?: EventParticipantItem[]; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/participants`);
+  },
+
+  removeParticipant: async (eventId: string, userId: string): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest<any>(`/events/${eventId}/participants/${userId}`, { method: 'DELETE' });
+  },
+
+  getMessages: async (id: string): Promise<{ success: boolean; messages?: EventMessageItem[]; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/messages`);
+  },
+
+  sendMessage: async (id: string, content: string): Promise<{ success: boolean; message?: EventMessageItem; message?: string }> => {
+    return apiRequest<any>(`/events/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
+  },
+};
+
 // Chat API functions
 export const chatApi = {
   // Get all chat rooms
@@ -451,6 +588,7 @@ export default {
   userApi,
   chatApi,
   forumApi,
+  eventsApi,
   getAuthToken,
   setAuthToken,
   removeAuthToken,

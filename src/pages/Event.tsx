@@ -52,6 +52,7 @@ import {
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { eventsApi } from '@/services/api';
 
 interface EventParticipant {
   id: string;
@@ -86,10 +87,10 @@ interface Event {
   coordinates?: { lat: number; lng: number };
   date: string;
   time: string;
-  duration: number; // in minutes
+  duration: number;
   maxParticipants: number;
   currentParticipants: number;
-  price: number; // 0 for free
+  price: number;
   currency: string;
   organizer: {
     id: string;
@@ -100,28 +101,25 @@ interface Event {
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
-    socialMedia?: {
-      facebook?: string;
-      instagram?: string;
-      twitter?: string;
-      linkedin?: string;
-    };
+    socialMedia?: Record<string, string>;
   };
   tags: string[];
   isPrivate: boolean;
   isFeatured: boolean;
   image?: string;
   language?: string;
-  skillLevel?: 'beginner' | 'intermediate' | 'advanced' | 'all-levels';
-  ageRestriction?: '18+' | '21+' | 'all-ages';
+  skillLevel?: string;
+  ageRestriction?: string;
   dressCode?: string;
   requirements?: string[];
   highlights: string[];
   isBookmarked: boolean;
   isJoined: boolean;
+  isOrganizer?: boolean;
+  reactionCount?: number;
+  userReacted?: boolean;
   createdAt: string;
   lastUpdated: string;
-  // Additional fields from Add Event / detailed view
   longDescription?: string;
   aboutEvent?: string;
   virtualMeetingLink?: string;
@@ -134,12 +132,7 @@ interface Event {
   parking?: string;
   accessibility?: string[];
   photos?: string[];
-  documents?: Array<{
-    name: string;
-    url: string;
-    type: 'pdf' | 'doc' | 'image';
-    size: string;
-  }>;
+  documents?: Array<{ name: string; url: string; type: string; size: string }>;
 }
 
 const Event = () => {
@@ -163,160 +156,68 @@ const Event = () => {
   const [isLeaving, setIsLeaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Simulate loading delay
+  // Fetch event, participants, and messages from API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Fetch event data based on ID
-  useEffect(() => {
-    if (id) {
-              // First try to get from localStorage (joined events)
-        let joinedEvents = [];
-        let hostedEvents = [];
-        
-        try {
-          joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-        } catch (error) {
-          console.warn('Failed to parse joinedEvents from localStorage:', error);
-          localStorage.removeItem('joinedEvents');
-          joinedEvents = [];
+    if (!id) return;
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await eventsApi.get(id);
+        if (cancelled) return;
+        if (!res.success || !res.event) {
+          setEvent(null);
+          setParticipants([]);
+          setMessages([]);
+          setLoading(false);
+          return;
         }
-        
-        try {
-          hostedEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-        } catch (error) {
-          console.warn('Failed to parse hostedEvents from localStorage:', error);
-          localStorage.removeItem('hostedEvents');
-          hostedEvents = [];
+        setEvent(res.event as Event);
+        const partRes = await eventsApi.getParticipants(id);
+        if (cancelled) return;
+        if (partRes.success && partRes.participants) {
+          setParticipants(partRes.participants as EventParticipant[]);
+        } else {
+          setParticipants([]);
         }
-      
-      // Find the event in either joined or hosted events
-      let foundEvent = joinedEvents.find((e: any) => e.id === id) || 
-                      hostedEvents.find((e: any) => e.id === id);
-      
-      // Only show events from joined or hosted (no mock events)
-      if (!foundEvent) {
-        setEvent(null);
-        setParticipants([]);
-        setMessages([]);
-        return;
-      }
-
-      const f = foundEvent as any;
-      const rawName = (f.organizer?.name ?? f.hostName ?? '').trim();
-      const organizerDisplayName = !rawName || /^unknown$/i.test(rawName) ? 'Event host' : rawName;
-      const hasOrganizer = f.organizer && (f.organizer.id != null || f.organizer.name);
-      const organizer = hasOrganizer
-        ? {
-            id: f.organizer.id ?? f.hostId ?? '',
-            name: organizerDisplayName,
-            avatar: f.organizer.avatar ?? '👤',
-            isVerified: !!f.organizer.isVerified,
-            bio: f.organizer?.bio,
-            contactEmail: f.organizer?.contactEmail ?? f.contactEmail,
-            contactPhone: f.organizer?.contactPhone ?? f.contactPhone,
-            website: (f.organizer?.website ?? f.website)?.trim() || undefined,
-            socialMedia: f.organizer?.socialMedia ?? f.socialMedia
+        if (res.event.isJoined || res.event.isOrganizer) {
+          const msgRes = await eventsApi.getMessages(id);
+          if (cancelled) return;
+          if (msgRes.success && msgRes.messages) {
+            setMessages(msgRes.messages.map((m: any) => ({
+              ...m,
+              timestamp: typeof m.timestamp === 'string' ? m.timestamp : new Date(m.timestamp).toISOString()
+            })));
           }
-        : {
-            id: f.hostId ?? '',
-            name: organizerDisplayName,
-            avatar: '👤',
-            isVerified: false,
-            bio: undefined,
-            contactEmail: f.contactEmail?.trim() || undefined,
-            contactPhone: f.contactPhone?.trim() || undefined,
-            website: f.website?.trim() || undefined,
-            socialMedia: f.socialMedia
-          };
-      const agendaArray = f.agenda && Array.isArray(f.agenda) && f.agenda.length > 0;
-      const agendaStrings = agendaArray
-        ? f.agenda.map((item: any) =>
-            typeof item === 'string' ? item : `${item.time || ''} - ${item.activity || ''}${item.description ? `: ${item.description}` : ''}`.trim()
-          ).filter(Boolean)
-        : [];
-      const fullEvent: Event = {
-        ...f,
-        address: (f.address && String(f.address).trim()) ? String(f.address).trim() : undefined,
-        longDescription: (f.aboutEvent && String(f.aboutEvent).trim()) ? String(f.aboutEvent).trim() : (f.description || ''),
-        virtualMeetingLink: (f.virtualMeetingLink && String(f.virtualMeetingLink).trim()) ? String(f.virtualMeetingLink).trim() : undefined,
-        additionalInfo: (f.additionalInfo && String(f.additionalInfo).trim()) ? String(f.additionalInfo).trim() : undefined,
-        organizer,
-        currentParticipants: typeof f.currentParticipants === 'number' ? f.currentParticipants : (Array.isArray(f.participants) ? f.participants.length : 0),
-        photos: (f.photos && Array.isArray(f.photos) && f.photos.length > 0) ? f.photos : (f.image ? [f.image] : []),
-        agenda: agendaStrings,
-        rules: (f.rules && f.rules.length > 0) ? f.rules : [],
-        transportation: (f.transportation && f.transportation.length > 0) ? f.transportation : [],
-        parking: (f.parking && String(f.parking).trim()) ? String(f.parking).trim() : undefined,
-        accessibility: (f.accessibility && f.accessibility.length > 0) ? f.accessibility : [],
-        documents: (f.documents && f.documents.length > 0) ? f.documents : [],
-        cancellationPolicy: (f.cancellationPolicy && String(f.cancellationPolicy).trim()) ? String(f.cancellationPolicy).trim() : undefined,
-        refundPolicy: (f.refundPolicy && String(f.refundPolicy).trim()) ? String(f.refundPolicy).trim() : undefined
-      };
-      setEvent(fullEvent);
-      const isUserJoined = joinedEvents.some((e: any) => e.id === id);
-      setEvent(prev => prev ? { ...prev, isJoined: isUserJoined } : null);
-      const participantList: EventParticipant[] = Array.isArray(f.participants) && f.participants.length > 0
-        ? f.participants.map((p: any) => ({
-            id: p.id ?? p.userId ?? '',
-            name: p.name ?? p.username ?? 'Participant',
-            avatar: p.avatar ?? '👤',
-            isVerified: !!p.isVerified,
-            joinedAt: p.joinedAt ?? p.createdAt ?? '',
-            status: (p.status as 'confirmed' | 'pending' | 'maybe') ?? 'confirmed',
-            isOrganizer: p.isOrganizer ?? (p.id === f.hostId || p.userId === f.hostId)
-          }))
-        : [];
-      setParticipants(participantList);
-      setMessages([]);
-    }
+        } else {
+          setMessages([]);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setEvent(null);
+          setParticipants([]);
+          setMessages([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [id]);
 
   const handleJoinEvent = async () => {
-    if (!event) return;
-    
+    if (!event || !user) return;
     setIsJoining(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Update local state
-    setEvent(prev => prev ? { ...prev, isJoined: true } : null);
-    
-    // Add to joinedEvents in localStorage with safe fallback
     try {
-      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-      if (!joinedEvents.some((e: any) => e.id === event.id)) {
-        joinedEvents.push(event);
-        localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
-      }
-    } catch (error) {
-      console.warn('Failed to update joinedEvents localStorage:', error);
-      // Clear corrupted data and start fresh
-      localStorage.removeItem('joinedEvents');
-      localStorage.setItem('joinedEvents', JSON.stringify([event]));
+      await eventsApi.join(event.id);
+      setEvent(prev => prev ? { ...prev, isJoined: true, currentParticipants: prev.currentParticipants + 1 } : null);
+      const partRes = await eventsApi.getParticipants(event.id);
+      if (partRes.success && partRes.participants) setParticipants(partRes.participants as EventParticipant[]);
+    } catch (e) {
+      console.error('Failed to join event', e);
+    } finally {
+      setIsJoining(false);
     }
-    
-    // Add user to participants
-    setParticipants(prev => [
-      ...prev,
-      {
-        id: user?.id || 'current-user',
-        name: user?.username || 'You',
-        avatar: user?.avatar || '👤',
-        isVerified: false,
-        joinedAt: new Date().toISOString(),
-        status: 'confirmed',
-        isOrganizer: false
-      }
-    ]);
-    
-    setIsJoining(false);
   };
 
   const handleLeaveEvent = () => {
@@ -327,46 +228,17 @@ const Event = () => {
 
   const confirmLeaveEvent = async () => {
     if (!eventToLeave) return;
-    
     setIsLeaving(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Update local state
-    setEvent(prev => prev ? { ...prev, isJoined: false } : null);
-    
-    // Remove from joinedEvents in localStorage with safe fallback
     try {
-      const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-      const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
-      localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
-    } catch (error) {
-      console.warn('Failed to update joinedEvents localStorage:', error);
-      // Clear corrupted data and start fresh
-      localStorage.removeItem('joinedEvents');
-      localStorage.setItem('joinedEvents', JSON.stringify([]));
+      await eventsApi.leave(eventToLeave.id);
+      setShowLeaveConfirmation(false);
+      setEventToLeave(null);
+      navigate('/my-events');
+    } catch (e) {
+      console.error('Failed to leave event', e);
+    } finally {
+      setIsLeaving(false);
     }
-    
-    // Remove user from participants
-    setParticipants(prev => prev.filter(p => p.id !== user?.id));
-    
-    setIsLeaving(false);
-    
-    // Close modal and reset state
-    setShowLeaveConfirmation(false);
-    setEventToLeave(null);
-    
-    // Navigate back to MyEvents page
-    navigate('/my-events');
-  };
-
-  const handleBookmarkEvent = () => {
-    if (!event) return;
-    
-    setEvent(prev => prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null);
-    
-    
   };
 
   const handleShareEvent = () => {
@@ -383,28 +255,49 @@ const Event = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !user) return;
-    
-    const message: EventMessage = {
-      id: Date.now().toString(),
-      user: {
-        id: user.id,
-        name: user.username,
-        avatar: user.avatar
-      },
-      content: newMessage,
-      timestamp: 'just now',
-      type: 'text'
-    };
-    
-    setMessages(prev => [...prev, message]);
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user || !event) return;
+    const content = newMessage.trim();
     setNewMessage('');
-    
-    // Scroll to bottom
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    try {
+      const res = await eventsApi.sendMessage(event.id, content);
+      if (res.success && res.message) {
+        const m = res.message as any;
+        setMessages(prev => [...prev, {
+          id: m.id,
+          user: m.user,
+          content: m.content,
+          timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : new Date().toISOString(),
+          type: m.type || 'text'
+        }]);
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      }
+    } catch (e) {
+      console.error('Failed to send message', e);
+    }
+  };
+
+  const handleReactEvent = async () => {
+    if (!event || !user) return;
+    try {
+      const res = await eventsApi.react(event.id);
+      if (res.success && res.count !== undefined) {
+        setEvent(prev => prev ? { ...prev, userReacted: res.reacted ?? false, reactionCount: res.count } : null);
+      }
+    } catch (e) {
+      console.error('Failed to react', e);
+    }
+  };
+
+  const handleRemoveParticipant = async (userId: string) => {
+    if (!event || event.organizer.id !== user?.id) return;
+    try {
+      await eventsApi.removeParticipant(event.id, userId);
+      const partRes = await eventsApi.getParticipants(event.id);
+      if (partRes.success && partRes.participants) setParticipants(partRes.participants as EventParticipant[]);
+    } catch (e) {
+      console.error('Failed to remove participant', e);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -593,19 +486,22 @@ const Event = () => {
                </div>
              </div>
              
-             {/* Action Buttons */}
+             {/* Action Buttons: heart with count, share, three-dot (only View organizer profile when not me, Visit website) */}
              <div className="flex items-center gap-1">
                <Button
                  variant="ghost"
                  size="icon"
-                 onClick={handleBookmarkEvent}
+                 onClick={handleReactEvent}
                  className="hover:scale-110 transition-spring hover:bg-primary/10"
                >
                  <Heart 
                    size={20} 
-                   className={event.isBookmarked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} 
+                   className={event.userReacted ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} 
                  />
                </Button>
+               {(event.reactionCount ?? 0) > 0 && (
+                 <span className="text-sm text-muted-foreground">{event.reactionCount}</span>
+               )}
                <Button
                  variant="ghost"
                  size="icon"
@@ -625,17 +521,14 @@ const Event = () => {
                    </Button>
                  </DropdownMenuTrigger>
                  <DropdownMenuContent align="end" className="w-48">
-                   <DropdownMenuItem onClick={() => setShowReportModal(true)}>
-                     <Flag size={16} className="mr-2" />
-                     Report Event
-                   </DropdownMenuItem>
-                   <DropdownMenuSeparator />
-                   <DropdownMenuItem onClick={() => navigate(`/profile/${event.organizer.id}`)}>
-                     <Globe size={16} className="mr-2" />
-                     View Organizer Profile
-                   </DropdownMenuItem>
+                   {!event.isOrganizer && (
+                     <DropdownMenuItem onClick={() => navigate(`/profile/${event.organizer.id}`)}>
+                       <Globe size={16} className="mr-2" />
+                       View Organizer Profile
+                     </DropdownMenuItem>
+                   )}
                    {event.organizer.website && (
-                     <DropdownMenuItem onClick={() => window.open(event.organizer.website, '_blank')}>
+                     <DropdownMenuItem onClick={() => window.open(event.organizer.website!, '_blank')}>
                        <ExternalLink size={16} className="mr-2" />
                        Visit Website
                      </DropdownMenuItem>
@@ -706,29 +599,31 @@ const Event = () => {
             </div>
           )}
 
-          {/* Action Buttons */}
-           <div className="flex gap-2">
-             {event.isJoined ? (
-               <Button
-                 variant="outline"
-                 onClick={handleLeaveEvent}
-                 disabled={isLeaving}
-                 className="flex-1"
-               >
-                 {isLeaving ? 'Leaving...' : 'Leave Event'}
-               </Button>
-             ) : (
-               <Button
-                 variant="default"
-                 onClick={handleJoinEvent}
-                 disabled={isJoining || event.currentParticipants >= event.maxParticipants}
-                 className="flex-1"
-               >
-                 {isJoining ? 'Joining...' : 
-                  event.currentParticipants >= event.maxParticipants ? 'Event Full' : 'Join Event'}
-               </Button>
-             )}
-           </div>
+          {/* Join / Leave: only show when not organizer */}
+           {!event.isOrganizer && (
+             <div className="flex gap-2">
+               {event.isJoined ? (
+                 <Button
+                   variant="outline"
+                   onClick={handleLeaveEvent}
+                   disabled={isLeaving}
+                   className="flex-1"
+                 >
+                   {isLeaving ? 'Leaving...' : 'Leave Event'}
+                 </Button>
+               ) : (
+                 <Button
+                   variant="default"
+                   onClick={handleJoinEvent}
+                   disabled={isJoining || event.currentParticipants >= event.maxParticipants}
+                   className="flex-1"
+                 >
+                   {isJoining ? 'Joining...' : 
+                    event.currentParticipants >= event.maxParticipants ? 'Event Full' : 'Join Event'}
+                 </Button>
+               )}
+             </div>
+           )}
         </div>
 
         {/* Tabs */}
@@ -871,7 +766,7 @@ const Event = () => {
               </Card>
             )}
 
-            {/* Organizer */}
+            {/* Organizer: avatar click goes to profile; social as "Name: url" */}
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -879,9 +774,15 @@ const Event = () => {
                   Organized by
                 </h3>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="text-lg">{event.organizer.avatar}</AvatarFallback>
-                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => navigate(user?.id === event.organizer.id ? '/profile' : `/profile/${event.organizer.id}`)}
+                    className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="text-lg">{event.organizer.avatar}</AvatarFallback>
+                    </Avatar>
+                  </button>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium">{event.organizer.name}</p>
@@ -915,75 +816,34 @@ const Event = () => {
                       variant="link"
                       size="sm"
                       className="p-0 h-auto text-muted-foreground hover:text-foreground"
-                      onClick={() => window.open(event.organizer.website, '_blank')}
+                      onClick={() => window.open(event.organizer.website!, '_blank')}
                     >
                       Visit website
                     </Button>
                   </div>
                 )}
-                {/* Social Media Links */}
-                {event.organizer.socialMedia && (
-                  <div className="flex items-center gap-2 mt-2">
-                    {event.organizer.socialMedia.facebook && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia!.facebook, '_blank')}
-                      >
-                        <span className="text-blue-600">📘</span>
-                      </Button>
-                    )}
-                    {event.organizer.socialMedia.instagram && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia!.instagram, '_blank')}
-                      >
-                        <span className="text-pink-600">📷</span>
-                      </Button>
-                    )}
-                    {event.organizer.socialMedia.twitter && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia!.twitter, '_blank')}
-                      >
-                        <span className="text-blue-400">🐦</span>
-                      </Button>
-                    )}
-                    {event.organizer.socialMedia.linkedin && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => window.open(event.organizer.socialMedia!.linkedin, '_blank')}
-                      >
-                        <span className="text-blue-700">💼</span>
-                      </Button>
+                {/* Social: name and value (e.g. Facebook: https://...) */}
+                {event.organizer.socialMedia && Object.keys(event.organizer.socialMedia).length > 0 && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    {Object.entries(event.organizer.socialMedia).map(([name, url]) =>
+                      url ? (
+                        <div key={name} className="text-sm">
+                          <span className="text-muted-foreground capitalize">{name}: </span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-primary font-normal"
+                            onClick={() => window.open(url, '_blank')}
+                          >
+                            {url}
+                          </Button>
+                        </div>
+                      ) : null
                     )}
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Visit website – only when creator added website (three-dot and overview bottom) */}
-            {event.organizer.website && (
-              <Card>
-                <CardContent className="p-4">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center gap-2"
-                    onClick={() => window.open(event.organizer.website!, '_blank')}
-                  >
-                    <ExternalLink size={18} />
-                    Visit website
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           {/* Details Tab */}
@@ -1162,31 +1022,26 @@ const Event = () => {
             )}
           </TabsContent>
 
-          {/* Participants Tab */}
+          {/* People Tab: real participants; organizer badge; avatar -> profile; X to remove (organizer only, not on self) */}
           <TabsContent value="participants" className="space-y-4 mt-4">
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold flex items-center gap-2 text-base">
-                    <Users size={18} className="text-primary flex-shrink-0" />
-                    <span className="break-words">Participants ({participants.length})</span>
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowParticipantList(true)}
-                    className="text-primary flex-shrink-0 ml-2"
-                  >
-                    View all
-                  </Button>
-                </div>
-                
+                <h3 className="font-semibold flex items-center gap-2 text-base mb-4">
+                  <Users size={18} className="text-primary flex-shrink-0" />
+                  People ({participants.length})
+                </h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-                  {participants.slice(0, 5).map((participant) => (
+                  {participants.map((participant) => (
                     <div key={participant.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarFallback className="text-sm font-medium">{participant.avatar}</AvatarFallback>
-                      </Avatar>
+                      <button
+                        type="button"
+                        onClick={() => navigate(participant.id === user?.id ? '/profile' : `/profile/${participant.id}`)}
+                        className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
+                      >
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback className="text-sm font-medium">{participant.avatar}</AvatarFallback>
+                        </Avatar>
+                      </button>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <p className="font-medium text-sm break-words min-w-0">{participant.name}</p>
@@ -1202,28 +1057,27 @@ const Event = () => {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground mb-2">
-                          Joined {new Date(participant.joinedAt).toLocaleDateString()}
+                          {participant.isOrganizer ? 'Host' : `Joined ${new Date(participant.joinedAt).toLocaleDateString()}`}
                         </p>
-                        <Badge variant="outline" className={`text-xs ${getStatusColor(participant.status)} flex-shrink-0`}>
-                          {getStatusIcon(participant.status)}
-                          <span className="ml-1 capitalize">{participant.status}</span>
-                        </Badge>
+                        {!participant.isOrganizer && (
+                          <Badge variant="outline" className={`text-xs ${getStatusColor(participant.status)} flex-shrink-0`}>
+                            {getStatusIcon(participant.status)}
+                            <span className="ml-1 capitalize">{participant.status}</span>
+                          </Badge>
+                        )}
                       </div>
+                      {event.isOrganizer && !participant.isOrganizer && participant.id !== user?.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleRemoveParticipant(participant.id)}
+                        >
+                          <XCircle size={18} />
+                        </Button>
+                      )}
                     </div>
                   ))}
-                  
-                  {participants.length > 5 && (
-                    <div className="text-center pt-3 border-t border-border-soft">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowParticipantList(true)}
-                        className="text-primary w-full"
-                      >
-                        Show {participants.length - 5} more participants
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1271,13 +1125,21 @@ const Event = () => {
                       ) : (
                         messages.map((message) => (
                           <div key={message.id} className="flex gap-3">
-                            <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarFallback className="text-sm">{message.user.avatar}</AvatarFallback>
-                            </Avatar>
+                            <button
+                              type="button"
+                              onClick={() => navigate(message.user.id === user?.id ? '/profile' : `/profile/${message.user.id}`)}
+                              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
+                            >
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-sm">{message.user.avatar}</AvatarFallback>
+                              </Avatar>
+                            </button>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <p className="text-sm font-medium">{message.user.name}</p>
-                                <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {message.timestamp ? new Date(message.timestamp).toLocaleString() : ''}
+                                </span>
                               </div>
                               <p className="text-sm text-muted-foreground bg-muted p-2 rounded-lg">
                                 {message.content}

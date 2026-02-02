@@ -36,6 +36,7 @@ import {
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { eventsApi } from '@/services/api';
 
 interface EventFormData {
   title: string;
@@ -409,50 +410,52 @@ const CreateEvent = () => {
   };
 
   const handleSubmit = async () => {
+    if (!user) return;
     setIsSubmitting(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create new event with unique ID (organizer + currentParticipants so Events list and detail show real data)
-      const newEvent = {
-        ...formData,
-        id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        hostId: user?.id || 'user_1',
-        hostName: user?.username || 'You',
-        participants: [],
-        currentParticipants: 0,
-        isHosted: true,
-        isBookmarked: false,
-        isJoined: false,
-        isFeatured: false,
-        organizer: {
-          id: user?.id || 'user_1',
-          name: user?.username || 'You',
-          avatar: user?.avatar || '👤',
-          isVerified: false,
-          contactEmail: formData.contactEmail || undefined,
-          contactPhone: formData.contactPhone || undefined,
-          website: formData.website || undefined,
-          socialMedia: formData.socialMedia || undefined
-        }
+      const agendaStrings = (formData.agenda ?? []).map((item) =>
+        item.activity ? `${item.time ? item.time + ' - ' : ''}${item.activity}${item.description ? ': ' + item.description : ''}`.trim() : ''
+      ).filter(Boolean);
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        aboutEvent: formData.aboutEvent?.trim() || null,
+        longDescription: formData.aboutEvent?.trim() || null,
+        category: formData.category,
+        type: formData.type,
+        location: formData.location?.trim() || '',
+        address: formData.address?.trim() || null,
+        virtualMeetingLink: formData.virtualMeetingLink?.trim() || null,
+        date: formData.date,
+        time: formData.time,
+        duration: formData.duration,
+        maxParticipants: formData.maxParticipants,
+        price: formData.price,
+        currency: formData.currency,
+        isPrivate: formData.isPrivate,
+        language: formData.language?.trim() || null,
+        ageRestriction: formData.ageRestriction || null,
+        dressCode: formData.dressCode?.trim() || null,
+        requirements: formData.requirements ?? [],
+        highlights: formData.highlights ?? [],
+        tags: formData.tags ?? [],
+        image: formData.image?.trim() || null,
+        agenda: agendaStrings,
+        additionalInfo: formData.additionalInfo?.trim() || null,
+        contactEmail: formData.contactEmail?.trim() || null,
+        contactPhone: formData.contactPhone?.trim() || null,
+        website: formData.website?.trim() || null,
+        socialMedia: formData.socialMedia ?? {},
+        cancellationPolicy: formData.cancellationPolicy?.trim() || null,
+        refundPolicy: formData.refundPolicy?.trim() || null,
+        transportation: formData.transportation ?? [],
+        parking: formData.parking || null,
+        accessibility: formData.accessibility ?? [],
+        photos: formData.photos ?? [],
+        rules: formData.rules ?? [],
+        documents: formData.documents ?? []
       };
-      
-              // Save to localStorage with safe fallback
-        try {
-          const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-          const updatedEvents = [...existingEvents, newEvent];
-          localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
-        } catch (error) {
-          console.warn('Failed to save to hostedEvents localStorage:', error);
-          // Fallback: create new array
-          localStorage.setItem('hostedEvents', JSON.stringify([newEvent]));
-        }
-      
-      // Navigate to my events page
+      await eventsApi.create(payload);
       navigate('/my-events');
     } catch (error) {
       console.error('Failed to create event:', error);

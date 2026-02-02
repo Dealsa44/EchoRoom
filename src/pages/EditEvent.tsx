@@ -36,6 +36,7 @@ import {
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { eventsApi } from '@/services/api';
 
 interface EventFormData {
   title: string;
@@ -189,62 +190,58 @@ const EditEvent = () => {
     { number: 7, title: 'Review', description: 'Preview and save changes', icon: '👁️' }
   ];
 
-  // Load existing event from hostedEvents in localStorage
+  // Load existing event from API
   useEffect(() => {
     if (!eventId) return;
-    let hosted: any[] = [];
-    try {
-      hosted = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-    } catch {
-      hosted = [];
-    }
-    const found = hosted.find((ev: any) => ev.id === eventId);
-    if (!found) return;
-    const e = found;
-    const agendaForm = Array.isArray(e.agenda)
-      ? e.agenda.map((item: any) =>
-          typeof item === 'string'
-            ? { time: '', activity: item, description: '' }
-            : { time: item.time ?? '', activity: item.activity ?? '', description: item.description ?? '' }
-        )
-      : [];
-    setFormData({
-      title: e.title ?? '',
-      description: e.description ?? '',
-      aboutEvent: e.aboutEvent ?? '',
-      category: e.category ?? 'language',
-      type: e.type ?? 'in-person',
-      location: e.location ?? '',
-      address: e.address ?? '',
-      virtualMeetingLink: e.virtualMeetingLink ?? '',
-      date: e.date ?? '',
-      time: e.time ?? '',
-      duration: typeof e.duration === 'number' ? e.duration : 60,
-      maxParticipants: typeof e.maxParticipants === 'number' ? e.maxParticipants : 20,
-      price: typeof e.price === 'number' ? e.price : 0,
-      currency: e.currency ?? 'GEL',
-      isPrivate: !!e.isPrivate,
-      language: e.language ?? '',
-      ageRestriction: e.ageRestriction ?? '18+',
-      dressCode: e.dressCode ?? '',
-      requirements: Array.isArray(e.requirements) ? e.requirements : [],
-      highlights: Array.isArray(e.highlights) ? e.highlights : [],
-      tags: Array.isArray(e.tags) ? e.tags : [],
-      image: e.image ?? '',
-      agenda: agendaForm,
-      additionalInfo: e.additionalInfo ?? '',
-      contactEmail: e.contactEmail ?? '',
-      contactPhone: e.contactPhone ?? '',
-      website: e.website ?? '',
-      socialMedia: e.socialMedia && typeof e.socialMedia === 'object' ? e.socialMedia : {},
-      cancellationPolicy: e.cancellationPolicy ?? '',
-      refundPolicy: e.refundPolicy ?? '',
-      transportation: Array.isArray(e.transportation) ? e.transportation : [],
-      parking: e.parking === 'yes' || e.parking === 'no' || e.parking === 'limited' || e.parking === 'paid' ? e.parking : 'no',
-      accessibility: Array.isArray(e.accessibility) ? e.accessibility : [],
-      photos: Array.isArray(e.photos) ? e.photos : [],
-      documents: Array.isArray(e.documents) ? e.documents : []
-    });
+    eventsApi.get(eventId).then((res) => {
+      if (!res.success || !res.event) return;
+      const e = res.event as any;
+      const agendaForm = Array.isArray(e.agenda)
+        ? e.agenda.map((item: any) =>
+            typeof item === 'string'
+              ? { time: '', activity: item, description: '' }
+              : { time: item.time ?? '', activity: item.activity ?? '', description: item.description ?? '' }
+          )
+        : [];
+      setFormData({
+        title: e.title ?? '',
+        description: e.description ?? '',
+        aboutEvent: e.aboutEvent ?? e.longDescription ?? '',
+        category: e.category ?? 'language',
+        type: e.type ?? 'in-person',
+        location: e.location ?? '',
+        address: e.address ?? '',
+        virtualMeetingLink: e.virtualMeetingLink ?? '',
+        date: e.date ?? '',
+        time: e.time ?? '',
+        duration: typeof e.duration === 'number' ? e.duration : 60,
+        maxParticipants: typeof e.maxParticipants === 'number' ? e.maxParticipants : 20,
+        price: typeof e.price === 'number' ? e.price : 0,
+        currency: e.currency ?? 'GEL',
+        isPrivate: !!e.isPrivate,
+        language: e.language ?? '',
+        ageRestriction: e.ageRestriction ?? '18+',
+        dressCode: e.dressCode ?? '',
+        requirements: Array.isArray(e.requirements) ? e.requirements : [],
+        highlights: Array.isArray(e.highlights) ? e.highlights : [],
+        tags: Array.isArray(e.tags) ? e.tags : [],
+        image: e.image ?? '',
+        agenda: agendaForm,
+        additionalInfo: e.additionalInfo ?? '',
+        contactEmail: e.contactEmail ?? (e.organizer?.contactEmail ?? ''),
+        contactPhone: e.contactPhone ?? (e.organizer?.contactPhone ?? ''),
+        website: e.website ?? (e.organizer?.website ?? ''),
+        socialMedia: e.organizer?.socialMedia && typeof e.organizer.socialMedia === 'object' ? e.organizer.socialMedia : {},
+        cancellationPolicy: e.cancellationPolicy ?? '',
+        refundPolicy: e.refundPolicy ?? '',
+        transportation: Array.isArray(e.transportation) ? e.transportation : [],
+        parking: e.parking === 'yes' || e.parking === 'no' || e.parking === 'limited' || e.parking === 'paid' ? e.parking : 'no',
+        accessibility: Array.isArray(e.accessibility) ? e.accessibility : [],
+        photos: Array.isArray(e.photos) ? e.photos : [],
+        documents: Array.isArray(e.documents) ? e.documents : [],
+        rules: Array.isArray(e.rules) ? e.rules : []
+      });
+    }).catch(() => {});
   }, [eventId]);
 
   // Get minimum time (current time + 1 hour)
@@ -382,26 +379,52 @@ const EditEvent = () => {
   };
 
   const handleSubmit = async () => {
+    if (!eventId) return;
     setIsSubmitting(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-              // Update event in localStorage with safe fallback
-        try {
-          const existingEvents = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-          const updatedEvents = existingEvents.map((event: any) =>
-            event.id === eventId ? { ...event, ...formData } : event
-          );
-          localStorage.setItem('hostedEvents', JSON.stringify(updatedEvents));
-        } catch (error) {
-          console.warn('Failed to update hostedEvents localStorage:', error);
-          // Fallback: create new array with updated event
-          localStorage.setItem('hostedEvents', JSON.stringify([{ id: eventId, ...formData }]));
-        }
-      
-      // Navigate back to my events page
+      const agendaStrings = (formData.agenda ?? []).map((item) =>
+        item.activity ? `${item.time ? item.time + ' - ' : ''}${item.activity}${item.description ? ': ' + item.description : ''}`.trim() : ''
+      ).filter(Boolean);
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        aboutEvent: formData.aboutEvent?.trim() || null,
+        longDescription: formData.aboutEvent?.trim() || null,
+        category: formData.category,
+        type: formData.type,
+        location: formData.location?.trim() || '',
+        address: formData.address?.trim() || null,
+        virtualMeetingLink: formData.virtualMeetingLink?.trim() || null,
+        date: formData.date,
+        time: formData.time,
+        duration: formData.duration,
+        maxParticipants: formData.maxParticipants,
+        price: formData.price,
+        currency: formData.currency,
+        isPrivate: formData.isPrivate,
+        language: formData.language?.trim() || null,
+        ageRestriction: formData.ageRestriction || null,
+        dressCode: formData.dressCode?.trim() || null,
+        requirements: formData.requirements ?? [],
+        highlights: formData.highlights ?? [],
+        tags: formData.tags ?? [],
+        image: formData.image?.trim() || null,
+        agenda: agendaStrings,
+        additionalInfo: formData.additionalInfo?.trim() || null,
+        contactEmail: formData.contactEmail?.trim() || null,
+        contactPhone: formData.contactPhone?.trim() || null,
+        website: formData.website?.trim() || null,
+        socialMedia: formData.socialMedia ?? {},
+        cancellationPolicy: formData.cancellationPolicy?.trim() || null,
+        refundPolicy: formData.refundPolicy?.trim() || null,
+        transportation: formData.transportation ?? [],
+        parking: formData.parking || null,
+        accessibility: formData.accessibility ?? [],
+        photos: formData.photos ?? [],
+        rules: formData.rules ?? [],
+        documents: formData.documents ?? []
+      };
+      await eventsApi.update(eventId, payload);
       navigate('/my-events');
     } catch (error) {
       console.error('Failed to update event:', error);

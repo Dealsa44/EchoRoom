@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Plus, MapPin, Calendar, Clock, Users, Star, Filter, Heart, Share2, MoreVertical, Globe, Lock, Music, BookOpen, Languages, Coffee, Camera, Gamepad2, Palette, Dumbbell, Utensils } from 'lucide-react';
+import { Search, Plus, MapPin, Calendar, Clock, Users, Star, Filter, Globe, Lock } from 'lucide-react';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { eventsApi } from '@/services/api';
 
 interface Event {
   id: string;
@@ -64,15 +65,6 @@ const Events = () => {
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [eventToLeave, setEventToLeave] = useState<Event | null>(null);
 
-  // Simulate loading delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   const categories = [
     { value: 'all', label: 'All Events', icon: '🎯' },
     { value: 'social', label: 'Social & Parties', icon: '🎉' },
@@ -117,227 +109,71 @@ const Events = () => {
     { value: 'distance', label: 'Nearest First' }
   ];
 
-  // Load events from localStorage only (hosted + joined; no mock events)
   const [events, setEvents] = useState<Event[]>([]);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
+  const [leavingId, setLeavingId] = useState<string | null>(null);
 
-  // Normalize organizer so card never shows "unknown" (events from CreateEvent have hostName/organizer; legacy may have only hostName)
-  const normalizeEventOrganizer = (e: any): Event => {
-    const rawName = (e.organizer?.name ?? e.hostName ?? '').trim();
-    const displayName = !rawName || /^unknown$/i.test(rawName) ? 'Event host' : rawName;
-    const organizer = e.organizer && (e.organizer.id != null || e.organizer.name)
-      ? {
-          id: e.organizer.id ?? e.hostId ?? '',
-          name: displayName,
-          avatar: e.organizer.avatar ?? '👤',
-          isVerified: !!e.organizer.isVerified
-        }
-      : {
-          id: e.hostId ?? '',
-          name: displayName,
-          avatar: '👤',
-          isVerified: false
-        };
-    return { ...e, organizer } as Event;
+  const fetchEvents = () => {
+    setLoading(true);
+    eventsApi
+      .list({
+        category: selectedCategory,
+        type: selectedType,
+        date: selectedDate,
+        price: selectedPrice,
+        search: searchQuery.trim() || undefined,
+        sort: sortBy
+      })
+      .then((res) => {
+        if (res.success && res.events) setEvents(res.events as Event[]);
+        else setEvents([]);
+      })
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
   useEffect(() => {
-    let hosted: any[] = [];
-    let joined: any[] = [];
+    const t = setTimeout(() => setSearchQuery(searchTerm), 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [selectedCategory, selectedType, selectedDate, selectedPrice, sortBy, searchQuery]);
+
+  const handleJoinEvent = async (eventId: string) => {
+    setJoiningId(eventId);
     try {
-      hosted = JSON.parse(localStorage.getItem('hostedEvents') || '[]');
-    } catch {
-      localStorage.removeItem('hostedEvents');
+      await eventsApi.join(eventId);
+      setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isJoined: true, currentParticipants: e.currentParticipants + 1 } : e));
+    } catch (e) {
+      console.error('Failed to join', e);
+    } finally {
+      setJoiningId(null);
     }
+  };
+
+  const handleLeaveEvent = (eventId: string) => {
+    const ev = events.find(e => e.id === eventId);
+    if (ev) setEventToLeave(ev);
+    setShowLeaveConfirmation(true);
+  };
+
+  const confirmLeaveEvent = async () => {
+    if (!eventToLeave) return;
+    setLeavingId(eventToLeave.id);
     try {
-      joined = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-    } catch {
-      localStorage.removeItem('joinedEvents');
+      await eventsApi.leave(eventToLeave.id);
+      setEvents(prev => prev.filter(e => e.id !== eventToLeave.id));
+      setShowLeaveConfirmation(false);
+      setEventToLeave(null);
+    } catch (e) {
+      console.error('Failed to leave', e);
+    } finally {
+      setLeavingId(null);
     }
-    const joinedIds = new Set(joined.map((x: any) => x.id));
-    const byId = new Map<string, any>();
-    hosted.forEach((e: any) => byId.set(e.id, { ...e, isJoined: joinedIds.has(e.id) }));
-    joined.forEach((e: any) => {
-      if (!byId.has(e.id)) byId.set(e.id, { ...e, isJoined: true });
-    });
-    const merged = Array.from(byId.values()).map(normalizeEventOrganizer);
-    setEvents(merged);
-    setLoading(false);
-  }, []);
-
-
-
-
-  // Filter events based on selected criteria (show all: hosted + joined)
-  const filteredEvents = events.filter(event => {
-    // Search filter - check title, description, tags, and organizer name
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = searchTerm === '' || 
-                         event.title.toLowerCase().includes(searchLower) ||
-                         event.description.toLowerCase().includes(searchLower) ||
-                         event.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-                         (event.organizer?.name ?? '').toLowerCase().includes(searchLower) ||
-                         event.location.toLowerCase().includes(searchLower);
-    
-    // Category filter
-    const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
-    
-    // Type filter
-    const matchesType = selectedType === 'all' || event.type === selectedType;
-    
-    // Date filter
-    let matchesDate = true;
-    if (selectedDate !== 'all') {
-      const eventDate = new Date(event.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      switch (selectedDate) {
-        case 'today':
-          matchesDate = eventDate.toDateString() === today.toDateString();
-          break;
-        case 'tomorrow':
-          matchesDate = eventDate.toDateString() === tomorrow.toDateString();
-          break;
-        case 'this-week':
-          const weekFromNow = new Date(today);
-          weekFromNow.setDate(weekFromNow.getDate() + 7);
-          matchesDate = eventDate >= today && eventDate <= weekFromNow;
-          break;
-        case 'this-month':
-          matchesDate = eventDate.getMonth() === today.getMonth() && eventDate.getFullYear() === today.getFullYear();
-          break;
-      }
-    }
-    
-    // Price filter
-    let matchesPrice = true;
-    if (selectedPrice !== 'all') {
-      switch (selectedPrice) {
-        case 'free':
-          matchesPrice = event.price === 0;
-          break;
-        case 'paid':
-          matchesPrice = event.price > 0;
-          break;
-        case 'under-50':
-          matchesPrice = event.price < 50;
-          break;
-        case 'under-100':
-          matchesPrice = event.price < 100;
-          break;
-      }
-    }
-    
-    return matchesSearch && matchesCategory && matchesType && matchesDate && matchesPrice;
-  });
-
-  // Sort events
-  const sortedEvents = [...filteredEvents].sort((a, b) => {
-    switch (sortBy) {
-      case 'upcoming':
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'popular':
-        // Sort by popularity (participants) then by date
-        const popularityDiff = b.currentParticipants - a.currentParticipants;
-        if (popularityDiff !== 0) return popularityDiff;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'price-low':
-        // Sort by price low to high, then by date
-        const priceDiff = a.price - b.price;
-        if (priceDiff !== 0) return priceDiff;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'price-high':
-        // Sort by price high to low, then by date
-        const priceDiffHigh = b.price - a.price;
-        if (priceDiffHigh !== 0) return priceDiffHigh;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'distance':
-        // For now, sort by date since we don't have real distance calculation
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      default:
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-    }
-  });
-
-     const handleJoinEvent = (eventId: string) => {
-       // Update the event's isJoined status
-       setEvents(prevEvents => 
-         prevEvents.map(event => 
-           event.id === eventId 
-             ? { ...event, isJoined: true }
-             : event
-         )
-       );
-       
-       // Add to joinedEvents in localStorage with safe fallback
-       try {
-         const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-         const eventToJoin = events.find(event => event.id === eventId);
-         if (eventToJoin && !joinedEvents.some((e: any) => e.id === eventId)) {
-           joinedEvents.push(eventToJoin);
-           localStorage.setItem('joinedEvents', JSON.stringify(joinedEvents));
-         }
-       } catch (error) {
-         console.warn('Failed to update joinedEvents localStorage:', error);
-         // Clear corrupted data and start fresh
-         localStorage.removeItem('joinedEvents');
-         const eventToJoin = events.find(event => event.id === eventId);
-         if (eventToJoin) {
-           localStorage.setItem('joinedEvents', JSON.stringify([eventToJoin]));
-         }
-       }
-     };
-
-     const handleLeaveEvent = (eventId: string) => {
-       // Find the event to leave
-       const event = events.find(e => e.id === eventId);
-       if (event) {
-         setEventToLeave(event);
-         setShowLeaveConfirmation(true);
-       }
-     };
-
-     const confirmLeaveEvent = () => {
-       if (!eventToLeave) return;
-       
-       // Update the event's isJoined status
-       setEvents(prevEvents => 
-         prevEvents.map(event => 
-           event.id === eventToLeave.id 
-             ? { ...event, isJoined: false }
-             : event
-         )
-       );
-       
-       // Remove from joinedEvents in localStorage
-       const joinedEvents = JSON.parse(localStorage.getItem('joinedEvents') || '[]');
-       const updatedJoinedEvents = joinedEvents.filter((e: any) => e.id !== eventToLeave.id);
-       localStorage.setItem('joinedEvents', JSON.stringify(updatedJoinedEvents));
-       
-       // Close modal and reset state
-       setShowLeaveConfirmation(false);
-       setEventToLeave(null);
-     };
-
-     const handleBookmarkEvent = (eventId: string) => {
-     // Simulate bookmarking event
-   };
-
-     const handleShareEvent = (event: Event) => {
-     // Simulate sharing event
-     if (navigator.share) {
-       navigator.share({
-         title: event.title,
-         text: event.description,
-         url: window.location.href,
-       });
-     } else {
-       // Fallback for browsers that don't support Web Share API
-       navigator.clipboard.writeText(`${event.title} - ${event.description}`);
-     }
-   };
+  };
 
   const getCategoryIcon = (category: string) => {
     const categoryData = categories.find(cat => cat.value === category);
@@ -578,9 +414,9 @@ const Events = () => {
         {/* Events List */}
         <div className="space-y-4">
           {/* Results Counter */}
-          {!loading && sortedEvents.length > 0 && (
+          {!loading && events.length > 0 && (
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{sortedEvents.length} available event{sortedEvents.length !== 1 ? 's' : ''} found</span>
+              <span>{events.length} available event{events.length !== 1 ? 's' : ''} found</span>
               {getActiveFiltersCount() > 0 && (
                 <Button
                   variant="ghost"
@@ -611,7 +447,7 @@ const Events = () => {
                 </CardContent>
               </Card>
             ))
-          ) : sortedEvents.length === 0 ? (
+          ) : events.length === 0 ? (
             // Empty state
             <Card className="shadow-medium border-border-soft">
               <CardContent className="p-8 text-center">
@@ -635,8 +471,8 @@ const Events = () => {
               </CardContent>
             </Card>
           ) : (
-            // Events list
-            sortedEvents.map((event) => (
+            // Events list: click card -> event info; only Join/Leave button (no three-dot, no participant/edit)
+            events.map((event) => (
               <Card 
                 key={event.id} 
                 className="cursor-pointer shadow-medium border-border-soft hover:shadow-large transition-all duration-300 active:scale-[0.98] overflow-hidden"
@@ -645,7 +481,7 @@ const Events = () => {
                 <CardContent className="p-0">
                   {/* Event Image */}
                   {event.image && (
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative h-48 overflow-hidden" onClick={() => navigate(`/event/${event.id}`)}>
                       <img
                         src={event.image}
                         alt={event.title}
@@ -653,14 +489,12 @@ const Events = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                       
-                      {/* Event Type Badge */}
                       <div className="absolute top-3 left-3">
                         <Badge variant="glass" className="bg-black/30 text-white border-white/20 dark:bg-black/30 dark:text-white dark:border-white/20 bg-white/90 text-black border-black/20">
                           {getEventTypeIcon(event.type)} {event.type}
                         </Badge>
                       </div>
                       
-                      {/* Featured Badge */}
                       {event.isFeatured && (
                         <div className="absolute top-3 right-3">
                           <Badge variant="gradient" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
@@ -669,7 +503,6 @@ const Events = () => {
                         </div>
                       )}
                       
-                      {/* Price Badge */}
                       <div className="absolute bottom-3 right-3">
                         <Badge variant="glass" className="bg-white/90 text-black font-semibold">
                           {formatPrice(event.price, event.currency)}
@@ -678,11 +511,9 @@ const Events = () => {
                     </div>
                   )}
                   
-                  {/* Event Content */}
                   <div className="p-4 space-y-3">
-                    {/* Header */}
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1" onClick={() => navigate(`/event/${event.id}`)}>
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="outline" className="text-xs h-6 px-2">
                             {getCategoryIcon(event.category)} {categories.find(cat => cat.value === event.category)?.label}
@@ -696,43 +527,12 @@ const Events = () => {
                         </div>
                         <h3 className="font-semibold text-lg leading-tight mb-1">{event.title}</h3>
                       </div>
-                      
-                      {/* Action Menu */}
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleBookmarkEvent(event.id);
-                          }}
-                          className="h-8 w-8 hover:bg-primary/10"
-                        >
-                          <Heart 
-                            size={16} 
-                            className={event.isBookmarked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'} 
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShareEvent(event);
-                          }}
-                          className="h-8 w-8 hover:bg-primary/10"
-                        >
-                          <Share2 size={16} className="text-muted-foreground" />
-                        </Button>
-                      </div>
                     </div>
                     
-                    {/* Description */}
                     <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                       {event.description}
                     </p>
                     
-                    {/* Event Details */}
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar size={16} />
@@ -758,9 +558,6 @@ const Events = () => {
                       )}
                     </div>
                     
-
-
-                    {/* Tags */}
                     {(event.tags?.length ?? 0) > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {(event.tags ?? []).slice(0, 3).map((tag, index) => (
@@ -768,7 +565,7 @@ const Events = () => {
                           {tag}
                         </Badge>
                       ))}
-                      {event.tags.length > 3 && (
+                      {(event.tags?.length ?? 0) > 3 && (
                         <span className="text-xs text-muted-foreground">
                           +{(event.tags ?? []).length - 3} more
                         </span>
@@ -776,7 +573,6 @@ const Events = () => {
                     </div>
                     )}
                     
-                    {/* Highlights */}
                     {(event.highlights?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {(event.highlights ?? []).slice(0, 2).map((highlight, index) => (
@@ -787,9 +583,9 @@ const Events = () => {
                       </div>
                     )}
                     
-                    {/* Organizer and Action */}
+                    {/* Organizer and Join/Leave only */}
                     <div className="flex items-center justify-between pt-2 border-t border-border-soft">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0" onClick={() => navigate(`/event/${event.id}`)}>
                         <span className="text-2xl flex-shrink-0">{event.organizer?.avatar ?? '👤'}</span>
                         <div className="min-w-0">
                           <p className="text-sm font-medium break-words min-w-0" title={event.organizer?.name ?? 'Event host'}>{event.organizer?.name ?? 'Event host'}</p>
@@ -804,17 +600,15 @@ const Events = () => {
                       <Button
                         variant={event.isJoined ? "outline" : "default"}
                         size="sm"
+                        disabled={joiningId === event.id || leavingId === event.id}
                         onClick={(e) => {
                           e.stopPropagation();
-                                                     if (event.isJoined) {
-                             handleLeaveEvent(event.id);
-                           } else {
-                             handleJoinEvent(event.id);
-                           }
+                          if (event.isJoined) handleLeaveEvent(event.id);
+                          else handleJoinEvent(event.id);
                         }}
                         className="rounded-full h-8 px-4"
                       >
-                        {event.isJoined ? 'Leave' : 'Join'}
+                        {joiningId === event.id ? 'Joining...' : leavingId === event.id ? 'Leaving...' : event.isJoined ? 'Leave' : 'Join'}
                       </Button>
                     </div>
                   </div>
