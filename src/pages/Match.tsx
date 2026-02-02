@@ -129,29 +129,36 @@ const Match = () => {
   const [realUsers, setRealUsers] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch discover feed (real users), then show real + mocks
+  // Fetch discover feed (real users) using current relationship filter so friendship/relationship filter works for real users
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
-        const res = await userApi.getDiscover();
+        const intent = filters.relationshipIntent;
+        const res = await userApi.getDiscover(intent);
         if (cancelled) return;
         if (res.success && res.users && res.users.length > 0) {
           const withPlaceholderPhotos = res.users.map((u) => ({
             ...u,
             id: u.id as string,
             photos: Array.isArray(u.photos) && u.photos.length > 0 ? u.photos : ['https://picsum.photos/400/400?random=user'],
+            lookingForRelationship: u.lookingForRelationship ?? false,
+            lookingForFriendship: u.lookingForFriendship ?? false,
           })) as MatchProfile[];
           setRealUsers(withPlaceholderPhotos);
+        } else {
+          setRealUsers([]);
         }
       } catch (_) {
         // Offline or API error: show mocks only
+        setRealUsers([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [filters.relationshipIntent]);
 
   const profiles: MatchProfile[] = useMemo(
     () => [...realUsers, ...mockProfiles],

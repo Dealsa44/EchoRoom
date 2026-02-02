@@ -251,9 +251,10 @@ export const userApi = {
     return apiRequest<User[]>(`/user/search?query=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
   },
 
-  // Discover feed for Match page (compatible real users only)
-  getDiscover: async (): Promise<{ success: boolean; users?: DiscoverProfile[]; message?: string }> => {
-    return apiRequest<any>('/user/discover');
+  // Discover feed for Match page (compatible real users only). intent=relationship|friendship|both|all aligns backend with filter.
+  getDiscover: async (intent?: string): Promise<{ success: boolean; users?: DiscoverProfile[]; message?: string }> => {
+    const query = intent && intent !== 'all' ? `?intent=${encodeURIComponent(intent)}` : '';
+    return apiRequest<any>(`/user/discover${query}`);
   },
 
   // Public profile by id (for viewing another user's profile)
