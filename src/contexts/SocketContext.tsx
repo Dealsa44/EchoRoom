@@ -7,8 +7,10 @@ import React, {
   ReactNode,
 } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getAuthToken, getSocketUrl } from '@/services/api';
+import { getSocketUrl } from '@/services/api';
 import { useApp } from '@/hooks/useApp';
+
+const AUTH_TOKEN_KEY = 'driftzo_token';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -38,7 +40,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const token = getAuthToken();
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null;
     if (!token) return;
 
     const url = getSocketUrl();
