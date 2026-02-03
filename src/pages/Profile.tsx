@@ -746,6 +746,7 @@ const Profile = () => {
                       : (profileData?.ethnicity && profileData.ethnicity !== 'prefer-not-to-say'
                           ? profileData.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                           : 'Not specified')}
+                          
                   </Badge>
                 </div>
               </div>
