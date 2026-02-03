@@ -185,10 +185,11 @@ const PrivateChat = () => {
     return () => leaveConversation(conversationId);
   }, [conversationId, joinConversation, leaveConversation]);
 
-  // Real-time: new message
+  // Real-time: new message (only add when message is from the other person; sender already added from API response)
   useEffect(() => {
     if (!socket || !conversationId || !user) return;
     const onNewMessage = (payload: DirectMessageItem) => {
+      if (payload.senderId === user.id) return;
       setMessages((prev) => {
         if (prev.some((m) => m.id === payload.id)) return prev;
         const next = mapApiMessageToDisplay(payload);
