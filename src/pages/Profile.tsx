@@ -562,15 +562,30 @@ const Profile = () => {
           <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
           <div className="pointer-events-none absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-secondary/10 blur-2xl animate-float-slow" aria-hidden />
           <CardContent className="p-6 text-center">
-            <div className="relative flex justify-center">
-              <div className="h-14 w-14 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft">
-                <div className="text-3xl">{displayUser?.avatar || '🌟'}</div>
+            <div className="flex items-center justify-center gap-3">
+              <div className="relative flex justify-center">
+                <div className="h-14 w-14 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft">
+                  <div className="text-3xl">{displayUser?.avatar || '🌟'}</div>
+                </div>
+                {!isOwnProfile && profileData?.isVerified && (
+                  <Shield className="absolute -top-1 right-[calc(50%-28px)] h-5 w-5 text-blue-500" />
+                )}
               </div>
-              {!isOwnProfile && profileData?.isVerified && (
-                <Shield className="absolute -top-1 right-[calc(50%-28px)] h-5 w-5 text-blue-500" />
-              )}
+              <div className="flex-1 min-w-0 text-left">
+                <h2 className="text-xl font-bold truncate">{displayUser?.username || 'Guest'}</h2>
+                {!isOwnProfile && profileData && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="mt-2 gap-1.5"
+                    onClick={() => navigate(`/private-chat/${String(profileData.id)}`, { state: { from: 'profile' } })}
+                  >
+                    <MessageCircle size={16} />
+                    Chat
+                  </Button>
+                )}
+              </div>
             </div>
-            <h2 className="mt-2 text-xl font-bold">{displayUser?.username || 'Guest'}</h2>
             <div className="mt-2 h-1 w-24 mx-auto rounded-full bg-gradient-to-r from-primary via-secondary to-accent opacity-80" />
             <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{displayUser?.bio || 'Welcome to Driftzo'}</p>
 

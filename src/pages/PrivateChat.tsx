@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
+import { conversationApi, type DirectMessageItem } from '@/services/api';
 import { ChatMessage } from '@/types';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
@@ -20,12 +21,18 @@ import CallButtons from '@/components/calls/CallButtons';
 import CameraScreen from '@/components/calls/CameraScreen';
 import PhotoGallery from '@/components/ui/PhotoGallery';
 
+// Display message shape (id from API is string; replyTo kept as string | null for consistency)
+type DisplayMessage = Omit<ChatMessage, 'id' | 'replyTo'> & { id: string; replyTo?: string | null };
+
 const PrivateChat = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDarkMode, toggleDarkMode } = useApp();
-  
+  const { user, isDarkMode, toggleDarkMode } = useApp();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [partner, setPartner] = useState<{ id: string; name: string; avatar: string } | null>(null);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+
   // Function to handle back navigation based on source
   const handleBackNavigation = () => {
     const state = location.state as { from?: string } | null;
@@ -54,168 +61,83 @@ const PrivateChat = () => {
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
-  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showAttachments, setShowAttachments] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
-  const [actionSheetMessageId, setActionSheetMessageId] = useState<number | null>(null);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [actionSheetMessageId, setActionSheetMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const chatPartner = partner
+    ? { id: partner.id, name: partner.name, avatar: partner.avatar, status: 'offline' as const, languageLearning: '' }
+    : { id: userId || '', name: '…', avatar: '🌟', status: 'offline' as const, languageLearning: '' };
 
-
-  // Mock user data - in real app this would come from API
-  const getUserById = (id: string) => {
-    const users = {
-      '1': { name: 'Luna', avatar: '🌙', status: 'online', languageLearning: 'English' },
-      '2': { name: 'Alex', avatar: '📚', status: 'online', languageLearning: 'Japanese' },
-      '3': { name: 'Sage', avatar: '🌱', status: 'online', languageLearning: 'Spanish' },
-      '4': { name: 'Maya', avatar: '🎨', status: 'online', languageLearning: 'Italian' },
-      '5': { name: 'Kai', avatar: '🏃', status: 'away', languageLearning: 'English' }
-    };
-    return users[id as keyof typeof users] || users['1'];
-  };
-
-  const userInfo = getUserById(userId || '1');
-  const chatPartner = {
-    id: userId,
-    name: userInfo.name,
-    avatar: userInfo.avatar,
-    status: userInfo.status,
-    languageLearning: userInfo.languageLearning
-  };
-
-  const getInitialMessage = (userName: string) => {
-    const messages = {
-      'Luna': 'Hi! I saw we both love philosophy. What\'s your favorite philosophical question?',
-      'Alex': 'Hey! I noticed you\'re interested in books. What\'s the last book that really changed your perspective?',
-      'Sage': 'Hello! I love that we both practice mindfulness. What\'s your favorite way to find inner peace?',
-      'Maya': 'Hi there! I see you appreciate art. What kind of creative expression speaks to you most?',
-      'Kai': 'Hey! I noticed we both value fitness. What\'s your favorite way to stay active?'
-    };
-    return messages[userName as keyof typeof messages] || messages['Luna'];
-  };
-
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      sender: 'them',
-      content: getInitialMessage(userInfo.name),
-      timestamp: '5 min ago',
+  function mapApiMessageToDisplay(m: DirectMessageItem): DisplayMessage {
+    const isMe = m.senderId === user?.id;
+    return {
+      id: m.id,
+      sender: isMe ? 'me' : 'them',
+      content: m.content,
+      timestamp: m.createdAt,
       translated: false,
       corrected: false,
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
       corrections: [],
-      type: 'text',
-      reactions: [],
+      type: m.type as 'text',
+      reactions: (m.reactions || []).map((r) => ({ emoji: r.emoji, userName: r.userId === user?.id ? 'You' : 'Them' })),
       isEdited: false,
       isDeleted: false,
       replyTo: null,
-      deliveryStatus: 'delivered',
-      isEncrypted: true
-    },
-    {
-      id: 2,
-      sender: 'me',
-      content: 'Hello! I think about "What makes life meaningful?" quite often. What about you?',
-      timestamp: '3 min ago',
-      translated: false,
-      corrected: false,
-      originalContent: '',
-      translatedContent: '',
-      hasErrors: false,
-      corrections: [],
-      type: 'text',
-      reactions: [{ emoji: '❤️', userName: userInfo.name }],
-      isEdited: false,
-      isDeleted: false,
-      replyTo: null,
-      deliveryStatus: 'read',
-      isEncrypted: true
-    },
-    {
-      id: 3,
-      sender: 'them',
-      content: 'That\'s beautiful! I often wonder about the nature of happiness. Is it something we find or create?',
-      timestamp: '2 min ago',
-      translated: false,
-      corrected: false,
-      originalContent: '',
-      translatedContent: '',
-      hasErrors: false,
-      corrections: [],
-      type: 'text',
-      reactions: [{ emoji: '👍', userName: 'You' }],
-      isEdited: false,
-      isDeleted: false,
-      replyTo: null,
-      deliveryStatus: 'delivered',
-      isEncrypted: true
-    },
-    {
-      id: 4,
-      sender: 'me',
-      content: 'I think happiness is something we create through our choices and mindset.',
-      timestamp: '1 min ago',
-      translated: false,
-      corrected: false,
-      originalContent: 'I think hapiness is something we create through our choises and mindset.',
-      translatedContent: '',
-      hasErrors: true,
-      corrections: [
-        {
-          original: 'hapiness',
-          corrected: 'happiness',
-          explanation: 'Spelling error: "happiness" has two p\'s',
-          rule: 'Common spelling rule'
-        },
-        {
-          original: 'choises',
-          corrected: 'choices',
-          explanation: 'Spelling error: the plural of "choice" is "choices"',
-          rule: 'Irregular plural form'
-        }
-      ],
-      type: 'text',
-      reactions: [],
-      isEdited: true,
-      isDeleted: false,
-      replyTo: null,
-      deliveryStatus: 'read',
-      isEncrypted: true
-    },
-    {
-      id: 5,
-      sender: 'them',
-      content: '🎵 Voice message',
-      timestamp: '30 sec ago',
-      translated: false,
-      corrected: false,
-      originalContent: '',
-      translatedContent: '',
-      hasErrors: false,
-      corrections: [],
-      type: 'voice',
-      reactions: [],
-      isEdited: false,
-      isDeleted: false,
-      replyTo: 4,
       deliveryStatus: 'delivered',
       isEncrypted: true,
-      voiceData: {
-        duration: 15,
-        waveform: [0.2, 0.5, 0.8, 0.3, 0.7, 0.4, 0.9, 0.1, 0.6, 0.3]
-      }
+    };
+  }
+
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+
+  // Load conversation and messages from API
+  useEffect(() => {
+    if (!userId || !user) {
+      setMessagesLoading(false);
+      return;
     }
-  ]);
+    setMessagesLoading(true);
+    conversationApi
+      .getOrCreate(userId)
+      .then((res) => {
+        if (!res.success || !res.conversation) {
+          toast({ title: 'Error', description: res.message || 'Could not open conversation', variant: 'destructive' });
+          setMessagesLoading(false);
+          return;
+        }
+        setConversationId(res.conversation.id);
+        setPartner({
+          id: res.conversation.otherUser.id,
+          name: res.conversation.otherUser.name,
+          avatar: res.conversation.otherUser.avatar || '🌟',
+        });
+        return conversationApi.getMessages(res.conversation.id);
+      })
+      .then((res) => {
+        if (res?.success && res.messages) {
+          setMessages(res.messages.map(mapApiMessageToDisplay));
+        }
+        setMessagesLoading(false);
+      })
+      .catch(() => {
+        toast({ title: 'Error', description: 'Failed to load conversation', variant: 'destructive' });
+        setMessagesLoading(false);
+      });
+  }, [userId, user?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -256,117 +178,6 @@ const PrivateChat = () => {
     }
   }, [partnerTyping]);
 
-  // Enhanced bot response simulation
-  const simulateBotResponse = (userMessage: string) => {
-    const responses = [
-      "That's such an interesting perspective! I never thought about it that way.",
-      "I completely agree with you on that point.",
-      "Could you tell me more about what you mean by that?",
-      "That reminds me of something I read recently...",
-      "I love how you think about these things!",
-      "That's a really thoughtful question.",
-      "I'm curious to hear more about your thoughts on this.",
-      "That's exactly what I was thinking too!",
-      "You have such a unique way of looking at things.",
-      "I'd love to explore this topic more with you."
-    ];
-    
-    // Context-aware responses based on message content
-    const lowerMessage = userMessage.toLowerCase();
-    let contextResponses = responses;
-    
-    if (lowerMessage.includes('philosophy') || lowerMessage.includes('meaning')) {
-      contextResponses = [
-        "Philosophy is so fascinating! What draws you to these big questions?",
-        "I love deep philosophical discussions. What's your favorite philosophical concept?",
-        "These are the kinds of conversations that make life meaningful.",
-        "I often think about these existential questions too."
-      ];
-    } else if (lowerMessage.includes('book') || lowerMessage.includes('read')) {
-      contextResponses = [
-        "Books have such power to change our perspectives! What are you reading now?",
-        "I love discovering new books through conversations like this.",
-        "Reading is such a beautiful way to explore different worlds.",
-        "What genre do you find yourself drawn to most?"
-      ];
-    } else if (lowerMessage.includes('mindfulness') || lowerMessage.includes('meditation')) {
-      contextResponses = [
-        "Mindfulness has been such a game-changer for me too!",
-        "I love that you practice mindfulness. What's your favorite technique?",
-        "Finding inner peace is such a beautiful journey.",
-        "Mindfulness helps me stay present in conversations like this."
-      ];
-    } else if (lowerMessage.includes('art') || lowerMessage.includes('creative')) {
-      contextResponses = [
-        "Art has such power to express what words sometimes can't!",
-        "I love creative expression too. What's your favorite medium?",
-        "Creativity is such a beautiful part of being human.",
-        "I'd love to see some of your creative work sometime!"
-      ];
-    }
-    
-    return contextResponses[Math.floor(Math.random() * contextResponses.length)];
-  };
-
-  // Simulate occasional bot messages to make chat feel alive
-  useEffect(() => {
-    const randomMessageInterval = setInterval(() => {
-      // Only send random messages if user hasn't sent anything recently and chat is active
-      const lastUserMessage = messages.filter(m => m.sender === 'me').pop();
-      const lastMessage = messages[messages.length - 1];
-      
-      if (lastMessage && lastMessage.sender === 'them' && lastUserMessage) {
-        const timeSinceLastUserMessage = Date.now() - new Date(lastUserMessage.timestamp).getTime();
-        const timeSinceLastMessage = Date.now() - new Date(lastMessage.timestamp).getTime();
-        
-        // Send random message if it's been more than 30 seconds since last user message
-        // and more than 10 seconds since last bot message
-        if (timeSinceLastUserMessage > 30000 && timeSinceLastMessage > 10000) {
-          const randomMessages = [
-            "I'm really enjoying our conversation! 😊",
-            "You have such interesting thoughts on things.",
-            "This is exactly the kind of deep conversation I love having.",
-            "I feel like we're really connecting here.",
-            "Your perspective is so refreshing to hear."
-          ];
-          
-          const randomMessage = randomMessages[Math.floor(Math.random() * randomMessages.length)];
-          
-          // Show typing indicator first
-          setPartnerTyping(true);
-          
-          setTimeout(() => {
-            setPartnerTyping(false);
-            
-            const newMessage = {
-              id: messages.length + 1,
-              sender: 'them' as const,
-              content: randomMessage,
-              timestamp: 'just now',
-              translated: false,
-              corrected: false,
-              originalContent: '',
-              translatedContent: '',
-              hasErrors: false,
-              corrections: [],
-              type: 'text' as const,
-              reactions: [],
-              isEdited: false,
-              isDeleted: false,
-              replyTo: null,
-              deliveryStatus: 'delivered' as const,
-              isEncrypted: true
-            };
-            
-            setMessages(prev => [...prev, newMessage]);
-          }, 2000);
-        }
-      }
-    }, 30000); // Check every 30 seconds
-    
-    return () => clearInterval(randomMessageInterval);
-  }, [messages]);
-
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -379,38 +190,18 @@ const PrivateChat = () => {
     };
   }, []);
 
-  // Message reaction handlers
-  const handleReaction = (messageId: number, emoji: string) => {
-    setMessages(prev => prev.map(msg => {
-      if (msg.id === messageId) {
-        const existingReaction = msg.reactions?.find(r => r.userName === 'You');
-        if (existingReaction) {
-          if (existingReaction.emoji === emoji) {
-            // Remove reaction
-            return { ...msg, reactions: msg.reactions?.filter(r => r.userName !== 'You') || [] };
-          } else {
-            // Change reaction
-            return { 
-              ...msg, 
-              reactions: msg.reactions?.map(r => r.userName === 'You' ? { ...r, emoji } : r) || []
-            };
-          }
-        } else {
-          // Add reaction
-          return { 
-            ...msg, 
-            reactions: [...(msg.reactions || []), { emoji, userName: 'You' }]
-          };
-        }
+  // Message reaction: call API and update local state
+  const handleReaction = (messageId: string, emoji: string) => {
+    conversationApi.reactToMessage(messageId, emoji).then((res) => {
+      const updated = res.success && res.message && typeof res.message !== 'string' ? res.message : null;
+      if (updated) {
+        setMessages(prev => prev.map(msg => msg.id === messageId ? mapApiMessageToDisplay(updated) : msg));
       }
-      return msg;
-    }));
-    
-    // Reaction added - toast removed per user request
+    });
   };
 
-  // Message editing
-  const handleEditMessage = (messageId: number) => {
+  // Message editing (local only for now; API edit can be added later)
+  const handleEditMessage = (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
     if (message && message.sender === 'me') {
       setEditingMessageId(messageId);
@@ -431,24 +222,22 @@ const PrivateChat = () => {
     }
   };
 
-  // Message deletion
-  const handleDeleteMessage = (messageId: number) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
+  // Message deletion (local only for now; API delete can be added later)
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
         ? { ...msg, content: 'This message was deleted', isDeleted: true, type: 'text' as const }
         : msg
     ));
-    // Message deleted - toast removed per user request
   };
 
   // Reply to message
-  const handleReplyToMessage = (messageId: number) => {
+  const handleReplyToMessage = (messageId: string) => {
     setReplyingTo(messageId);
-    // Focus input (would need ref in real implementation)
   };
 
   // Long-press helpers for mobile to open actions sheet
-  const startLongPress = (messageId: number) => {
+  const startLongPress = (messageId: string) => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => setActionSheetMessageId(messageId), 400);
   };
@@ -475,27 +264,26 @@ const PrivateChat = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageData = e.target?.result as string;
-        const newMessage = {
-          id: messages.length + index + 1,
-          sender: 'me' as const,
+        const newMessage: DisplayMessage = {
+          id: `local-img-${Date.now()}-${index}`,
+          sender: 'me',
           content: '📷 Photo',
-          timestamp: 'now',
+          timestamp: new Date().toISOString(),
           translated: false,
           corrected: false,
           originalContent: '',
           translatedContent: '',
           hasErrors: false,
           corrections: [],
-          type: 'image' as const,
+          type: 'image',
           reactions: [],
           isEdited: false,
           isDeleted: false,
-          replyTo: replyingTo,
-          deliveryStatus: 'sent' as const,
+          replyTo: replyingTo ?? null,
+          deliveryStatus: 'sent',
           isEncrypted: true,
           imageUrl: imageData
         };
-
         setMessages(prev => [...prev, newMessage]);
       };
       reader.readAsDataURL(photo);
@@ -506,28 +294,26 @@ const PrivateChat = () => {
   };
 
   const handleImageCaptured = (imageData: string) => {
-    // Create a new message with the captured image
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'me' as const,
+    const newMessage: DisplayMessage = {
+      id: `local-cam-${Date.now()}`,
+      sender: 'me',
       content: '📷 Photo',
-      timestamp: 'now',
+      timestamp: new Date().toISOString(),
       translated: false,
       corrected: false,
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
       corrections: [],
-      type: 'image' as const,
+      type: 'image',
       reactions: [],
       isEdited: false,
       isDeleted: false,
-      replyTo: replyingTo,
-      deliveryStatus: 'sent' as const,
+      replyTo: replyingTo ?? null,
+      deliveryStatus: 'sent',
       isEncrypted: true,
       imageUrl: imageData
     };
-
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
     
@@ -556,62 +342,58 @@ const PrivateChat = () => {
   };
 
   const handleSendRecording = () => {
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'me' as const,
+    const newMessage: DisplayMessage = {
+      id: `local-voice-${Date.now()}`,
+      sender: 'me',
       content: `🎵 Voice message (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`,
-      timestamp: 'now',
+      timestamp: new Date().toISOString(),
       translated: false,
       corrected: false,
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
       corrections: [],
-      type: 'voice' as const,
+      type: 'voice',
       reactions: [],
       isEdited: false,
       isDeleted: false,
-      replyTo: replyingTo,
-      deliveryStatus: 'sent' as const,
+      replyTo: replyingTo ?? null,
+      deliveryStatus: 'sent',
       isEncrypted: true,
       voiceData: {
         duration: recordingTime,
         waveform: Array.from({ length: 20 }, () => Math.random())
       }
     };
-
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
     handleStopRecording();
   };
 
   const handleFileUpload = () => {
-    // Simulate file upload
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'me' as const,
+    const newMessage: DisplayMessage = {
+      id: `local-file-${Date.now()}`,
+      sender: 'me',
       content: '📄 Document.pdf',
-      timestamp: 'now',
+      timestamp: new Date().toISOString(),
       translated: false,
       corrected: false,
       originalContent: '',
       translatedContent: '',
       hasErrors: false,
       corrections: [],
-      type: 'file' as const,
+      type: 'file',
       reactions: [],
       isEdited: false,
       isDeleted: false,
-      replyTo: replyingTo,
-      deliveryStatus: 'sent' as const,
+      replyTo: replyingTo ?? null,
+      deliveryStatus: 'sent',
       isEncrypted: true,
       fileData: {
         name: 'Language_Practice_Notes.pdf',
-        size: '2.4 MB',
-        type: 'application/pdf'
+        size: '2.4 MB'
       }
     };
-
     setMessages(prev => [...prev, newMessage]);
     setReplyingTo(null);
     setShowAttachments(false);
@@ -620,72 +402,21 @@ const PrivateChat = () => {
   };
 
   const handleSendMessage = () => {
-    if (!message.trim()) return;
+    const text = message.trim();
+    if (!text || !conversationId) return;
 
-    // Simulate grammar checking in practice mode
-    const hasErrors = practiceMode && Math.random() > 0.6;
-    const corrections = hasErrors ? [
-      {
-        original: 'there',
-        corrected: 'their',
-        explanation: '"Their" shows possession, "there" indicates location',
-        rule: 'Homophones usage'
-      }
-    ] : [];
-
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'me' as const,
-      content: message,
-      timestamp: 'now',
-      translated: false,
-      corrected: false,
-      originalContent: hasErrors ? message.replace('their', 'there') : '',
-      translatedContent: '',
-      hasErrors,
-      corrections,
-      type: 'text' as const,
-      reactions: [],
-      isEdited: false,
-      isDeleted: false,
-      replyTo: replyingTo,
-      deliveryStatus: 'sent' as const,
-      isEncrypted: true
-    };
-
-    setMessages(prev => [...prev, newMessage]);
+    setIsTyping(false);
     setMessage('');
     setReplyingTo(null);
-    setIsTyping(false);
 
-    if (hasErrors && practiceMode) {
-      // Grammar suggestion - toast removed per user request
-    }
-
-    // Simulate response
-    setTimeout(() => {
-      const response = {
-        id: messages.length + 2,
-        sender: 'them' as const,
-        content: simulateBotResponse(message),
-        timestamp: 'just now',
-        translated: false,
-        corrected: false,
-        originalContent: '',
-        translatedContent: `[${targetLanguage.toUpperCase()}] ${simulateBotResponse(message)}`,
-        hasErrors: false,
-        corrections: [],
-        type: 'text' as const,
-        reactions: [],
-        isEdited: false,
-        isDeleted: false,
-        replyTo: null,
-        deliveryStatus: 'delivered' as const,
-        isEncrypted: true
-      };
-      
-      setMessages(prev => [...prev, response]);
-    }, 2000);
+    conversationApi.sendMessage(conversationId, text).then((res) => {
+      if (res.success && res.message && typeof res.message !== 'string') {
+        setMessages(prev => [...prev, mapApiMessageToDisplay(res.message as DirectMessageItem)]);
+      } else {
+        toast({ title: 'Error', description: typeof res.message === 'string' ? res.message : 'Failed to send message', variant: 'destructive' });
+        setMessage(text);
+      }
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -693,30 +424,18 @@ const PrivateChat = () => {
     setIsTyping(e.target.value.length > 0);
   };
 
-  const handleGrammarCheck = (messageId: number) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, corrected: true }
-        : msg
+  const handleGrammarCheck = (messageId: string) => {
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId ? { ...msg, corrected: true } : msg
     ));
-    
-    // Grammar checked - toast removed per user request
   };
 
-  const handleTranslate = (messageId: number) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { 
-            ...msg, 
-            translated: !msg.translated,
-            translatedContent: msg.translatedContent || `[${targetLanguage.toUpperCase()}] ${msg.content}`
-          }
+  const handleTranslate = (messageId: string) => {
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
+        ? { ...msg, translated: !msg.translated, translatedContent: msg.translatedContent || `[${targetLanguage.toUpperCase()}] ${msg.content}` }
         : msg
     ));
-    
-    if (!messages.find(msg => msg.id === messageId)?.translated) {
-      // Translation ready - toast removed per user request
-    }
   };
 
   const handleSuggestionFromAI = (suggestion: string) => {
@@ -786,13 +505,15 @@ const PrivateChat = () => {
           </div>
           
           <div className="flex items-center gap-2 flex-shrink-0">
-            <CallButtons
-              participantId={chatPartner.id || '1'}
-              participantName={chatPartner.name}
-              participantAvatar={chatPartner.avatar}
-              variant="full"
-              callType="private"
-            />
+            <div className="opacity-50 pointer-events-none" title="Coming soon" aria-hidden>
+              <CallButtons
+                participantId={chatPartner.id || '1'}
+                participantName={chatPartner.name}
+                participantAvatar={typeof chatPartner.avatar === 'string' ? chatPartner.avatar : '🌟'}
+                variant="full"
+                callType="private"
+              />
+            </div>
             <button
               onClick={toggleDarkMode}
               className="h-10 w-10 bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0 flex items-center justify-center rounded-lg transition-all hover:scale-110"
@@ -816,6 +537,9 @@ const PrivateChat = () => {
 
       {/* Messages */}
       <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pt-24 content-safe-top ${showAttachments ? 'pb-52' : 'pb-36'}`}>
+        {messagesLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading messages…</div>
+        ) : (
         <div className="space-y-4">
           {messages.map((msg) => {
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
@@ -1048,6 +772,7 @@ const PrivateChat = () => {
 
           <div ref={messagesEndRef} />
         </div>
+        )}
       </div>
 
       {/* Photo Gallery */}
@@ -1188,8 +913,10 @@ const PrivateChat = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowAttachments(!showAttachments)}
-            className={`p-2 ${showAttachments ? 'text-primary' : ''}`}
+            disabled
+            aria-disabled="true"
+            title="Images, voice, and files coming soon"
+            className="p-2 opacity-50 cursor-not-allowed"
           >
             <Paperclip size={16} />
           </Button>
@@ -1215,9 +942,11 @@ const PrivateChat = () => {
             </Button>
           ) : (
             <Button
-              onClick={handleVoiceRecord}
               variant="ghost"
-              className={`px-3 ${isRecording ? 'bg-red-100 text-red-600' : ''}`}
+              disabled
+              aria-disabled="true"
+              title="Voice messages coming soon"
+              className="px-3 opacity-50 cursor-not-allowed"
             >
               <Mic size={16} />
             </Button>

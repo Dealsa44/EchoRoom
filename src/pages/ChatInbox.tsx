@@ -54,9 +54,10 @@ import {
   getConversationState, 
   updateConversationState, 
   markConversationAsLeft,
-  deleteConversationState 
 } from '@/lib/conversationStorage';
+import { conversationApi, type ConversationListItem } from '@/services/api';
 import { mockProfiles } from '@/data/mockProfiles';
+import { formatDistanceToNow } from 'date-fns';
 
 interface ChatConversation {
   id: string;
@@ -117,103 +118,73 @@ const ChatInbox = () => {
   });
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
 
   // Save active tab to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('chatInboxActiveTab', activeTab);
   }, [activeTab]);
 
-  // Initialize conversations with persistent state
+  // Load real private conversations from API
+  const loadConversations = () => {
+    setConversationsLoading(true);
+    conversationApi
+      .list(false)
+      .then((res) => {
+        if (res.success && res.conversations) {
+          const withPinState = res.conversations.map((c: ConversationListItem) => {
+            const state = getConversationState(c.id);
+            return {
+              id: c.id,
+              type: 'private' as const,
+              participant: {
+                id: c.otherUser.id,
+                name: c.otherUser.name,
+                avatar: c.otherUser.avatar || '🌟',
+                isOnline: false,
+              },
+              lastMessage: c.lastMessage
+                ? {
+                    id: c.lastMessage.id,
+                    content: c.lastMessage.content,
+                    sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
+                    timestamp: c.lastMessage.createdAt,
+                    type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
+                    isRead: true,
+                  }
+                : {
+                    id: '',
+                    content: 'No messages yet',
+                    sender: '',
+                    timestamp: c.lastMessageAt || new Date().toISOString(),
+                    type: 'text' as const,
+                    isRead: true,
+                  },
+              unreadCount: 0,
+              isPinned: state.isPinned,
+              isArchived: c.isArchived,
+              isMuted: state.isMuted,
+              isTyping: false,
+            };
+          });
+          setConversations(withPinState);
+        } else {
+          setConversations([]);
+        }
+      })
+      .catch(() => setConversations([]))
+      .finally(() => setConversationsLoading(false));
+  };
+
   useEffect(() => {
-    const initializeConversations = () => {
-      const baseConversations: ChatConversation[] = [
-        // Private chats from matches
-        {
-          id: 'private-1',
-          type: 'private',
-          participant: {
-            id: '1',
-            name: 'Luna',
-            avatar: '🌙',
-            isOnline: true,
-          },
-          lastMessage: {
-            id: 'msg-1',
-            content: 'That\'s such a beautiful perspective on philosophy! I\'d love to hear more about your thoughts on...',
-            sender: 'Luna',
-            timestamp: '2 min ago',
-            type: 'text',
-            isRead: false,
-          },
-          unreadCount: 3,
-          isPinned: false,
-          isArchived: false,
-          isMuted: false,
-          isTyping: false,
-        },
-        {
-          id: 'private-2',
-          type: 'private',
-          participant: {
-            id: '2',
-            name: 'Alex',
-            avatar: '📚',
-            isOnline: false,
-            lastSeen: '1 hour ago',
-          },
-          lastMessage: {
-            id: 'msg-2',
-            content: '🎵 Voice message (0:45)',
-            sender: 'Alex',
-            timestamp: '1 hour ago',
-            type: 'voice',
-            isRead: true,
-          },
-          unreadCount: 0,
-          isPinned: false,
-          isArchived: false,
-          isMuted: false,
-          isTyping: false,
-        },
-        {
-          id: 'private-3',
-          type: 'private',
-          participant: {
-            id: '3',
-            name: 'Sage',
-            avatar: '🌱',
-            isOnline: true,
-          },
-          lastMessage: {
-            id: 'msg-3',
-            content: '📷 Photo',
-            sender: 'you',
-            timestamp: '3 hours ago',
-            type: 'image',
-            isRead: true,
-          },
-          unreadCount: 0,
-          isPinned: false,
-          isArchived: false,
-          isMuted: false,
-          isTyping: true,
-        },
-      ];
+    if (user) loadConversations();
+    else {
+      setConversations([]);
+      setConversationsLoading(false);
+    }
+  }, [user?.id]);
 
-      // Apply persistent states to conversations
-      const conversationsWithState = baseConversations.map(conv => {
-        const state = getConversationState(conv.id);
-        return {
-          ...conv,
-          isPinned: state.isPinned,
-          isArchived: state.isArchived,
-          isMuted: state.isMuted
-        };
-      });
-
-      setConversations(conversationsWithState);
-    };
-
+  useEffect(() => {
     const initializeContactRequests = () => {
       // Get profiles with IDs 6, 7, 8 (unused profiles for contact requests)
       const zaraProfile = mockProfiles.find(p => p.id === 6);
@@ -281,38 +252,7 @@ const ChatInbox = () => {
       ];
       setContactRequests(mockRequests);
     };
-
-    initializeConversations();
     initializeContactRequests();
-  }, []);
-
-  // Refresh conversations when joined rooms change
-  useEffect(() => {
-    // This will trigger a re-render when joinedRooms changes,
-    // which will update the joinedRoomConversations
-  }, [joinedRooms]);
-
-  // Simulate typing in conversations to make them feel alive
-  useEffect(() => {
-    const typingInterval = setInterval(() => {
-      // 20% chance to show someone typing
-      if (Math.random() < 0.2) {
-        setConversations(prev => prev.map(conv => {
-          // Only show typing for online users and not for the current user
-          if (conv.participant.isOnline && conv.participant.name !== 'You') {
-            return { ...conv, isTyping: true };
-          }
-          return conv;
-        }));
-
-        // Stop typing after 2-4 seconds
-        setTimeout(() => {
-          setConversations(prev => prev.map(conv => ({ ...conv, isTyping: false })));
-        }, 2000 + Math.random() * 2000);
-      }
-    }, 20000); // Every 20 seconds
-    
-    return () => clearInterval(typingInterval);
   }, []);
 
   // Add joined rooms to conversations (exclude left rooms)
@@ -440,18 +380,19 @@ const ChatInbox = () => {
   const handleArchiveConversation = (conversationId: string) => {
     const conv = allConversations.find(c => c.id === conversationId);
     const newArchivedState = !conv?.isArchived;
-    
-    // Update persistent storage
+
+    if (conv?.type === 'private' && !conversationId.startsWith('joined-')) {
+      conversationApi.setArchived(conversationId, newArchivedState).then((res) => {
+        if (res.success) loadConversations();
+        else toast({ title: 'Error', description: 'Failed to update archive state', variant: 'destructive' });
+      });
+      return;
+    }
+
     updateConversationState(conversationId, { isArchived: newArchivedState });
-    
-    // Update local state
-    setConversations(prev => prev.map(conv => 
-      conv.id === conversationId 
-        ? { ...conv, isArchived: newArchivedState }
-        : conv
+    setConversations(prev => prev.map(c =>
+      c.id === conversationId ? { ...c, isArchived: newArchivedState } : c
     ));
-    
-    // Archived/unarchived conversation - toast removed per user request
   };
 
   const handleMuteConversation = (conversationId: string) => {
@@ -471,22 +412,19 @@ const ChatInbox = () => {
 
   const handleLeaveConversation = (conversationId: string) => {
     const conv = allConversations.find(c => c.id === conversationId);
-    
+
     if (conv?.type === 'group' && conversationId.startsWith('joined-')) {
-      // Extract room ID from conversation ID
       const roomId = conversationId.replace('joined-', '');
-      
-      // Mark as left in persistent storage
       markConversationAsLeft(conversationId);
-      
-      // Leave room in app context (this will make it available in chat rooms again)
       leaveRoom(roomId);
-    } else if (conv?.type === 'private') {
-      // For private chats, remove them from persistent storage and local state
-      deleteConversationState(conversationId);
-      setConversations(prev => prev.filter(conv => conv.id !== conversationId));
-      
-      // Deleted conversation - toast removed per user request
+      return;
+    }
+
+    if (conv?.type === 'private') {
+      conversationApi.deleteConversation(conversationId).then((res) => {
+        if (res.success) setConversations(prev => prev.filter(c => c.id !== conversationId));
+        else toast({ title: 'Error', description: 'Failed to delete conversation', variant: 'destructive' });
+      });
     }
   };
 
@@ -514,7 +452,10 @@ const ChatInbox = () => {
   };
 
   const formatTimestamp = (timestamp: string) => {
-    // Simple formatting - in real app would use proper date library
+    try {
+      const d = new Date(timestamp);
+      if (!Number.isNaN(d.getTime())) return formatDistanceToNow(d, { addSuffix: true });
+    } catch (_) {}
     return timestamp;
   };
 
@@ -687,7 +628,15 @@ const ChatInbox = () => {
         ) : (
           /* Conversations List */
         <div className="space-y-3">
-          {filteredConversations.map((conversation, index) => (
+          {conversationsLoading ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">Loading conversations…</div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              <p className="mb-2">No conversations yet</p>
+              <p className="text-xs">Chat with someone from their profile to start.</p>
+            </div>
+          ) : null}
+          {!conversationsLoading && filteredConversations.map((conversation, index) => (
             <Card 
               key={conversation.id}
               className={`cursor-pointer transform-gpu will-change-transform transition-all active:scale-[0.98] hover:shadow-large animate-fade-in animate-slide-up ${conversation.unreadCount > 0 ? 'border-primary/20 shadow-glow-primary/40' : ''}`}

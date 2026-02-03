@@ -712,12 +712,94 @@ export const chatApi = {
   },
 };
 
+// Conversation (DM) types
+export interface ConversationListItem {
+  id: string;
+  otherUser: { id: string; name: string; avatar: string };
+  lastMessage: {
+    id: string;
+    content: string;
+    senderId: string;
+    senderName: string;
+    createdAt: string;
+    type: string;
+  } | null;
+  lastMessageAt: string | null;
+  isArchived: boolean;
+}
+
+export interface DirectMessageItem {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  content: string;
+  type: string;
+  reactions: Array<{ userId: string; emoji: string }>;
+  createdAt: string;
+}
+
+// Conversation (DM) API
+export const conversationApi = {
+  list: async (archived = false): Promise<{ success: boolean; conversations?: ConversationListItem[]; message?: string }> => {
+    const q = archived ? '?archived=true' : '';
+    return apiRequest<ConversationListItem[]>(`/conversations${q}`);
+  },
+
+  getOrCreate: async (otherUserId: string): Promise<{
+    success: boolean;
+    conversation?: { id: string; otherUser: { id: string; name: string; avatar: string } };
+    message?: string;
+  }> => {
+    return apiRequest<any>(`/conversations/with/${encodeURIComponent(otherUserId)}`);
+  },
+
+  getMessages: async (conversationId: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: DirectMessageItem[]; message?: string }> => {
+    return apiRequest<DirectMessageItem[]>(
+      `/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`
+    );
+  },
+
+  sendMessage: async (conversationId: string, content: string): Promise<{ success: boolean; message?: DirectMessageItem | string }> => {
+    const res = await apiRequest<DirectMessageItem>(`/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content: content.trim() }),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith('conversations/'));
+    return res as { success: boolean; message?: DirectMessageItem | string };
+  },
+
+  setArchived: async (conversationId: string, isArchived: boolean): Promise<ApiResponse> => {
+    const res = await apiRequest(`/conversations/${conversationId}/archive`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isArchived }),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith('conversations'));
+    return res;
+  },
+
+  deleteConversation: async (conversationId: string): Promise<ApiResponse> => {
+    const res = await apiRequest(`/conversations/${conversationId}`, { method: 'DELETE' });
+    if (res.success) invalidateApiCache((k) => k.startsWith('conversations'));
+    return res;
+  },
+
+  reactToMessage: async (messageId: string, emoji: string): Promise<{ success: boolean; message?: DirectMessageItem | string }> => {
+    const res = await apiRequest<DirectMessageItem>(`/conversations/messages/${messageId}/react`, {
+      method: 'PUT',
+      body: JSON.stringify({ emoji }),
+    });
+    return res as { success: boolean; message?: DirectMessageItem | string };
+  },
+};
+
 export default {
   authApi,
   userApi,
   chatApi,
   forumApi,
   eventsApi,
+  conversationApi,
   getAuthToken,
   setAuthToken,
   removeAuthToken,
