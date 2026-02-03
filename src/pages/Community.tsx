@@ -61,6 +61,15 @@ const Community = () => {
     newToday: 12
   };
 
+  // Three moving dots for loading counts
+  const LoadingDots = () => (
+    <span className="inline-flex items-center gap-0.5" aria-hidden="true">
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70 animate-bounce" style={{ animationDelay: '0ms' }} />
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70 animate-bounce" style={{ animationDelay: '0.15s' }} />
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70 animate-bounce" style={{ animationDelay: '0.3s' }} />
+    </span>
+  );
+
   const joinedRoomsCount = joinedRooms.length;
 
   return (
@@ -178,8 +187,8 @@ const Community = () => {
                       Forum
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-14 bg-green-500/70 rounded-full" />
                     </h3>
-                    <Badge variant="glass" size="sm" className="bg-green-500/20 text-green-700 w-fit">
-                      {communityStats.totalDiscussions} discussions
+                    <Badge variant="glass" size="sm" className="bg-green-500/20 text-green-700 w-fit min-w-[4rem] justify-center">
+                      {forumPostCount === null ? <LoadingDots /> : `${forumPostCount} discussions`}
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">
@@ -222,8 +231,8 @@ const Community = () => {
                       Events
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-16 bg-orange-500/70 rounded-full" />
                     </h3>
-                    <Badge variant="glass" size="sm" className="bg-orange-500/20 text-orange-700 w-fit">
-                      {upcomingEventsCount !== null ? upcomingEventsCount : '—'} upcoming
+                    <Badge variant="glass" size="sm" className="bg-orange-500/20 text-orange-700 w-fit min-w-[4rem] justify-center">
+                      {upcomingEventsCount === null ? <LoadingDots /> : `${upcomingEventsCount} upcoming`}
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">

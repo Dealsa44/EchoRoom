@@ -284,7 +284,7 @@ export const userApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    if (res.success) invalidateApiCache('user/profile');
+    if (res.success) invalidateApiCache((k) => k === 'auth/me' || k.startsWith('user/profile'));
     return res;
   },
 
@@ -632,23 +632,32 @@ export const eventsApi = {
   },
 
   react: async (id: string): Promise<{ success: boolean; reacted?: boolean; count?: number; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/react`, { method: 'PUT' });
+    const res = await apiRequest<any>(`/events/${id}/react`, { method: 'PUT' });
+    if (res.success) invalidateEventsCache({ eventId: id });
+    return res;
   },
 
   getParticipants: async (id: string): Promise<{ success: boolean; participants?: EventParticipantItem[]; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/participants`);
+    return cachedOrFetch(`events/participants/${id}`, () => apiRequest<any>(`/events/${id}/participants`));
   },
 
   removeParticipant: async (eventId: string, userId: string): Promise<{ success: boolean; message?: string }> => {
-    return apiRequest<any>(`/events/${eventId}/participants/${userId}`, { method: 'DELETE' });
+    const res = await apiRequest<any>(`/events/${eventId}/participants/${userId}`, { method: 'DELETE' });
+    if (res.success) {
+      invalidateApiCache(`events/participants/${eventId}`);
+      invalidateEventsCache({ eventId });
+    }
+    return res;
   },
 
   getMessages: async (id: string): Promise<{ success: boolean; messages?: EventMessageItem[]; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/messages`);
+    return cachedOrFetch(`events/messages/${id}`, () => apiRequest<any>(`/events/${id}/messages`));
   },
 
   sendMessage: async (id: string, content: string): Promise<{ success: boolean; message?: EventMessageItem; message?: string }> => {
-    return apiRequest<any>(`/events/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
+    const res = await apiRequest<any>(`/events/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
+    if (res.success) invalidateApiCache(`events/messages/${id}`);
+    return res;
   },
 };
 
