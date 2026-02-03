@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,77 +47,62 @@ import {
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { userApi } from '@/services/api';
 import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
+
+type DisplayUserInfo = {
+  name: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  age: number;
+  isOnline: boolean;
+  lastSeen: string;
+};
 
 const UserProfileActions = () => {
   const navigate = useNavigate();
   const { userId } = useParams();
   const { user } = useApp();
-  
-  // Mock user data - in real app this would come from API
-  const getUserById = (id: string) => {
-    const users = {
-      '1': { 
-        name: 'Luna', 
-        avatar: '🌙', 
-        status: 'online', 
-        languageLearning: 'English',
-        isOnline: true,
-        lastSeen: 'Online now',
-        bio: 'Philosophy enthusiast and language learner',
-        location: 'New York, NY',
-        age: 25
-      },
-      '2': { 
-        name: 'Alex', 
-        avatar: '📚', 
-        status: 'online', 
-        languageLearning: 'Japanese',
-        isOnline: true,
-        lastSeen: 'Online now',
-        bio: 'Book lover and creative writer',
-        location: 'Tokyo, Japan',
-        age: 28
-      },
-      '3': { 
-        name: 'Sage', 
-        avatar: '🌱', 
-        status: 'online', 
-        languageLearning: 'Spanish',
-        isOnline: true,
-        lastSeen: 'Online now',
-        bio: 'Mindfulness practitioner and nature lover',
-        location: 'Barcelona, Spain',
-        age: 26
-      },
-      '4': { 
-        name: 'Maya', 
-        avatar: '🎨', 
-        status: 'away', 
-        languageLearning: 'Italian',
-        isOnline: false,
-        lastSeen: '1 hour ago',
-        bio: 'Artist and cultural explorer',
-        location: 'Florence, Italy',
-        age: 24
-      },
-      '5': { 
-        name: 'Kai', 
-        avatar: '🏃', 
-        status: 'away', 
-        languageLearning: 'English',
-        isOnline: false,
-        lastSeen: '2 hours ago',
-        bio: 'Fitness enthusiast and adventure seeker',
-        location: 'Vancouver, Canada',
-        age: 29
-      }
-    };
-    return users[id as keyof typeof users] || users['1'];
-  };
 
-  const userInfo = getUserById(userId || '1');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<DisplayUserInfo | null>(null);
+
+  useEffect(() => {
+    if (!userId || userId === user?.id) {
+      setProfileLoading(false);
+      setUserInfo(null);
+      return;
+    }
+    setProfileLoading(true);
+    setProfileError(null);
+    userApi
+      .getPublicProfile(userId)
+      .then((res) => {
+        if (res.success && res.profile) {
+          const p = res.profile;
+          setUserInfo({
+            name: p.name ?? 'Unknown',
+            avatar: p.avatar ?? '👤',
+            bio: p.bio ?? '',
+            location: p.location ?? '',
+            age: typeof p.age === 'number' ? p.age : 0,
+            isOnline: p.isOnline ?? false,
+            lastSeen: p.isOnline ? 'Online now' : (p.lastActive ?? 'Offline'),
+          });
+        } else {
+          setProfileError(res.message ?? 'Could not load profile');
+          setUserInfo(null);
+        }
+      })
+      .catch(() => {
+        setProfileError('Failed to load profile');
+        setUserInfo(null);
+      })
+      .finally(() => setProfileLoading(false));
+  }, [userId, user?.id]);
   
   
   // State for various settings
@@ -169,14 +154,14 @@ const UserProfileActions = () => {
   };
 
   const handleShare = () => {
+    const name = userInfo?.name ?? 'Profile';
     if (navigator.share) {
       navigator.share({
-        title: `${userInfo.name}'s Profile`,
-        text: `Check out ${userInfo.name}'s profile on Driftzo`,
+        title: `${name}'s Profile`,
+        text: `Check out ${name}'s profile on Driftzo`,
         url: window.location.origin + `/profile/${userId}`
       });
     } else {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.origin + `/profile/${userId}`);
     }
   };
@@ -246,6 +231,39 @@ const UserProfileActions = () => {
     setShowMoodThemeSelector(true);
   };
 
+  if (profileLoading && !userInfo) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="User Actions" showBack={true} onBack={() => navigate(-1)} />
+        <div className="px-4 py-6 max-w-md mx-auto content-safe-top flex items-center justify-center min-h-[40vh]">
+          <p className="text-muted-foreground text-sm">Loading profile…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError || (!profileLoading && userId && userId !== user?.id && !userInfo)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar title="User Actions" showBack={true} onBack={() => navigate(-1)} />
+        <div className="px-4 py-6 max-w-md mx-auto content-safe-top flex flex-col items-center justify-center min-h-[40vh] gap-2">
+          <p className="text-muted-foreground text-sm text-center">{profileError ?? 'User not found'}</p>
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>Go back</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const displayInfo = userInfo ?? {
+    name: 'Unknown',
+    avatar: '👤',
+    bio: '',
+    location: '',
+    age: 0,
+    isOnline: false,
+    lastSeen: 'Offline',
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar 
@@ -261,22 +279,26 @@ const UserProfileActions = () => {
           <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/12 blur-2xl animate-float-ambient" aria-hidden />
           <CardContent className="p-6 text-center">
             <div className="relative flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft">
-                <div className="text-3xl">{userInfo.avatar}</div>
+              <div className="h-16 w-16 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft overflow-hidden">
+                {displayInfo.avatar.startsWith('http') ? (
+                  <img src={displayInfo.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-3xl">{displayInfo.avatar}</div>
+                )}
               </div>
-              {userInfo.isOnline && (
+              {displayInfo.isOnline && (
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
               )}
             </div>
-            <h2 className="text-xl font-bold mb-1">{userInfo.name}</h2>
-            <p className="text-sm text-muted-foreground mb-2">{userInfo.bio}</p>
+            <h2 className="text-xl font-bold mb-1">{displayInfo.name}</h2>
+            <p className="text-sm text-muted-foreground mb-2">{displayInfo.bio}</p>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>{userInfo.location}</span>
+              <span>{displayInfo.location}</span>
               <span>•</span>
-              <span>{userInfo.age} years old</span>
-              <span>•</span>
-              <span className={userInfo.isOnline ? "text-green-500" : "text-muted-foreground"}>
-                {userInfo.lastSeen}
+              <span>{displayInfo.age ? `${displayInfo.age} years old` : ''}</span>
+              {displayInfo.age ? <span>•</span> : null}
+              <span className={displayInfo.isOnline ? "text-green-500" : "text-muted-foreground"}>
+                {displayInfo.lastSeen}
               </span>
             </div>
           </CardContent>
@@ -558,8 +580,8 @@ const UserProfileActions = () => {
 
       {/* Compatibility Dashboard Modal */}
       <CompatibilityDashboard
-        partnerId={userId || '1'}
-        partnerName={userInfo.name}
+        partnerId={userId ?? ''}
+        partnerName={displayInfo.name}
         isOpen={showCompatibilityDashboard}
         onClose={() => setShowCompatibilityDashboard(false)}
       />
