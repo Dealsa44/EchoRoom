@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,6 +60,7 @@ import {
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
+import { useSocket } from '@/contexts/SocketContext';
 import { toast } from '@/hooks/use-toast';
 import { chatRooms } from '@/data/chatRooms';
 import { 
@@ -128,6 +129,7 @@ interface ContactRequest {
 const ChatInbox = () => {
   const navigate = useNavigate();
   const { user, joinedRooms, leaveRoom } = useApp();
+  const { socket } = useSocket();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('chatInboxActiveTab') || 'chats';
@@ -214,10 +216,24 @@ const ChatInbox = () => {
     }
   }, [user?.id]);
 
-  // Poll list so unarchived chats (e.g. after new message) and new messages appear without refresh
+  // Refetch list when any conversation is updated (new message, reaction, theme) so inbox stays current
+  const loadConversationsRef = useRef(loadConversations);
+  loadConversationsRef.current = loadConversations;
+  useEffect(() => {
+    if (!socket || !user) return;
+    const onConversationUpdated = () => {
+      loadConversationsRef.current();
+    };
+    socket.on('conversation:updated', onConversationUpdated);
+    return () => {
+      socket.off('conversation:updated', onConversationUpdated);
+    };
+  }, [socket, user?.id]);
+
+  // Poll list so unarchived chats and last-activity preview stay current (backup to socket)
   useEffect(() => {
     if (!user || activeTab !== 'chats') return;
-    const REFRESH_INTERVAL_MS = 8000;
+    const REFRESH_INTERVAL_MS = 4000;
     const interval = setInterval(() => {
       conversationApi.list(false).then((res) => {
         if (res.success && res.conversations) {
@@ -228,20 +244,26 @@ const ChatInbox = () => {
     return () => clearInterval(interval);
   }, [user?.id, activeTab]);
 
-  // Refetch when user returns to this tab/window so unarchived chats show up
+  // Refetch when user returns to this tab/window or focuses the window
+  const refetchList = () => {
+    conversationApi.list(false).then((res) => {
+      if (res.success && res.conversations) {
+        setConversations(mapConversationListToState(res.conversations));
+      }
+    }).catch(() => {});
+  };
   useEffect(() => {
     if (!user) return;
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        conversationApi.list(false).then((res) => {
-          if (res.success && res.conversations) {
-            setConversations(mapConversationListToState(res.conversations));
-          }
-        }).catch(() => {});
-      }
+      if (document.visibilityState === 'visible') refetchList();
     };
+    const onFocus = () => refetchList();
     document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [user?.id]);
 
   useEffect(() => {

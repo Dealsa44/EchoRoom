@@ -220,6 +220,24 @@ const PrivateChat = () => {
     };
   }, [socket, conversationId]);
 
+  // When any conversation update is pushed (message, reaction, theme), refetch this chat to stay in sync
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+    const onConversationUpdated = (payload: { conversationId: string }) => {
+      if (payload.conversationId !== conversationId) return;
+      conversationApi.getMessages(conversationId).then((res) => {
+        if (res?.success && res.messages) {
+          setMessages(res.messages.map(mapApiMessageToDisplay));
+        }
+        if (res?.success && res.chatTheme) setConversationTheme(res.chatTheme);
+      });
+    };
+    socket.on('conversation:updated', onConversationUpdated);
+    return () => {
+      socket.off('conversation:updated', onConversationUpdated);
+    };
+  }, [socket, conversationId]);
+
   // Real-time: reaction update
   useEffect(() => {
     if (!socket || !conversationId || !user) return;
@@ -265,10 +283,10 @@ const PrivateChat = () => {
     };
   }, [socket, conversationId, partner?.id, user?.id]);
 
-  // Poll for new messages: when disconnected (primary fallback) or when connected (backup if socket event is delayed/lost)
+  // Poll for new messages and theme: when disconnected (primary) or when connected (backup if socket missed)
   useEffect(() => {
     if (!conversationId) return;
-    const intervalMs = isConnected ? 8000 : 6000;
+    const intervalMs = isConnected ? 5000 : 5000; // 5s so list and theme stay current
     const interval = setInterval(() => {
       conversationApi.getMessages(conversationId).then((res) => {
         if (res.success && res.messages) {
@@ -679,22 +697,25 @@ const PrivateChat = () => {
         onClose={() => setShowLanguagePanel(false)}
       />
 
-      {/* Messages area: theme applies here only (not topbar/input); theme vars + optional design class */}
+      {/* Messages area: theme applies here only (not topbar/input). Default = original app look (no override). */}
       {(() => {
+        const isDefault = conversationTheme === 'default';
         const theme = moodThemes[conversationTheme] || moodThemes.default;
-        const themeStyle: React.CSSProperties = {
-          ['--mood-primary' as string]: theme.colors.primary,
-          ['--mood-secondary' as string]: theme.colors.secondary,
-          ['--mood-accent' as string]: theme.colors.accent,
-          ['--mood-background' as string]: theme.colors.background,
-          ['--mood-surface' as string]: theme.colors.surface,
-          ['--mood-text' as string]: theme.colors.text,
-          ['--mood-muted' as string]: theme.colors.muted,
-          backgroundColor: theme.colors.background,
-        };
+        const themeStyle: React.CSSProperties = isDefault
+          ? {}
+          : {
+              ['--mood-primary' as string]: theme.colors.primary,
+              ['--mood-secondary' as string]: theme.colors.secondary,
+              ['--mood-accent' as string]: theme.colors.accent,
+              ['--mood-background' as string]: theme.colors.background,
+              ['--mood-surface' as string]: theme.colors.surface,
+              ['--mood-text' as string]: theme.colors.text,
+              ['--mood-muted' as string]: theme.colors.muted,
+              backgroundColor: theme.colors.background,
+            };
         return (
       <div
-        className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header chat-messages-area mood-${conversationTheme} ${theme.designClass || ''} ${showAttachments ? 'pb-52' : 'pb-36'}`}
+        className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header chat-messages-area ${isDefault ? 'bg-background' : ''} ${isDefault ? '' : `mood-${conversationTheme} ${theme.designClass || ''}`} ${showAttachments ? 'pb-52' : 'pb-36'}`}
         style={themeStyle}
       >
         {messagesLoading ? (
