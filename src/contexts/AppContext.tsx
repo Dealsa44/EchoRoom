@@ -44,6 +44,7 @@ interface User {
   lookingForFriendship: boolean;
   customGender?: string; // For custom gender identity
   customOrientation?: string; // For custom orientation
+  ethnicity?: string;
   // New lifestyle fields
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';

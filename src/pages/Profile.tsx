@@ -174,14 +174,14 @@ const Profile = () => {
         ...user,
         // Ensure languages array is safe
         languages: Array.isArray(user.languages) 
-          ? user.languages.filter(lang => lang && typeof lang === 'object' && lang.language)
+          ? user.languages.filter(lang => lang && typeof lang === 'object' && ('name' in lang ? lang.name : (lang as { language?: string }).language))
           : []
       } as unknown as DisplayUser : null)
     : (profileData ? {
         ...profileData,
         // Ensure languages array is safe
         languages: Array.isArray(profileData.languages) 
-          ? profileData.languages.filter(lang => lang && typeof lang === 'object' && lang.language)
+          ? profileData.languages.filter(lang => lang && typeof lang === 'object' && ('name' in lang ? (lang as { name?: string }).name : (lang as { language?: string }).language))
           : []
       } as unknown as DisplayUser : null);
 

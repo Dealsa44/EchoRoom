@@ -97,6 +97,9 @@ export interface ChatRoom {
   activeNow: number;
   tags: string[];
   icon: string;
+  isActive?: boolean;
+  memberCount?: number;
+  messageCount?: number;
 }
 
 export interface ConversationContext {

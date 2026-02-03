@@ -8,6 +8,12 @@ export interface ChatRoom {
   activeNow: number;
   tags: string[];
   icon: string;
+  /** Derived or provided: room has active users */
+  isActive?: boolean;
+  /** Alias for members, or from API */
+  memberCount?: number;
+  /** Optional message count for stats */
+  messageCount?: number;
 }
 
 export const chatRooms: ChatRoom[] = [
@@ -20,7 +26,10 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: false,
     activeNow: 8,
     tags: ['Deep', 'Thoughtful'],
-    icon: '🤔'
+    icon: '🤔',
+    isActive: true,
+    memberCount: 127,
+    messageCount: 0
   },
   {
     id: '2',
@@ -31,7 +40,10 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: false,
     activeNow: 15,
     tags: ['Fiction', 'Reviews'],
-    icon: '📚'
+    icon: '📚',
+    isActive: true,
+    memberCount: 243,
+    messageCount: 0
   },
   {
     id: '3',
@@ -42,7 +54,10 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: false,
     activeNow: 5,
     tags: ['Calm', 'Healing'],
-    icon: '🧘'
+    icon: '🧘',
+    isActive: true,
+    memberCount: 89,
+    messageCount: 0
   },
   {
     id: '4',
@@ -53,7 +68,10 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: false,
     activeNow: 12,
     tags: ['Creative', 'Supportive'],
-    icon: '✍️'
+    icon: '✍️',
+    isActive: true,
+    memberCount: 156,
+    messageCount: 0
   },
   {
     id: '5',
@@ -64,7 +82,10 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: false,
     activeNow: 23,
     tags: ['Learning', 'Practice'],
-    icon: '🌍'
+    icon: '🌍',
+    isActive: true,
+    memberCount: 201,
+    messageCount: 0
   },
   {
     id: '6',
@@ -75,6 +96,9 @@ export const chatRooms: ChatRoom[] = [
     isPrivate: true,
     activeNow: 3,
     tags: ['Support', 'Private'],
-    icon: '💜'
+    icon: '💜',
+    isActive: true,
+    memberCount: 67,
+    messageCount: 0
   }
 ];

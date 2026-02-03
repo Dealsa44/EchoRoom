@@ -156,17 +156,17 @@ const RoomActions = () => {
               <div className="h-16 w-16 rounded-full bg-card-hover border-2 border-border flex items-center justify-center shadow-inner-soft">
                 <div className="text-3xl">{roomData.icon}</div>
               </div>
-              {roomData.isActive && (
+              {(roomData.isActive ?? roomData.activeNow > 0) && (
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
               )}
             </div>
             <h2 className="text-xl font-bold mb-1">{roomData.title}</h2>
             <p className="text-sm text-muted-foreground mb-2">{roomData.description}</p>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>{roomData.memberCount} members</span>
+              <span>{roomData.memberCount ?? roomData.members} members</span>
               <span>•</span>
-              <span className={roomData.isActive ? "text-green-500" : "text-muted-foreground"}>
-                {roomData.isActive ? "Active" : "Inactive"}
+              <span className={(roomData.isActive ?? roomData.activeNow > 0) ? "text-green-500" : "text-muted-foreground"}>
+                {(roomData.isActive ?? roomData.activeNow > 0) ? "Active" : "Inactive"}
               </span>
             </div>
           </CardContent>
@@ -260,11 +260,11 @@ const RoomActions = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{roomData.memberCount}</div>
+                <div className="text-2xl font-bold text-primary">{roomData.memberCount ?? roomData.members}</div>
                 <div className="text-sm text-muted-foreground">Members</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{roomData.messageCount || 0}</div>
+                <div className="text-2xl font-bold text-primary">{roomData.messageCount ?? 0}</div>
                 <div className="text-sm text-muted-foreground">Messages</div>
               </div>
             </div>

@@ -36,6 +36,7 @@ interface User {
   lookingForFriendship: boolean;
   customGender?: string;
   customOrientation?: string;
+  ethnicity?: string;
   smoking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   drinking: 'never' | 'casually' | 'socially' | 'regularly' | 'prefer-not-to-say';
   hasChildren: 'no' | 'yes' | 'want-someday' | 'have-and-want-more' | 'have-and-dont-want-more' | 'not-sure-yet' | 'prefer-not-to-say';

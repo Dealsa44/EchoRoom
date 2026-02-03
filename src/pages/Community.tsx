@@ -15,6 +15,8 @@ const Community = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [forumPostCount, setForumPostCount] = useState<number | null>(null);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState<number | null>(null);
+  const [forumCountLoading, setForumCountLoading] = useState(true);
+  const [eventsCountLoading, setEventsCountLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -22,29 +24,39 @@ const Community = () => {
   }, []);
 
   useEffect(() => {
-    forumApi.getPostCount().then((res) => {
-      if (res.success && typeof res.count === 'number') setForumPostCount(res.count);
-    }).catch(() => {});
+    setForumCountLoading(true);
+    forumApi.getPostCount()
+      .then((res) => {
+        if (res.success && typeof res.count === 'number') setForumPostCount(res.count);
+        else setForumPostCount(null);
+      })
+      .catch(() => setForumPostCount(null))
+      .finally(() => setForumCountLoading(false));
   }, []);
 
   // Real count of upcoming events (browse list + my hosted + my joined)
   useEffect(() => {
-    eventsApi.list().then((res) => {
-      const browse = res.success && res.events ? res.events.length : 0;
-      if (user) {
-        eventsApi.getMy().then((myRes) => {
-          if (myRes.success) {
-            const hosted = (myRes.hosted ?? []).length;
-            const joined = (myRes.joined ?? []).length;
-            setUpcomingEventsCount(browse + hosted + joined);
-          } else {
-            setUpcomingEventsCount(browse);
-          }
-        }).catch(() => setUpcomingEventsCount(browse));
-      } else {
-        setUpcomingEventsCount(browse);
-      }
-    }).catch(() => setUpcomingEventsCount(null));
+    setEventsCountLoading(true);
+    eventsApi.list()
+      .then((res) => {
+        const browse = res.success && res.events ? res.events.length : 0;
+        if (user) {
+          return eventsApi.getMy()
+            .then((myRes) => {
+              if (myRes.success) {
+                const hosted = (myRes.hosted ?? []).length;
+                const joined = (myRes.joined ?? []).length;
+                return browse + hosted + joined;
+              }
+              return browse;
+            })
+            .catch(() => browse);
+        }
+        return browse;
+      })
+      .then((count) => { if (typeof count === 'number') setUpcomingEventsCount(count); })
+      .catch(() => setUpcomingEventsCount(null))
+      .finally(() => setEventsCountLoading(false));
   }, [user]);
 
   const getGreeting = () => {
@@ -188,7 +200,7 @@ const Community = () => {
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-14 bg-green-500/70 rounded-full" />
                     </h3>
                     <Badge variant="glass" size="sm" className="bg-green-500/20 text-green-700 w-fit min-w-[4rem] justify-center">
-                      {forumPostCount === null ? <LoadingDots /> : `${forumPostCount} discussions`}
+                      {forumCountLoading ? <LoadingDots /> : (forumPostCount !== null ? `${forumPostCount} discussions` : '—')}
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">
@@ -232,7 +244,7 @@ const Community = () => {
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-16 bg-orange-500/70 rounded-full" />
                     </h3>
                     <Badge variant="glass" size="sm" className="bg-orange-500/20 text-orange-700 w-fit min-w-[4rem] justify-center">
-                      {upcomingEventsCount === null ? <LoadingDots /> : `${upcomingEventsCount} upcoming`}
+                      {eventsCountLoading ? <LoadingDots /> : (upcomingEventsCount !== null ? `${upcomingEventsCount} upcoming` : '—')}
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">

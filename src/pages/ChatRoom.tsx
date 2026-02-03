@@ -220,6 +220,7 @@ const ChatRoom = () => {
     title: room.title,
     description: room.description,
     members: room.members,
+    memberCount: room.memberCount ?? room.members,
     activeNow: room.activeNow,
     icon: room.icon,
     emoji: room.icon, // Map icon to emoji for display
