@@ -1,7 +1,7 @@
 // API service for communicating with Driftzo backend
 const API_BASE_URL = 'https://echoroom-backend-23jb.onrender.com/api';
 
-// Types for API responses
+// Types for API responses (index signature allows endpoint-specific payloads: event, events, posts, hosted, joined, etc.)
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
@@ -9,6 +9,7 @@ export interface ApiResponse<T = any> {
   user?: T;
   token?: string;
   errors?: string[];
+  [key: string]: any;
 }
 
 export interface User {
@@ -654,10 +655,10 @@ export const eventsApi = {
     return cachedOrFetch(`events/messages/${id}`, () => apiRequest<any>(`/events/${id}/messages`));
   },
 
-  sendMessage: async (id: string, content: string): Promise<{ success: boolean; message?: EventMessageItem; message?: string }> => {
+  sendMessage: async (id: string, content: string): Promise<{ success: boolean; message?: EventMessageItem | string }> => {
     const res = await apiRequest<any>(`/events/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
     if (res.success) invalidateApiCache(`events/messages/${id}`);
-    return res;
+    return res as { success: boolean; message?: EventMessageItem | string };
   },
 };
 
