@@ -111,8 +111,8 @@ export interface VerificationData {
   code: string;
 }
 
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
+// Helper function to get auth token (named export for SocketContext / build)
+export const getAuthToken = (): string | null => {
   return localStorage.getItem('driftzo_token');
 };
 
