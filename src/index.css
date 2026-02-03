@@ -1197,6 +1197,11 @@
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
   }
+
+  /* Content below private/chat room header (taller header: avatar + 2 lines + safe area) */
+  .chat-content-below-header {
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 7rem);
+  }
   
   /* Ensure content doesn't scroll under fixed elements */
   .scroll-safe {
@@ -1220,6 +1225,10 @@
   
   .header-height {
     height: calc(4rem + max(env(safe-area-inset-top, 0px), 0.5rem));
+  }
+
+  .chat-content-below-header {
+    padding-top: calc(max(env(safe-area-inset-top, 0px), 0.5rem) + 7rem);
   }
 }
 
