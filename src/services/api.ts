@@ -763,7 +763,7 @@ function setPersistedConversations(archived: boolean, data: ConversationListItem
     localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
   } catch {}
 }
-function getPersistedMessages(conversationId: string): DirectMessageItem[] | null {
+export function getPersistedMessages(conversationId: string): DirectMessageItem[] | null {
   try {
     const raw = localStorage.getItem(MESSAGES_CACHE_KEY_PREFIX + conversationId);
     if (!raw) return null;
@@ -802,6 +802,9 @@ export const conversationApi = {
   }> => {
     return apiRequest<any>(`/conversations/with/${encodeURIComponent(otherUserId)}`);
   },
+
+  /** Sync: read cached messages from localStorage (for instant show when opening chat) */
+  getCachedMessages: (conversationId: string): DirectMessageItem[] | null => getPersistedMessages(conversationId),
 
   getMessages: async (conversationId: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: DirectMessageItem[]; message?: string }> => {
     try {

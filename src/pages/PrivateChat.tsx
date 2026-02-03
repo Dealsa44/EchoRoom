@@ -121,13 +121,26 @@ const PrivateChat = () => {
     } catch {}
   };
 
-  // Load conversation and messages from API (or cache when offline)
+  // Load conversation and messages: show cache first (instant), then refresh from API
   useEffect(() => {
     if (!userId || !user) {
       setMessagesLoading(false);
       return;
     }
-    setMessagesLoading(true);
+    const cachedConv = getCachedConversation(userId);
+    if (cachedConv) {
+      setConversationId(cachedConv.conversationId);
+      setPartner({ id: cachedConv.otherUser.id, name: cachedConv.otherUser.name, avatar: cachedConv.otherUser.avatar || '🌟' });
+      const cachedMessages = conversationApi.getCachedMessages(cachedConv.conversationId);
+      if (cachedMessages?.length) {
+        setMessages(cachedMessages.map(mapApiMessageToDisplay));
+        setMessagesLoading(false);
+      } else {
+        setMessagesLoading(true);
+      }
+    } else {
+      setMessagesLoading(true);
+    }
     conversationApi
       .getOrCreate(userId)
       .then((res) => {
@@ -153,10 +166,9 @@ const PrivateChat = () => {
         if (cached) {
           setConversationId(cached.conversationId);
           setPartner({ id: cached.otherUser.id, name: cached.otherUser.name, avatar: cached.otherUser.avatar || '🌟' });
-          conversationApi.getMessages(cached.conversationId).then((res) => {
-            if (res.success && res.messages) setMessages(res.messages.map(mapApiMessageToDisplay));
-            setMessagesLoading(false);
-          }).catch(() => setMessagesLoading(false));
+          const cachedMsgs = conversationApi.getCachedMessages(cached.conversationId);
+          if (cachedMsgs?.length) setMessages(cachedMsgs.map(mapApiMessageToDisplay));
+          setMessagesLoading(false);
         } else {
           toast({ title: 'Error', description: 'Failed to load conversation', variant: 'destructive' });
           setMessagesLoading(false);
@@ -164,18 +176,14 @@ const PrivateChat = () => {
       });
   }, [userId, user?.id]);
 
-  // Poll for new messages while chat is open so incoming messages appear without refresh
+  // Poll for new messages and reaction updates while chat is open
   useEffect(() => {
     if (!conversationId) return;
     const POLL_INTERVAL_MS = 4000;
     const interval = setInterval(() => {
       conversationApi.getMessages(conversationId).then((res) => {
         if (res.success && res.messages) {
-          setMessages((prev) => {
-            const next = res.messages!.map(mapApiMessageToDisplay);
-            if (next.length === prev.length && next[next.length - 1]?.id === prev[prev.length - 1]?.id) return prev;
-            return next;
-          });
+          setMessages(res.messages.map(mapApiMessageToDisplay));
         }
       });
     }, POLL_INTERVAL_MS);
