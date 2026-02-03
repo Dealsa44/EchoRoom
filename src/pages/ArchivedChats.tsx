@@ -15,7 +15,12 @@ import {
   MoreVertical,
   Pin,
   VolumeX,
-  LogOut
+  LogOut,
+  Heart,
+  Palette,
+  Mic,
+  Image,
+  File
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -60,9 +65,12 @@ interface ArchivedConversation {
     content: string;
     sender: string;
     timestamp: string;
-    type: 'text' | 'image' | 'voice' | 'file';
+    type: 'text' | 'image' | 'voice' | 'file' | 'system';
     isRead: boolean;
   };
+  lastActivityType?: string | null;
+  lastActivitySummary?: string | null;
+  lastActivityUserId?: string | null;
   unreadCount: number;
   isPinned: boolean;
   isArchived: boolean;
@@ -99,7 +107,7 @@ const ArchivedChats = () => {
               content: c.lastMessage.content,
               sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
               timestamp: c.lastMessage.createdAt,
-              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
+              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file' | 'system',
               isRead: true,
             }
           : {
@@ -110,6 +118,9 @@ const ArchivedChats = () => {
               type: 'text' as const,
               isRead: true,
             },
+        lastActivityType: c.lastActivityType ?? null,
+        lastActivitySummary: c.lastActivitySummary ?? null,
+        lastActivityUserId: c.lastActivityUserId ?? null,
         unreadCount: 0,
         isPinned: state.isPinned,
         isArchived: true,
@@ -301,10 +312,38 @@ const ArchivedChats = () => {
 
   const getMessageTypeIcon = (type: string) => {
     switch (type) {
-      case 'voice': return <MessageCircle size={12} />;
-      case 'image': return <MessageCircle size={12} />;
-      case 'file': return <MessageCircle size={12} />;
+      case 'voice': return <Mic size={12} />;
+      case 'image': return <Image size={12} />;
+      case 'file': return <File size={12} />;
       default: return <MessageCircle size={12} />;
+    }
+  };
+
+  const getLastActivityPreview = (conv: ArchivedConversation) => {
+    if (conv.type !== 'private' || !conv.lastActivityType || !conv.lastActivitySummary) {
+      return {
+        icon: getMessageTypeIcon(conv.lastMessage.type),
+        text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + conv.lastMessage.content,
+      };
+    }
+    const otherName = conv.participant.name;
+    const isYou = conv.lastActivityUserId === user?.id;
+    switch (conv.lastActivityType) {
+      case 'reaction':
+        return {
+          icon: <Heart size={12} className="text-muted-foreground" />,
+          text: (isYou ? 'You ' : otherName + ' ') + conv.lastActivitySummary,
+        };
+      case 'theme':
+        return {
+          icon: <Palette size={12} className="text-muted-foreground" />,
+          text: conv.lastActivitySummary,
+        };
+      default:
+        return {
+          icon: getMessageTypeIcon(conv.lastMessage.type),
+          text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + (conv.lastActivitySummary || conv.lastMessage.content),
+        };
     }
   };
 
@@ -374,11 +413,15 @@ const ArchivedChats = () => {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          {getMessageTypeIcon(conversation.lastMessage.type)}
-                          <p className="text-sm text-muted-foreground truncate">
-                            {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
-                            {conversation.lastMessage.content}
-                          </p>
+                          {(() => {
+                            const { icon, text } = getLastActivityPreview(conversation);
+                            return (
+                              <>
+                                {icon}
+                                <p className="text-sm text-muted-foreground truncate">{text}</p>
+                              </>
+                            );
+                          })()}
                         </div>
                         
                                                  <div className="flex items-center gap-2 ml-2">

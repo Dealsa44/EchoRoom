@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
 import { useSocket } from '@/contexts/SocketContext';
 import { conversationApi, type DirectMessageItem } from '@/services/api';
+import { moodThemes } from '@/lib/moodThemes';
 import { ChatMessage } from '@/types';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
 import LanguageCorrectionTooltip from '@/components/language/LanguageCorrectionTooltip';
@@ -94,7 +95,7 @@ const PrivateChat = () => {
       translatedContent: '',
       hasErrors: false,
       corrections: [],
-      type: m.type as 'text',
+      type: (m.type === 'system' ? 'system' : m.type) as DisplayMessage['type'],
       reactions: (m.reactions || []).map((r) => ({ emoji: r.emoji, userName: r.userId === user?.id ? 'You' : 'Them' })),
       isEdited: false,
       isDeleted: false,
@@ -105,6 +106,7 @@ const PrivateChat = () => {
   }
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [conversationTheme, setConversationTheme] = useState<string>('default');
 
   // Persist conversation id + partner for offline: key by other user id
   const CONV_CACHE_KEY = 'driftzo:conv:';
@@ -151,9 +153,10 @@ const PrivateChat = () => {
           setMessagesLoading(false);
           return;
         }
-        const { id: cId, otherUser: ou } = res.conversation;
+        const { id: cId, otherUser: ou, chatTheme } = res.conversation;
         setConversationId(cId);
         setPartner({ id: ou.id, name: ou.name, avatar: ou.avatar || '🌟' });
+        setConversationTheme(chatTheme || 'default');
         setCachedConversation(userId, cId, { id: ou.id, name: ou.name, avatar: ou.avatar || '🌟' });
         return conversationApi.getMessages(cId);
       })
@@ -161,6 +164,7 @@ const PrivateChat = () => {
         if (res?.success && res.messages) {
           setMessages(res.messages.map(mapApiMessageToDisplay));
         }
+        if (res?.success && res.chatTheme) setConversationTheme(res.chatTheme);
         setMessagesLoading(false);
       })
       .catch(() => {
@@ -185,11 +189,11 @@ const PrivateChat = () => {
     return () => leaveConversation(conversationId);
   }, [conversationId, joinConversation, leaveConversation]);
 
-  // Real-time: new message (only add when message is from the other person; sender already added from API response)
+  // Real-time: new message (add when from other person, or when system message e.g. theme changed)
   useEffect(() => {
     if (!socket || !conversationId || !user) return;
     const onNewMessage = (payload: DirectMessageItem) => {
-      if (payload.senderId === user.id) return;
+      if (payload.senderId === user.id && payload.type !== 'system') return;
       setMessages((prev) => {
         if (prev.some((m) => m.id === payload.id)) return prev;
         const next = mapApiMessageToDisplay(payload);
@@ -203,6 +207,18 @@ const PrivateChat = () => {
       socket.off('message:new', onNewMessage);
     };
   }, [socket, conversationId, user?.id]);
+
+  // Real-time: theme changed (both sides see new theme and system message arrives via message:new)
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+    const onThemeChanged = (payload: { themeId: string; themeName: string }) => {
+      setConversationTheme(payload.themeId);
+    };
+    socket.on('theme:changed', onThemeChanged);
+    return () => {
+      socket.off('theme:changed', onThemeChanged);
+    };
+  }, [socket, conversationId]);
 
   // Real-time: reaction update
   useEffect(() => {
@@ -258,6 +274,7 @@ const PrivateChat = () => {
         if (res.success && res.messages) {
           setMessages(res.messages.map(mapApiMessageToDisplay));
         }
+        if (res.success && res.chatTheme) setConversationTheme(res.chatTheme);
       });
     }, intervalMs);
     return () => clearInterval(interval);
@@ -662,15 +679,39 @@ const PrivateChat = () => {
         onClose={() => setShowLanguagePanel(false)}
       />
 
-      {/* Messages - top padding from chat-content-below-header only (no py-4) so header never covers first message */}
-      <div className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header ${showAttachments ? 'pb-52' : 'pb-36'}`}>
+      {/* Messages area: theme applies here only (not topbar/input); theme vars + optional design class */}
+      {(() => {
+        const theme = moodThemes[conversationTheme] || moodThemes.default;
+        const themeStyle: React.CSSProperties = {
+          ['--mood-primary' as string]: theme.colors.primary,
+          ['--mood-secondary' as string]: theme.colors.secondary,
+          ['--mood-accent' as string]: theme.colors.accent,
+          ['--mood-background' as string]: theme.colors.background,
+          ['--mood-surface' as string]: theme.colors.surface,
+          ['--mood-text' as string]: theme.colors.text,
+          ['--mood-muted' as string]: theme.colors.muted,
+          backgroundColor: theme.colors.background,
+        };
+        return (
+      <div
+        className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header chat-messages-area mood-${conversationTheme} ${theme.designClass || ''} ${showAttachments ? 'pb-52' : 'pb-36'}`}
+        style={themeStyle}
+      >
         {messagesLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading messages…</div>
         ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 relative z-[1]">
           {messages.map((msg) => {
+            if (msg.type === 'system') {
+              return (
+                <div key={msg.id} className="flex justify-center py-2">
+                  <span className="text-xs text-muted-foreground bg-muted/80 dark:bg-white/10 px-3 py-1.5 rounded-full">
+                    {msg.content}
+                  </span>
+                </div>
+              );
+            }
             const replyToMessage = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
-            
             return (
               <div
                 key={msg.id}
@@ -901,6 +942,8 @@ const PrivateChat = () => {
         </div>
         )}
       </div>
+        );
+      })()}
 
       {/* Photo Gallery */}
       {showPhotoGallery && (

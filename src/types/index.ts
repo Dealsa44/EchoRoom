@@ -53,7 +53,7 @@ export interface ChatMessage {
   sender: 'me' | 'other' | string;
   content: string;
   timestamp: string;
-  type: 'text' | 'image' | 'voice' | 'file';
+  type: 'text' | 'image' | 'voice' | 'file' | 'system';
   imageUrl?: string;
   fileData?: {
     name: string;

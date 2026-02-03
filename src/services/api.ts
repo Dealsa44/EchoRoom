@@ -730,6 +730,10 @@ export interface ConversationListItem {
     type: string;
   } | null;
   lastMessageAt: string | null;
+  /** For inbox preview: 'message' | 'reaction' | 'theme' */
+  lastActivityType?: string | null;
+  lastActivitySummary?: string | null;
+  lastActivityUserId?: string | null;
   isArchived: boolean;
 }
 
@@ -802,22 +806,48 @@ export const conversationApi = {
 
   getOrCreate: async (otherUserId: string): Promise<{
     success: boolean;
-    conversation?: { id: string; otherUser: { id: string; name: string; avatar: string } };
+    conversation?: { id: string; chatTheme?: string; otherUser: { id: string; name: string; avatar: string } };
     message?: string;
   }> => {
     return apiRequest<any>(`/conversations/with/${encodeURIComponent(otherUserId)}`);
   },
 
+  setTheme: async (
+    conversationId: string,
+    themeId: string,
+    themeName: string
+  ): Promise<{
+    success: boolean;
+    themeId?: string;
+    themeName?: string;
+    systemMessage?: DirectMessageItem;
+    message?: string;
+  }> => {
+    const res = await apiRequest<{ themeId: string; themeName: string; systemMessage: DirectMessageItem }>(
+      `/conversations/${conversationId}/theme`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ themeId, themeName }),
+      }
+    );
+    if (res.success) invalidateApiCache((k) => k.startsWith('conversations'));
+    return res as any;
+  },
+
   /** Sync: read cached messages from localStorage (for instant show when opening chat) */
   getCachedMessages: (conversationId: string): DirectMessageItem[] | null => getPersistedMessages(conversationId),
 
-  getMessages: async (conversationId: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: DirectMessageItem[]; message?: string }> => {
+  getMessages: async (
+    conversationId: string,
+    limit = 50,
+    offset = 0
+  ): Promise<{ success: boolean; messages?: DirectMessageItem[]; chatTheme?: string; message?: string }> => {
     try {
-      const res = await apiRequest<DirectMessageItem[]>(
+      const res = await apiRequest<DirectMessageItem[] & { chatTheme?: string }>(
         `/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`
       );
       if (res.success && res.messages && offset === 0) setPersistedMessages(conversationId, res.messages);
-      return res;
+      return res as { success: boolean; messages?: DirectMessageItem[]; chatTheme?: string; message?: string };
     } catch (e) {
       if (offset === 0) {
         const cached = getPersistedMessages(conversationId);

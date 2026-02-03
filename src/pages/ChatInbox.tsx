@@ -35,7 +35,9 @@ import {
   Eye,
   Trash2,
   Bell,
-  BellOff
+  BellOff,
+  Heart,
+  Palette
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -84,9 +86,13 @@ interface ChatConversation {
     content: string;
     sender: string;
     timestamp: string;
-    type: 'text' | 'image' | 'voice' | 'file';
+    type: 'text' | 'image' | 'voice' | 'file' | 'system';
     isRead: boolean;
   };
+  /** Last action in the conversation for preview: 'message' | 'reaction' | 'theme' */
+  lastActivityType?: string | null;
+  lastActivitySummary?: string | null;
+  lastActivityUserId?: string | null;
   unreadCount: number;
   isPinned: boolean;
   isArchived: boolean;
@@ -154,7 +160,7 @@ const ChatInbox = () => {
               content: c.lastMessage.content,
               sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
               timestamp: c.lastMessage.createdAt,
-              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
+              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file' | 'system',
               isRead: true,
             }
           : {
@@ -165,6 +171,9 @@ const ChatInbox = () => {
               type: 'text' as const,
               isRead: true,
             },
+        lastActivityType: c.lastActivityType ?? null,
+        lastActivitySummary: c.lastActivitySummary ?? null,
+        lastActivityUserId: c.lastActivityUserId ?? null,
         unreadCount: 0,
         isPinned: state.isPinned,
         isArchived: c.isArchived,
@@ -365,8 +374,9 @@ const ChatInbox = () => {
   const allConversations = [...conversations, ...joinedRoomConversations];
 
   const filteredConversations = allConversations.filter(conv => {
+    const previewText = conv.lastActivitySummary || conv.lastMessage.content;
     const matchesSearch = conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase());
+                         previewText.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'chats') return matchesSearch && !conv.isArchived;
     if (activeTab === 'requests') return false; // Requests are handled separately
@@ -503,6 +513,35 @@ const ChatInbox = () => {
       case 'image': return <Image size={12} />;
       case 'file': return <File size={12} />;
       default: return null;
+    }
+  };
+
+  /** Preview line and icon for last activity (message, reaction, or theme) on private chats */
+  const getLastActivityPreview = (conv: ChatConversation) => {
+    if (conv.type !== 'private' || !conv.lastActivityType || !conv.lastActivitySummary) {
+      return {
+        icon: getMessageTypeIcon(conv.lastMessage.type),
+        text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + conv.lastMessage.content,
+      };
+    }
+    const otherName = conv.participant.name;
+    const isYou = conv.lastActivityUserId === user?.id;
+    switch (conv.lastActivityType) {
+      case 'reaction':
+        return {
+          icon: <Heart size={12} className="text-muted-foreground" />,
+          text: (isYou ? 'You ' : otherName + ' ') + conv.lastActivitySummary,
+        };
+      case 'theme':
+        return {
+          icon: <Palette size={12} className="text-muted-foreground" />,
+          text: conv.lastActivitySummary,
+        };
+      default:
+        return {
+          icon: getMessageTypeIcon(conv.lastMessage.type),
+          text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + (conv.lastActivitySummary || conv.lastMessage.content),
+        };
     }
   };
 
@@ -721,15 +760,17 @@ const ChatInbox = () => {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {getMessageTypeIcon(conversation.lastMessage.type)}
                         {conversation.isTyping ? (
                           <p className="text-sm text-primary/80 truncate animate-pulse-soft">typing…</p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground truncate">
-                            {conversation.lastMessage.sender === 'you' ? 'You: ' : ''}
-                            {conversation.lastMessage.content}
-                          </p>
-                        )}
+                        ) : (() => {
+                          const { icon, text } = getLastActivityPreview(conversation);
+                          return (
+                            <>
+                              {icon}
+                              <p className="text-sm text-muted-foreground truncate">{text}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                       
                       <div className="flex items-center gap-2 ml-2">

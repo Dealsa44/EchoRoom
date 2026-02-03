@@ -47,7 +47,7 @@ import {
 } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
-import { userApi } from '@/services/api';
+import { userApi, conversationApi } from '@/services/api';
 import CompatibilityDashboard from '@/components/ai/CompatibilityDashboard';
 import MoodThemeSelector from '@/components/ai/MoodThemeSelector';
 
@@ -125,6 +125,7 @@ const UserProfileActions = () => {
   const [showCompatibilityDashboard, setShowCompatibilityDashboard] = useState(false);
   const [showMoodThemeSelector, setShowMoodThemeSelector] = useState(false);
   const [currentMoodTheme, setCurrentMoodTheme] = useState('default');
+  const [themeConversationId, setThemeConversationId] = useState<string | null>(null);
 
   const handleCall = (type: 'audio' | 'video') => {
     if (type === 'audio') {
@@ -228,7 +229,14 @@ const UserProfileActions = () => {
   };
 
   const handleMoodThemeSelector = () => {
-    setShowMoodThemeSelector(true);
+    if (!userId) return;
+    conversationApi.getOrCreate(userId).then((res) => {
+      if (res.success && res.conversation) {
+        setThemeConversationId(res.conversation.id);
+        setCurrentMoodTheme(res.conversation.chatTheme || 'default');
+      }
+      setShowMoodThemeSelector(true);
+    }).catch(() => setShowMoodThemeSelector(true));
   };
 
   if (profileLoading && !userInfo) {
@@ -589,10 +597,14 @@ const UserProfileActions = () => {
       {/* Mood Theme Selector Modal */}
       <MoodThemeSelector
         currentTheme={currentMoodTheme}
-        messages={[]} // Empty array for now, could be populated with actual messages if needed
+        conversationId={themeConversationId}
         onThemeChange={setCurrentMoodTheme}
         isOpen={showMoodThemeSelector}
         onClose={() => setShowMoodThemeSelector(false)}
+        onApplyTheme={async (conversationId, themeId, themeName) => {
+          const res = await conversationApi.setTheme(conversationId, themeId, themeName);
+          return !!res.success;
+        }}
       />
     </div>
   );
