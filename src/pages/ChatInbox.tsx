@@ -45,6 +45,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
@@ -119,6 +129,7 @@ const ChatInbox = () => {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
 
   // Save active tab to localStorage when it changes
   useEffect(() => {
@@ -412,20 +423,24 @@ const ChatInbox = () => {
 
   const handleLeaveConversation = (conversationId: string) => {
     const conv = allConversations.find(c => c.id === conversationId);
-
     if (conv?.type === 'group' && conversationId.startsWith('joined-')) {
       const roomId = conversationId.replace('joined-', '');
       markConversationAsLeft(conversationId);
       leaveRoom(roomId);
       return;
     }
-
     if (conv?.type === 'private') {
-      conversationApi.deleteConversation(conversationId).then((res) => {
-        if (res.success) setConversations(prev => prev.filter(c => c.id !== conversationId));
-        else toast({ title: 'Error', description: 'Failed to delete conversation', variant: 'destructive' });
-      });
+      setConversationToDelete(conversationId);
     }
+  };
+
+  const confirmDeleteConversation = () => {
+    if (!conversationToDelete) return;
+    conversationApi.deleteConversation(conversationToDelete).then((res) => {
+      if (res.success) setConversations(prev => prev.filter(c => c.id !== conversationToDelete));
+      else toast({ title: 'Error', description: 'Failed to delete conversation', variant: 'destructive' });
+      setConversationToDelete(null);
+    });
   };
 
   const handleAcceptRequest = (requestId: string) => {
@@ -841,6 +856,27 @@ const ChatInbox = () => {
           </div>
         )}
       </div>
+
+      {/* Delete conversation confirmation */}
+      <AlertDialog open={!!conversationToDelete} onOpenChange={(open) => !open && setConversationToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the conversation from your list and clear the history on your side. The other person&apos;s chat will not be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteConversation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNavigation />
     </div>
