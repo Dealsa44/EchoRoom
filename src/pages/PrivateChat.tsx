@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useApp } from '@/hooks/useApp';
+import { useSocket } from '@/contexts/SocketContext';
 import { conversationApi, type DirectMessageItem } from '@/services/api';
 import { ChatMessage } from '@/types';
 import AIAssistantModal from '@/components/modals/AIAssistantModal';
@@ -29,6 +30,7 @@ const PrivateChat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isDarkMode, toggleDarkMode } = useApp();
+  const { socket, isConnected, joinConversation, leaveConversation, emitTypingStart, emitTypingStop } = useSocket();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [partner, setPartner] = useState<{ id: string; name: string; avatar: string } | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -176,10 +178,78 @@ const PrivateChat = () => {
       });
   }, [userId, user?.id]);
 
-  // Poll for new messages and reaction updates while chat is open
+  // Join/leave conversation room for real-time events
   useEffect(() => {
     if (!conversationId) return;
-    const POLL_INTERVAL_MS = 4000;
+    joinConversation(conversationId);
+    return () => leaveConversation(conversationId);
+  }, [conversationId, joinConversation, leaveConversation]);
+
+  // Real-time: new message
+  useEffect(() => {
+    if (!socket || !conversationId || !user) return;
+    const onNewMessage = (payload: DirectMessageItem) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === payload.id)) return prev;
+        const next = mapApiMessageToDisplay(payload);
+        return [...prev, next].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+      });
+    };
+    socket.on('message:new', onNewMessage);
+    return () => {
+      socket.off('message:new', onNewMessage);
+    };
+  }, [socket, conversationId, user?.id]);
+
+  // Real-time: reaction update
+  useEffect(() => {
+    if (!socket || !conversationId || !user) return;
+    const onReaction = (payload: { messageId: string; message: DirectMessageItem }) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === payload.messageId ? mapApiMessageToDisplay(payload.message) : msg
+        )
+      );
+    };
+    socket.on('message:reaction', onReaction);
+    return () => {
+      socket.off('message:reaction', onReaction);
+    };
+  }, [socket, conversationId, user?.id]);
+
+  // Real-time: typing indicators (partner only); auto-hide after 4s if no typing:stop
+  const partnerTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (!socket || !conversationId || !partner || !user) return;
+    const onTypingStart = (data: { userId: string; conversationId: string }) => {
+      if (data.conversationId === conversationId && data.userId === partner.id) {
+        if (partnerTypingTimeoutRef.current) clearTimeout(partnerTypingTimeoutRef.current);
+        setPartnerTyping(true);
+        partnerTypingTimeoutRef.current = setTimeout(() => setPartnerTyping(false), 4000);
+      }
+    };
+    const onTypingStop = (data: { userId: string; conversationId: string }) => {
+      if (data.conversationId === conversationId && data.userId === partner.id) {
+        if (partnerTypingTimeoutRef.current) clearTimeout(partnerTypingTimeoutRef.current);
+        partnerTypingTimeoutRef.current = null;
+        setPartnerTyping(false);
+      }
+    };
+    socket.on('typing:start', onTypingStart);
+    socket.on('typing:stop', onTypingStop);
+    return () => {
+      socket.off('typing:start', onTypingStart);
+      socket.off('typing:stop', onTypingStop);
+      if (partnerTypingTimeoutRef.current) clearTimeout(partnerTypingTimeoutRef.current);
+    };
+  }, [socket, conversationId, partner?.id, user?.id]);
+
+  // Poll for new messages when socket is disconnected (fallback)
+  useEffect(() => {
+    if (!conversationId || isConnected) return;
+    const POLL_INTERVAL_MS = 6000;
     const interval = setInterval(() => {
       conversationApi.getMessages(conversationId).then((res) => {
         if (res.success && res.messages) {
@@ -188,33 +258,35 @@ const PrivateChat = () => {
       });
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [conversationId, user?.id]);
+  }, [conversationId, user?.id, isConnected]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Simulate typing indicator
+  // Emit typing:start when user types (debounced), typing:stop when they stop or send
+  const typingDebounceRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    let typingTimer: NodeJS.Timeout;
-    if (isTyping) {
-      setPartnerTyping(false);
-      typingTimer = setTimeout(() => {
-        setPartnerTyping(true);
-        setTimeout(() => setPartnerTyping(false), 2000);
-      }, 1000);
+    if (!conversationId) return;
+    if (!message.trim()) {
+      emitTypingStop(conversationId);
+      return;
     }
-    return () => clearTimeout(typingTimer);
-  }, [isTyping]);
+    if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
+    typingDebounceRef.current = setTimeout(() => {
+      emitTypingStart(conversationId);
+      typingDebounceRef.current = null;
+    }, 300);
+    return () => {
+      if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
+    };
+  }, [message, conversationId, emitTypingStart, emitTypingStop]);
 
-  // Show typing indicator immediately when user types
   useEffect(() => {
-    if (isTyping) {
-      setPartnerTyping(true);
-      const timer = setTimeout(() => setPartnerTyping(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTyping]);
+    return () => {
+      if (conversationId) emitTypingStop(conversationId);
+    };
+  }, [conversationId, emitTypingStop]);
 
   // Auto-scroll to bottom when typing indicator appears (only if already at bottom)
   useEffect(() => {
@@ -459,6 +531,7 @@ const PrivateChat = () => {
     setIsTyping(false);
     setMessage('');
     setReplyingTo(null);
+    emitTypingStop(conversationId);
 
     conversationApi.sendMessage(conversationId, text).then((res) => {
       if (res.success && res.message && typeof res.message !== 'string') {
@@ -978,6 +1051,7 @@ const PrivateChat = () => {
             placeholder="Type a thoughtful message..."
             value={message}
             onChange={handleInputChange}
+            onBlur={() => conversationId && emitTypingStop(conversationId)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             autoComplete="off"
             className="flex-1"

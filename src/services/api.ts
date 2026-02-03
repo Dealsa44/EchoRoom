@@ -1,6 +1,11 @@
 // API service for communicating with Driftzo backend
 const API_BASE_URL = 'https://echoroom-backend-23jb.onrender.com/api';
 
+/** Base URL for Socket.IO (same host as API, no /api path) */
+export function getSocketUrl(): string {
+  return API_BASE_URL.replace(/\/api\/?$/, '');
+}
+
 // Types for API responses (index signature allows endpoint-specific payloads: event, events, posts, hosted, joined, etc.)
 export interface ApiResponse<T = any> {
   success: boolean;
