@@ -65,7 +65,7 @@ import {
   updateConversationState, 
   markConversationAsLeft,
 } from '@/lib/conversationStorage';
-import { conversationApi, type ConversationListItem } from '@/services/api';
+import { conversationApi, getPersistedConversations, type ConversationListItem } from '@/services/api';
 import { mockProfiles } from '@/data/mockProfiles';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -136,54 +136,64 @@ const ChatInbox = () => {
     localStorage.setItem('chatInboxActiveTab', activeTab);
   }, [activeTab]);
 
-  // Load real private conversations from API
+  const mapConversationListToState = (list: ConversationListItem[]) =>
+    list.map((c: ConversationListItem) => {
+      const state = getConversationState(c.id);
+      return {
+        id: c.id,
+        type: 'private' as const,
+        participant: {
+          id: c.otherUser.id,
+          name: c.otherUser.name,
+          avatar: c.otherUser.avatar || '🌟',
+          isOnline: false,
+        },
+        lastMessage: c.lastMessage
+          ? {
+              id: c.lastMessage.id,
+              content: c.lastMessage.content,
+              sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
+              timestamp: c.lastMessage.createdAt,
+              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
+              isRead: true,
+            }
+          : {
+              id: '',
+              content: 'No messages yet',
+              sender: '',
+              timestamp: c.lastMessageAt || new Date().toISOString(),
+              type: 'text' as const,
+              isRead: true,
+            },
+        unreadCount: 0,
+        isPinned: state.isPinned,
+        isArchived: c.isArchived,
+        isMuted: state.isMuted,
+        isTyping: false,
+      };
+    });
+
+  // Load private conversations: show cached first (offline/fast), then refresh from API
   const loadConversations = () => {
-    setConversationsLoading(true);
+    const cached = getPersistedConversations(false);
+    if (cached?.length) {
+      setConversations(mapConversationListToState(cached));
+      setConversationsLoading(false);
+    } else {
+      setConversationsLoading(true);
+    }
     conversationApi
       .list(false)
       .then((res) => {
         if (res.success && res.conversations) {
-          const withPinState = res.conversations.map((c: ConversationListItem) => {
-            const state = getConversationState(c.id);
-            return {
-              id: c.id,
-              type: 'private' as const,
-              participant: {
-                id: c.otherUser.id,
-                name: c.otherUser.name,
-                avatar: c.otherUser.avatar || '🌟',
-                isOnline: false,
-              },
-              lastMessage: c.lastMessage
-                ? {
-                    id: c.lastMessage.id,
-                    content: c.lastMessage.content,
-                    sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
-                    timestamp: c.lastMessage.createdAt,
-                    type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
-                    isRead: true,
-                  }
-                : {
-                    id: '',
-                    content: 'No messages yet',
-                    sender: '',
-                    timestamp: c.lastMessageAt || new Date().toISOString(),
-                    type: 'text' as const,
-                    isRead: true,
-                  },
-              unreadCount: 0,
-              isPinned: state.isPinned,
-              isArchived: c.isArchived,
-              isMuted: state.isMuted,
-              isTyping: false,
-            };
-          });
-          setConversations(withPinState);
-        } else {
+          setConversations(mapConversationListToState(res.conversations));
+        } else if (!cached?.length) {
           setConversations([]);
         }
       })
-      .catch(() => setConversations([]))
+      .catch(() => {
+        if (!cached?.length) setConversations([]);
+      })
       .finally(() => setConversationsLoading(false));
   };
 

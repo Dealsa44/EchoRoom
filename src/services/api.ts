@@ -739,11 +739,60 @@ export interface DirectMessageItem {
   createdAt: string;
 }
 
+// Persistent cache for conversations/messages (localStorage) so messenger works offline / feels faster
+const CONVERSATIONS_CACHE_KEY = 'driftzo:conversations';
+const CONVERSATIONS_ARCHIVED_CACHE_KEY = 'driftzo:conversations:archived';
+const MESSAGES_CACHE_KEY_PREFIX = 'driftzo:messages:';
+const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+export function getPersistedConversations(archived = false): ConversationListItem[] | null {
+  try {
+    const key = archived ? CONVERSATIONS_ARCHIVED_CACHE_KEY : CONVERSATIONS_CACHE_KEY;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_MAX_AGE_MS) return null;
+    return Array.isArray(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+function setPersistedConversations(archived: boolean, data: ConversationListItem[]) {
+  try {
+    const key = archived ? CONVERSATIONS_ARCHIVED_CACHE_KEY : CONVERSATIONS_CACHE_KEY;
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  } catch {}
+}
+function getPersistedMessages(conversationId: string): DirectMessageItem[] | null {
+  try {
+    const raw = localStorage.getItem(MESSAGES_CACHE_KEY_PREFIX + conversationId);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_MAX_AGE_MS) return null;
+    return Array.isArray(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+function setPersistedMessages(conversationId: string, data: DirectMessageItem[]) {
+  try {
+    localStorage.setItem(MESSAGES_CACHE_KEY_PREFIX + conversationId, JSON.stringify({ ts: Date.now(), data }));
+  } catch {}
+}
+
 // Conversation (DM) API
 export const conversationApi = {
   list: async (archived = false): Promise<{ success: boolean; conversations?: ConversationListItem[]; message?: string }> => {
     const q = archived ? '?archived=true' : '';
-    return apiRequest<ConversationListItem[]>(`/conversations${q}`);
+    try {
+      const res = await apiRequest<ConversationListItem[]>(`/conversations${q}`);
+      if (res.success && res.conversations) setPersistedConversations(archived, res.conversations);
+      return res;
+    } catch (e) {
+      const cached = getPersistedConversations(archived);
+      if (cached) return { success: true, conversations: cached };
+      throw e;
+    }
   },
 
   getOrCreate: async (otherUserId: string): Promise<{
@@ -755,9 +804,19 @@ export const conversationApi = {
   },
 
   getMessages: async (conversationId: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: DirectMessageItem[]; message?: string }> => {
-    return apiRequest<DirectMessageItem[]>(
-      `/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`
-    );
+    try {
+      const res = await apiRequest<DirectMessageItem[]>(
+        `/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`
+      );
+      if (res.success && res.messages && offset === 0) setPersistedMessages(conversationId, res.messages);
+      return res;
+    } catch (e) {
+      if (offset === 0) {
+        const cached = getPersistedMessages(conversationId);
+        if (cached) return { success: true, messages: cached };
+      }
+      throw e;
+    }
   },
 
   sendMessage: async (conversationId: string, content: string): Promise<{ success: boolean; message?: DirectMessageItem | string }> => {

@@ -41,7 +41,7 @@ import {
   updateConversationState,
   deleteConversationState,
 } from '@/lib/conversationStorage';
-import { conversationApi, type ConversationListItem } from '@/services/api';
+import { conversationApi, getPersistedConversations, type ConversationListItem } from '@/services/api';
 import { markArchivedChatsAsRead } from '@/lib/notificationStorage';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -81,8 +81,72 @@ const ArchivedChats = () => {
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const mapToArchived = (list: ConversationListItem[]) =>
+    list.map((c: ConversationListItem) => {
+      const state = getConversationState(c.id);
+      return {
+        id: c.id,
+        type: 'private' as const,
+        participant: {
+          id: c.otherUser.id,
+          name: c.otherUser.name,
+          avatar: c.otherUser.avatar || '🌟',
+          isOnline: false,
+        },
+        lastMessage: c.lastMessage
+          ? {
+              id: c.lastMessage.id,
+              content: c.lastMessage.content,
+              sender: c.lastMessage.senderId === user?.id ? 'you' : c.lastMessage.senderName,
+              timestamp: c.lastMessage.createdAt,
+              type: c.lastMessage.type as 'text' | 'image' | 'voice' | 'file',
+              isRead: true,
+            }
+          : {
+              id: '',
+              content: 'No messages yet',
+              sender: '',
+              timestamp: c.lastMessageAt || new Date().toISOString(),
+              type: 'text' as const,
+              isRead: true,
+            },
+        unreadCount: 0,
+        isPinned: state.isPinned,
+        isArchived: true,
+        isMuted: state.isMuted,
+      };
+    });
+
   const loadArchived = () => {
-    setLoading(true);
+    const cached = getPersistedConversations(true);
+    if (cached?.length) {
+      setArchivedConversations((prev) => {
+        const privateArchived = mapToArchived(cached);
+        const allConversationStates = JSON.parse(localStorage.getItem('conversationStates') || '{}');
+        const groupArchived: ArchivedConversation[] = (joinedRooms || []).map((roomId: string) => {
+          const room = chatRooms.find(r => r.id === roomId);
+          if (!room) return null;
+          const conversationId = `joined-${roomId}`;
+          const state = allConversationStates[conversationId] || {};
+          if (!state.isArchived) return null;
+          return {
+            id: conversationId,
+            type: 'group' as const,
+            participant: { id: room.id, name: room.title, avatar: room.icon ?? room.avatar ?? '💬', isOnline: false },
+            lastMessage: { id: '', content: '', sender: '', timestamp: '', type: 'text' as const, isRead: true },
+            unreadCount: 0,
+            isPinned: false,
+            isArchived: true,
+            isMuted: false,
+            roomInfo: { title: room.title, memberCount: room.members ?? 0, category: room.category },
+          };
+        }).filter(Boolean) as ArchivedConversation[];
+        return [...privateArchived, ...groupArchived];
+      });
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     conversationApi
       .list(true)
       .then((res) => {
@@ -148,11 +212,13 @@ const ArchivedChats = () => {
             };
           }).filter(Boolean) as ArchivedConversation[];
           setArchivedConversations([...privateArchived, ...groupArchived]);
-        } else {
+        } else if (!cached?.length) {
           setArchivedConversations([]);
         }
       })
-      .catch(() => setArchivedConversations([]))
+      .catch(() => {
+        if (!cached?.length) setArchivedConversations([]);
+      })
       .finally(() => setLoading(false));
   };
 

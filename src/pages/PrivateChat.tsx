@@ -104,7 +104,24 @@ const PrivateChat = () => {
 
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
 
-  // Load conversation and messages from API
+  // Persist conversation id + partner for offline: key by other user id
+  const CONV_CACHE_KEY = 'driftzo:conv:';
+  const getCachedConversation = (otherUserId: string) => {
+    try {
+      const raw = localStorage.getItem(CONV_CACHE_KEY + otherUserId);
+      if (!raw) return null;
+      const { conversationId, otherUser } = JSON.parse(raw);
+      if (conversationId && otherUser) return { conversationId, otherUser };
+    } catch {}
+    return null;
+  };
+  const setCachedConversation = (otherUserId: string, conversationId: string, otherUser: { id: string; name: string; avatar: string }) => {
+    try {
+      localStorage.setItem(CONV_CACHE_KEY + otherUserId, JSON.stringify({ conversationId, otherUser }));
+    } catch {}
+  };
+
+  // Load conversation and messages from API (or cache when offline)
   useEffect(() => {
     if (!userId || !user) {
       setMessagesLoading(false);
@@ -119,13 +136,11 @@ const PrivateChat = () => {
           setMessagesLoading(false);
           return;
         }
-        setConversationId(res.conversation.id);
-        setPartner({
-          id: res.conversation.otherUser.id,
-          name: res.conversation.otherUser.name,
-          avatar: res.conversation.otherUser.avatar || '🌟',
-        });
-        return conversationApi.getMessages(res.conversation.id);
+        const { id: cId, otherUser: ou } = res.conversation;
+        setConversationId(cId);
+        setPartner({ id: ou.id, name: ou.name, avatar: ou.avatar || '🌟' });
+        setCachedConversation(userId, cId, { id: ou.id, name: ou.name, avatar: ou.avatar || '🌟' });
+        return conversationApi.getMessages(cId);
       })
       .then((res) => {
         if (res?.success && res.messages) {
@@ -134,10 +149,38 @@ const PrivateChat = () => {
         setMessagesLoading(false);
       })
       .catch(() => {
-        toast({ title: 'Error', description: 'Failed to load conversation', variant: 'destructive' });
-        setMessagesLoading(false);
+        const cached = getCachedConversation(userId);
+        if (cached) {
+          setConversationId(cached.conversationId);
+          setPartner({ id: cached.otherUser.id, name: cached.otherUser.name, avatar: cached.otherUser.avatar || '🌟' });
+          conversationApi.getMessages(cached.conversationId).then((res) => {
+            if (res.success && res.messages) setMessages(res.messages.map(mapApiMessageToDisplay));
+            setMessagesLoading(false);
+          }).catch(() => setMessagesLoading(false));
+        } else {
+          toast({ title: 'Error', description: 'Failed to load conversation', variant: 'destructive' });
+          setMessagesLoading(false);
+        }
       });
   }, [userId, user?.id]);
+
+  // Poll for new messages while chat is open so incoming messages appear without refresh
+  useEffect(() => {
+    if (!conversationId) return;
+    const POLL_INTERVAL_MS = 4000;
+    const interval = setInterval(() => {
+      conversationApi.getMessages(conversationId).then((res) => {
+        if (res.success && res.messages) {
+          setMessages((prev) => {
+            const next = res.messages!.map(mapApiMessageToDisplay);
+            if (next.length === prev.length && next[next.length - 1]?.id === prev[prev.length - 1]?.id) return prev;
+            return next;
+          });
+        }
+      });
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [conversationId, user?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
