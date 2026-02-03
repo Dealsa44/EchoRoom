@@ -205,6 +205,36 @@ const ChatInbox = () => {
     }
   }, [user?.id]);
 
+  // Poll list so unarchived chats (e.g. after new message) and new messages appear without refresh
+  useEffect(() => {
+    if (!user || activeTab !== 'chats') return;
+    const REFRESH_INTERVAL_MS = 8000;
+    const interval = setInterval(() => {
+      conversationApi.list(false).then((res) => {
+        if (res.success && res.conversations) {
+          setConversations(mapConversationListToState(res.conversations));
+        }
+      }).catch(() => {});
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [user?.id, activeTab]);
+
+  // Refetch when user returns to this tab/window so unarchived chats show up
+  useEffect(() => {
+    if (!user) return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        conversationApi.list(false).then((res) => {
+          if (res.success && res.conversations) {
+            setConversations(mapConversationListToState(res.conversations));
+          }
+        }).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [user?.id]);
+
   useEffect(() => {
     const initializeContactRequests = () => {
       // Get profiles with IDs 6, 7, 8 (unused profiles for contact requests)
