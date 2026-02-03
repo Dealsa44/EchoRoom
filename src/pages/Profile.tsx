@@ -184,7 +184,6 @@ const Profile = () => {
           ? profileData.languages.filter(lang => lang && typeof lang === 'object' && ('name' in lang ? (lang as { name?: string }).name : (lang as { language?: string }).language))
           : []
       } as unknown as DisplayUser : null);
-
   // Fetch user profile data on mount
   useEffect(() => {
     if (isOwnProfile) {
@@ -746,7 +745,7 @@ const Profile = () => {
                       : (profileData?.ethnicity && profileData.ethnicity !== 'prefer-not-to-say'
                           ? profileData.ethnicity.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
                           : 'Not specified')}
-                          
+
                   </Badge>
                 </div>
               </div>
