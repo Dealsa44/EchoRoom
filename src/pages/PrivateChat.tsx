@@ -220,11 +220,12 @@ const PrivateChat = () => {
     };
   }, [socket, conversationId, user?.id]);
 
-  // Real-time: typing indicators (partner only); auto-hide after 4s if no typing:stop
+  // Real-time: typing indicators (partner only); never show when it's our own typing
   const partnerTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (!socket || !conversationId || !partner || !user) return;
     const onTypingStart = (data: { userId: string; conversationId: string }) => {
+      if (data.userId === user.id) return;
       if (data.conversationId === conversationId && data.userId === partner.id) {
         if (partnerTypingTimeoutRef.current) clearTimeout(partnerTypingTimeoutRef.current);
         setPartnerTyping(true);
@@ -232,6 +233,7 @@ const PrivateChat = () => {
       }
     };
     const onTypingStop = (data: { userId: string; conversationId: string }) => {
+      if (data.userId === user.id) return;
       if (data.conversationId === conversationId && data.userId === partner.id) {
         if (partnerTypingTimeoutRef.current) clearTimeout(partnerTypingTimeoutRef.current);
         partnerTypingTimeoutRef.current = null;
@@ -247,17 +249,17 @@ const PrivateChat = () => {
     };
   }, [socket, conversationId, partner?.id, user?.id]);
 
-  // Poll for new messages when socket is disconnected (fallback)
+  // Poll for new messages: when disconnected (primary fallback) or when connected (backup if socket event is delayed/lost)
   useEffect(() => {
-    if (!conversationId || isConnected) return;
-    const POLL_INTERVAL_MS = 6000;
+    if (!conversationId) return;
+    const intervalMs = isConnected ? 8000 : 6000;
     const interval = setInterval(() => {
       conversationApi.getMessages(conversationId).then((res) => {
         if (res.success && res.messages) {
           setMessages(res.messages.map(mapApiMessageToDisplay));
         }
       });
-    }, POLL_INTERVAL_MS);
+    }, intervalMs);
     return () => clearInterval(interval);
   }, [conversationId, user?.id, isConnected]);
 
