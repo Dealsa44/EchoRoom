@@ -535,8 +535,8 @@ const PrivateChat = () => {
         onClose={() => setShowLanguagePanel(false)}
       />
 
-      {/* Messages - top padding matches header height (safe area + 6.5rem) so first message is never covered */}
-      <div className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full chat-content-below-header ${showAttachments ? 'pb-52' : 'pb-36'}`}>
+      {/* Messages - top padding from chat-content-below-header only (no py-4) so header never covers first message */}
+      <div className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header ${showAttachments ? 'pb-52' : 'pb-36'}`}>
         {messagesLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading messages…</div>
         ) : (
