@@ -3,11 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Send, Settings, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Send, Moon, Sun, Paperclip, Mic } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
 import { useSocket } from '@/contexts/SocketContext';
 import { chatApi } from '@/services/api';
 import { moodThemes } from '@/lib/moodThemes';
+import CallButtons from '@/components/calls/CallButtons';
 
 type RoomMessage = {
   id: string;
@@ -84,10 +85,44 @@ const ChatRoom = () => {
       return;
     }
     setLoading(true);
-    loadRoom();
-    loadMessages();
-    setLoading(false);
-  }, [id, user?.id, loadRoom, loadMessages]);
+    let done = 0;
+    const maybeDone = () => {
+      done++;
+      if (done >= 2) setLoading(false);
+    };
+    chatApi.getChatRoom(id).then((res) => {
+      if (res.success && res.room) {
+        setRoom({
+          id: res.room.id,
+          title: res.room.title,
+          chatTheme: res.room.chatTheme ?? 'default',
+          isCreator: res.room.isCreator ?? false,
+        });
+      } else {
+        setRoom(null);
+      }
+      maybeDone();
+    }).catch(() => {
+      setRoom(null);
+      maybeDone();
+    });
+    chatApi.getRoomMessages(id).then((res) => {
+      if (res.success && res.messages) {
+        setMessages(
+          res.messages.map((m: any) => ({
+            id: m.id,
+            userId: m.userId,
+            content: m.content,
+            type: m.type || 'text',
+            reactions: m.reactions || [],
+            createdAt: m.createdAt,
+            user: m.user,
+          }))
+        );
+      }
+      maybeDone();
+    }).catch(maybeDone);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (!id || !socket) return;
@@ -226,44 +261,74 @@ const ChatRoom = () => {
   }
 
   const state = location.state as { from?: string } | null;
+  const handleBack = () => {
+    if (state?.from === 'chat-inbox') navigate('/chat-inbox');
+    else navigate('/chat-rooms');
+  };
+
+  const isDefault = themeId === 'default';
+  const themeStyle = isDefault ? {} : {
+    ['--mood-primary' as string]: theme.colors.primary,
+    ['--mood-secondary' as string]: theme.colors.secondary,
+    ['--mood-accent' as string]: theme.colors.accent,
+    ['--mood-background' as string]: theme.colors.background,
+    ['--mood-surface' as string]: theme.colors.surface,
+    ['--mood-text' as string]: theme.colors.text,
+    ['--mood-muted' as string]: theme.colors.muted,
+    backgroundColor: theme.colors.background,
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header
-        className="fixed top-0 left-0 right-0 z-20 border-b safe-top flex items-center justify-between gap-2 px-4 py-3 max-w-md mx-auto w-full"
-        style={{
-          background: theme?.gradients?.header || 'var(--background)',
-          color: theme?.colors?.text ? undefined : 'var(--foreground)',
-        }}
-      >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              if (state?.from === 'chat-inbox') navigate('/chat-inbox');
-              else navigate('/chat-rooms');
-            }}
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="font-semibold truncate">{room.title}</h1>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header: same as PrivateChat - same class and layout, name clickable -> room-actions */}
+      <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
+        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="h-10 w-10 bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 m-0 rounded-lg transition-colors text-left"
+              onClick={() => navigate(`/room-actions/${id}`, { state: { originalFrom: state?.from } })}
+            >
+              <div className="text-2xl flex-shrink-0">💬</div>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-semibold truncate">{room.title}</h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground truncate">Group</span>
+                </div>
+              </div>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="opacity-50 pointer-events-none" title="Coming soon" aria-hidden>
+              <CallButtons
+                participantId={id ?? ''}
+                participantName={room.title}
+                participantAvatar="💬"
+                variant="full"
+                callType="private"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="h-10 w-10 bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0 flex items-center justify-center rounded-lg transition-all hover:scale-110"
+            >
+              {isDarkMode ? <Sun size={20} className="text-warning hover:text-warning transition-smooth" /> : <Moon size={20} className="text-secondary hover:text-secondary transition-smooth" />}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/room-actions/${id}`, { state: { originalFrom: state?.from } })}>
-            <Settings size={20} />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
-        </div>
-      </header>
+      </div>
 
       <div
-        className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top pb-36 ${theme?.designClass ?? ''}`}
-        style={{
-          background: theme?.colors?.background || undefined,
-        }}
+        className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header chat-messages-area content-safe-top ${isDefault ? 'bg-background' : ''} ${isDefault ? '' : `mood-${themeId} ${theme.designClass || ''}`} pb-36`}
+        style={themeStyle}
       >
         <div className="space-y-3">
           {messages.map((msg) => {
@@ -307,19 +372,49 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-3 max-w-md mx-auto bg-background border-t safe-bottom">
+      {/* Message input: same as PrivateChat - Paperclip (disabled), Input, Send/Mic (Mic disabled) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border safe-bottom">
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled
+            aria-disabled="true"
+            title="Attachments coming soon"
+            className="p-2 opacity-50 cursor-not-allowed"
+          >
+            <Paperclip size={16} />
+          </Button>
           <Input
-            placeholder="Type a message..."
+            id="chatRoomMessage"
+            name="chatRoomMessage"
+            placeholder="Type a thoughtful message..."
             value={message}
             onChange={handleInputChange}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             autoComplete="off"
             className="flex-1"
           />
-          <Button onClick={handleSend} disabled={sending || !message.trim()} size="icon">
-            <Send size={18} />
-          </Button>
+          {message.trim() ? (
+            <Button
+              onClick={handleSend}
+              variant="cozy"
+              className="px-3"
+              disabled={sending}
+            >
+              <Send size={16} />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              disabled
+              aria-disabled="true"
+              title="Voice messages coming soon"
+              className="px-3 opacity-50 cursor-not-allowed"
+            >
+              <Mic size={16} />
+            </Button>
+          )}
         </div>
       </div>
     </div>

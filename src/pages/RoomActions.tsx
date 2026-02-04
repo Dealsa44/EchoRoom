@@ -4,16 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
-  ArrowLeft,
   Users,
-  Moon,
-  Sun,
   Palette,
   LogOut,
   Trash2,
   X,
-  User,
 } from 'lucide-react';
+import TopBar from '@/components/layout/TopBar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,33 +166,19 @@ const RoomActions = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border shadow-soft safe-top">
-        <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() =>
-                navigate(`/chat-room/${id}`, {
-                  replace: true,
-                  state: { from: state?.originalFrom || 'chat-rooms' },
-                })
-              }
-              className="flex-shrink-0"
-            >
-              <ArrowLeft size={20} />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <h1 className="font-semibold truncate">Room Actions</h1>
-              <p className="text-xs text-muted-foreground truncate">{room.title}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </Button>
-        </div>
-      </div>
-
+      <TopBar
+        title="Room Actions"
+        subtitle={room.title}
+        showBack={true}
+        onBack={() =>
+          navigate(`/chat-room/${id}`, {
+            replace: true,
+            state: { from: state?.originalFrom || 'chat-rooms' },
+          })
+        }
+        showNotifications={false}
+        showAIAssistant={false}
+      />
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24 overflow-y-auto">
         <Card>
           <CardContent className="p-6 text-center">
