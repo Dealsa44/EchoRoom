@@ -97,7 +97,6 @@ interface UserType {
 }
 import { getAttractionPreferences } from '@/contexts/app-utils';
 import { Profile as ProfileType, ProfileQuestion } from '@/types';
-import { getProfileById } from '@/data/mockProfiles';
 import { LoadingState } from '@/components/ui/LoadingSpinner';
 import { toast } from '@/hooks/use-toast';
 import { calculateAge } from '@/lib/auth';
@@ -191,48 +190,11 @@ const Profile = () => {
     }
   }, [isOwnProfile]);
 
-  // Load other user's profile if viewing someone else (mock by id number, or real user by API)
+  // Load other user's profile from API when viewing someone else
   useEffect(() => {
     if (!isOwnProfile && userId) {
       setLoading(true);
       setError(null);
-
-      const numericId = parseInt(userId, 10);
-      const isNumericId = !Number.isNaN(numericId) && String(numericId) === userId;
-
-      if (isNumericId) {
-        const profile = getProfileById(numericId);
-        if (profile) {
-          setProfileData({
-            ...profile,
-            username: profile.name,
-            email: `${profile.name.toLowerCase()}@example.com`,
-            password: '',
-            languages: profile.languages || [{ language: 'english', level: 'intermediate' }],
-            safeMode: 'light' as const,
-            anonymousMode: false,
-            aiAssistant: true,
-            customGender: undefined,
-            customOrientation: undefined,
-            ethnicity: profile.ethnicity || 'prefer-not-to-say',
-            relationshipType: profile.relationshipType || undefined
-          } as ProfileType & {
-            username: string;
-            email: string;
-            password: string;
-            languages: Array<{ language: string; level: string }>;
-            safeMode: 'light' | 'medium' | 'strict';
-            anonymousMode: boolean;
-            aiAssistant: boolean;
-            customGender?: string;
-            customOrientation?: string;
-            ethnicity: string;
-            relationshipType?: string;
-          });
-          setLoading(false);
-          return;
-        }
-      }
 
       userApi.getPublicProfile(userId)
         .then((res) => {

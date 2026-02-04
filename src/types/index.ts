@@ -45,8 +45,8 @@ export interface Profile {
   profileQuestions: ProfileQuestion[];
 }
 
-// Match page: mock profiles have id: number, real users have id: string
-export type MatchProfile = Omit<Profile, 'id'> & { id: number | string };
+// Match page: profiles from discover API use string id
+export type MatchProfile = Omit<Profile, 'id'> & { id: string };
 
 export interface ChatMessage {
   id: number;

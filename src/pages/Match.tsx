@@ -17,7 +17,6 @@ import { useApp } from '@/hooks/useApp';
 import { getAttractionPreferences } from '@/contexts/app-utils';
 import { toast } from '@/hooks/use-toast';
 import { Profile, MatchProfile } from '@/types';
-import { mockProfiles } from '@/data/mockProfiles';
 import { userApi } from '@/services/api';
 
 interface Filters {
@@ -125,11 +124,10 @@ const Match = () => {
     "What's your favorite season and why?"
   ];
 
-  // Real users from API (discover) first, then mock profiles
   const [realUsers, setRealUsers] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch discover feed (real users) using current relationship filter so friendship/relationship filter works for real users
+  // Fetch discover feed (real users) using current relationship filter
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -151,7 +149,6 @@ const Match = () => {
           setRealUsers([]);
         }
       } catch (_) {
-        // Offline or API error: show mocks only
         setRealUsers([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -160,10 +157,7 @@ const Match = () => {
     return () => { cancelled = true; };
   }, [filters.relationshipIntent]);
 
-  const profiles: MatchProfile[] = useMemo(
-    () => [...realUsers, ...mockProfiles],
-    [realUsers]
-  );
+  const profiles: MatchProfile[] = useMemo(() => realUsers, [realUsers]);
 
   // Filter profiles based on current filters (memoized to prevent infinite re-renders)
   const filteredProfiles = useMemo(() => {

@@ -67,7 +67,6 @@ import {
   updateConversationState,
 } from '@/lib/conversationStorage';
 import { conversationApi, chatApi, getPersistedConversations, getPersistedRooms, invalidateApiCache, type ConversationListItem, type ChatRoomListItem } from '@/services/api';
-import { mockProfiles } from '@/data/mockProfiles';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ChatConversation {
@@ -311,77 +310,6 @@ const ChatInbox = () => {
       window.removeEventListener('focus', onFocus);
     };
   }, [user?.id]);
-
-  useEffect(() => {
-    const initializeContactRequests = () => {
-      // Get profiles with IDs 6, 7, 8 (unused profiles for contact requests)
-      const zaraProfile = mockProfiles.find(p => p.id === 6);
-      const riverProfile = mockProfiles.find(p => p.id === 7);
-      const leoProfile = mockProfiles.find(p => p.id === 8);
-
-      const mockRequests: ContactRequest[] = [
-        {
-          id: 'req-1',
-          from: {
-            id: '6',
-            name: zaraProfile?.name || 'Zara',
-            avatar: zaraProfile?.avatar || '🎭',
-            age: zaraProfile?.age || 27,
-            location: zaraProfile?.location || 'Montreal, Canada',
-            isOnline: zaraProfile?.isOnline || true,
-          },
-          context: {
-            type: 'forum',
-            source: 'Philosophy Forum',
-            topic: 'The paradox of choice in modern life'
-          },
-          message: 'Hi! I loved your thoughtful response about decision-making. I\'d love to discuss this further with you.',
-          timestamp: '1 hour ago',
-          status: 'pending'
-        },
-        {
-          id: 'req-2',
-          from: {
-            id: '7',
-            name: riverProfile?.name || 'River',
-            avatar: riverProfile?.avatar || '🌊',
-            age: riverProfile?.age || 26,
-            location: riverProfile?.location || 'Portland, Oregon',
-            isOnline: riverProfile?.isOnline || false,
-          },
-          context: {
-            type: 'chatroom',
-            source: 'Wellness Chat',
-            topic: 'Mindfulness practices'
-          },
-          message: 'Your insights on meditation were really helpful! Would love to connect and share more experiences.',
-          timestamp: '3 hours ago',
-          status: 'pending'
-        },
-        {
-          id: 'req-3',
-          from: {
-            id: '8',
-            name: leoProfile?.name || 'Leo',
-            avatar: leoProfile?.avatar || '🎵',
-            age: leoProfile?.age || 29,
-            location: leoProfile?.location || 'Austin, Texas',
-            isOnline: leoProfile?.isOnline || true,
-          },
-          context: {
-            type: 'forum',
-            source: 'Education Forum',
-            topic: 'Learning languages as an adult'
-          },
-          message: 'I\'m also learning Georgian! It would be great to practice together and share tips.',
-          timestamp: '5 hours ago',
-          status: 'pending'
-        }
-      ];
-      setContactRequests(mockRequests);
-    };
-    initializeContactRequests();
-  }, []);
 
   const joinedRoomConversations: ChatConversation[] = myRooms.map((room) => {
     const lastMessageAt = room.lastMessageAt ? new Date(room.lastMessageAt).toISOString() : room.createdAt ?? new Date().toISOString();
