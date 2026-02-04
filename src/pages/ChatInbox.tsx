@@ -993,6 +993,7 @@ const ChatInbox = () => {
           ))
           )}
         </div>
+        )}
 
         {/* Empty State */}
         {((activeTab === 'requests' && filteredRequests.length === 0) || 
