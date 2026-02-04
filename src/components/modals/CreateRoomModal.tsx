@@ -106,7 +106,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreated }: CreateRoomModalProps) =
               <SelectTrigger>
                 <SelectValue placeholder="Choose a topic" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[10000]">
                 {topics.map((topic) => (
                   <SelectItem key={topic} value={topic}>
                     {topic}

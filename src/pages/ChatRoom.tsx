@@ -230,7 +230,7 @@ const ChatRoom = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header
-        className="sticky top-0 z-20 border-b safe-top flex items-center justify-between gap-2 px-4 py-3 max-w-md mx-auto w-full"
+        className="fixed top-0 left-0 right-0 z-20 border-b safe-top flex items-center justify-between gap-2 px-4 py-3 max-w-md mx-auto w-full"
         style={{
           background: theme?.gradients?.header || 'var(--background)',
           color: theme?.colors?.text ? undefined : 'var(--foreground)',
@@ -260,7 +260,7 @@ const ChatRoom = () => {
       </header>
 
       <div
-        className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full pb-24 ${theme?.designClass ?? ''}`}
+        className={`flex-1 overflow-y-auto px-4 py-4 max-w-md mx-auto w-full content-safe-top pb-36 ${theme?.designClass ?? ''}`}
         style={{
           background: theme?.colors?.background || undefined,
         }}
