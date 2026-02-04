@@ -66,7 +66,7 @@ import {
   getConversationState,
   updateConversationState,
 } from '@/lib/conversationStorage';
-import { conversationApi, chatApi, getPersistedConversations, type ConversationListItem, type ChatRoomListItem } from '@/services/api';
+import { conversationApi, chatApi, getPersistedConversations, getPersistedRooms, invalidateApiCache, type ConversationListItem, type ChatRoomListItem } from '@/services/api';
 import { mockProfiles } from '@/data/mockProfiles';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -230,27 +230,39 @@ const ChatInbox = () => {
     };
   }, [socket, user?.id]);
 
-  // Poll list so unarchived chats and last-activity preview stay current (backup to socket)
+  // Load rooms: show persisted list first (like DMs), then refresh from API; socket/refresh keep it updated
   const loadMyRooms = () => {
-    setRoomsLoading(true);
+    const cached = getPersistedRooms();
+    if (cached?.length) {
+      setMyRooms(cached);
+      setRoomsLoading(false);
+    } else {
+      setRoomsLoading(true);
+    }
     chatApi
       .listMyRooms()
       .then((res) => {
         if (res.success && res.rooms) setMyRooms(res.rooms);
-        else setMyRooms([]);
+        else if (!cached?.length) setMyRooms([]);
       })
-      .catch(() => setMyRooms([]))
+      .catch(() => {
+        if (!cached?.length) setMyRooms([]);
+      })
       .finally(() => setRoomsLoading(false));
   };
 
   useEffect(() => {
     if (user) loadMyRooms();
-    else setMyRooms([]);
+    else {
+      setMyRooms([]);
+      setRoomsLoading(false);
+    }
   }, [user?.id]);
 
   useEffect(() => {
     if (!socket || !user) return;
     const onRoomUpdated = () => {
+      invalidateApiCache('chat/rooms/my');
       loadMyRooms();
       refreshJoinedRooms();
     };
@@ -274,12 +286,16 @@ const ChatInbox = () => {
     return () => clearInterval(interval);
   }, [user?.id, activeTab]);
 
-  // Refetch when user returns to this tab/window or focuses the window
+  // Refetch when user returns to this tab/window or focuses the window (DMs + rooms)
   const refetchList = () => {
     conversationApi.list(false).then((res) => {
       if (res.success && res.conversations) {
         setConversations(mapConversationListToState(res.conversations));
       }
+    }).catch(() => {});
+    invalidateApiCache('chat/rooms/my');
+    chatApi.listMyRooms().then((res) => {
+      if (res.success && res.rooms) setMyRooms(res.rooms);
     }).catch(() => {});
   };
   useEffect(() => {

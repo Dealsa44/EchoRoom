@@ -707,7 +707,11 @@ export const chatApi = {
 
   listMyRooms: async (): Promise<{ success: boolean; rooms?: ChatRoomListItem[] }> => {
     const key = 'chat/rooms/my';
-    return cachedOrFetch(key, () => apiRequest<any>('/chat/rooms/my'));
+    return cachedOrFetch(key, async () => {
+      const res = await apiRequest<any>('/chat/rooms/my');
+      if (res.success && res.rooms?.length) setPersistedRooms(res.rooms);
+      return res;
+    });
   },
 
   createRoom: async (data: { title: string; category: string; description?: string; icon?: string; tags?: string[] }): Promise<{ success: boolean; room?: ChatRoomListItem; message?: string }> => {
@@ -851,7 +855,26 @@ export interface DirectMessageItem {
 const CONVERSATIONS_CACHE_KEY = 'driftzo:conversations';
 const CONVERSATIONS_ARCHIVED_CACHE_KEY = 'driftzo:conversations:archived';
 const MESSAGES_CACHE_KEY_PREFIX = 'driftzo:messages:';
+const ROOMS_MY_CACHE_KEY = 'driftzo:chat_rooms_my';
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/** Persisted "my rooms" for chat inbox – instant load like DMs */
+export function getPersistedRooms(): ChatRoomListItem[] | null {
+  try {
+    const raw = localStorage.getItem(ROOMS_MY_CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_MAX_AGE_MS) return null;
+    return Array.isArray(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+function setPersistedRooms(data: ChatRoomListItem[]) {
+  try {
+    localStorage.setItem(ROOMS_MY_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {}
+}
 
 export function getPersistedConversations(archived = false): ConversationListItem[] | null {
   try {
