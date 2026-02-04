@@ -1,56 +1,76 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
+import { chatApi } from '@/services/api';
+import { useApp } from '@/hooks/useApp';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onCreated?: () => void;
 }
 
-const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
+const topics = [
+  'Philosophy & Deep Thoughts',
+  'Books & Literature',
+  'Science & Technology',
+  'Arts & Culture',
+  'Wellness & Mental Health',
+  'Language Learning',
+  'Creative Writing',
+  'Music & Sound',
+  'Nature & Environment',
+  'Travel & Cultures',
+];
+
+const CreateRoomModal = ({ isOpen, onClose, onCreated }: CreateRoomModalProps) => {
+  const navigate = useNavigate();
+  const { joinRoom, refreshJoinedRooms } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     topic: '',
     description: '',
-    isPrivate: false,
-    allowAnonymous: true
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const topics = [
-    'Philosophy & Deep Thoughts',
-    'Books & Literature',
-    'Science & Technology',
-    'Arts & Culture',
-    'Wellness & Mental Health',
-    'Language Learning',
-    'Creative Writing',
-    'Music & Sound',
-    'Nature & Environment',
-    'Travel & Cultures'
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simulate room creation
-    // Room created - toast removed per user request
-    
-    // Reset form and close modal
-    setFormData({
-      name: '',
-      topic: '',
-      description: '',
-      isPrivate: false,
-      allowAnonymous: true
-    });
-    
-    onClose();
+    if (!formData.name.trim()) {
+      toast({ title: 'Room name is required', variant: 'destructive' });
+      return;
+    }
+    if (!formData.topic.trim()) {
+      toast({ title: 'Please choose a topic', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await chatApi.createRoom({
+        title: formData.name.trim(),
+        category: formData.topic.trim(),
+        description: formData.description.trim() || undefined,
+      });
+      if (res.success && res.room) {
+        setFormData({ name: '', topic: '', description: '' });
+        onClose();
+        refreshJoinedRooms();
+        onCreated?.();
+        navigate(`/chat-room/${res.room.id}`, { state: { from: 'chat-rooms' } });
+      } else {
+        toast({ title: res.message || 'Failed to create room', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Failed to create room', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -62,16 +82,15 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             Set up a new chat room for meaningful conversations and discussions.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="room-name">Room Name</Label>
             <Input
               id="room-name"
-              name="roomName"
               placeholder="e.g., Midnight Philosophers"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               autoComplete="off"
               required
             />
@@ -79,12 +98,16 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="topic">Topic Category</Label>
-            <Select name="topic" value={formData.topic} onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}>
+            <Select
+              value={formData.topic}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, topic: value }))}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Choose a topic" />
               </SelectTrigger>
               <SelectContent>
-                {topics.map(topic => (
+                {topics.map((topic) => (
                   <SelectItem key={topic} value={topic}>
                     {topic}
                   </SelectItem>
@@ -97,48 +120,20 @@ const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              name="description"
               placeholder="What will you discuss in this room?"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               autoComplete="off"
               className="min-h-20"
-              required
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="private-room">Private Room</Label>
-                <p className="text-xs text-muted-foreground">Only invited members can join</p>
-              </div>
-              <Switch
-                id="private-room"
-                checked={formData.isPrivate}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPrivate: checked }))}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="anonymous-chat">Allow Anonymous Chat</Label>
-                <p className="text-xs text-muted-foreground">Members can chat without showing names</p>
-              </div>
-              <Switch
-                id="anonymous-chat"
-                checked={formData.allowAnonymous}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, allowAnonymous: checked }))}
-              />
-            </div>
-          </div>
-
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" variant="cozy" className="flex-1">
-              Create Room
+            <Button type="submit" variant="cozy" className="flex-1" disabled={submitting}>
+              {submitting ? 'Creating...' : 'Create Room'}
             </Button>
           </div>
         </form>

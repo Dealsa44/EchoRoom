@@ -6,8 +6,7 @@ import { Users, Brain, MessageCircle, Globe, Lock, Star, BookOpen, Lightbulb, Sh
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
-import { chatRooms } from '@/data/chatRooms';
-import { forumApi, eventsApi } from '@/services/api';
+import { chatApi, forumApi, eventsApi } from '@/services/api';
 
 const Community = () => {
   const navigate = useNavigate();
@@ -15,8 +14,10 @@ const Community = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [forumPostCount, setForumPostCount] = useState<number | null>(null);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState<number | null>(null);
+  const [joinableRoomsCount, setJoinableRoomsCount] = useState<number | null>(null);
   const [forumCountLoading, setForumCountLoading] = useState(true);
   const [eventsCountLoading, setEventsCountLoading] = useState(true);
+  const [chatRoomsCountLoading, setChatRoomsCountLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -59,6 +60,18 @@ const Community = () => {
       .finally(() => setEventsCountLoading(false));
   }, [user]);
 
+  useEffect(() => {
+    setChatRoomsCountLoading(true);
+    chatApi
+      .getJoinableCount()
+      .then((res) => {
+        if (res.success && typeof res.count === 'number') setJoinableRoomsCount(res.count);
+        else setJoinableRoomsCount(null);
+      })
+      .catch(() => setJoinableRoomsCount(null))
+      .finally(() => setChatRoomsCountLoading(false));
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -67,10 +80,10 @@ const Community = () => {
   };
 
   const communityStats = {
-    activeRooms: chatRooms.length,
+    joinableRooms: joinableRoomsCount ?? 0,
     activeUsers: 1247,
     totalDiscussions: forumPostCount ?? 0,
-    newToday: 12
+    newToday: 12,
   };
 
   // Three moving dots for loading counts
@@ -155,8 +168,8 @@ const Community = () => {
                       Chat Rooms
                       <span className="absolute left-0 -bottom-0.5 h-0.5 w-16 bg-blue-500/70 rounded-full" />
                     </h3>
-                    <Badge variant="glass" size="sm" className="bg-blue-500/20 text-blue-700 w-fit">
-                      {communityStats.activeRooms} active
+                    <Badge variant="glass" size="sm" className="bg-blue-500/20 text-blue-700 w-fit min-w-[4rem] justify-center">
+                      {chatRoomsCountLoading ? <LoadingDots /> : `${communityStats.joinableRooms} to join`}
                     </Badge>
                   </div>
                   <p className="text-body-small text-muted-foreground mb-3 leading-relaxed">

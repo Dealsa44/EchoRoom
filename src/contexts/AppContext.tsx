@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { logoutUser, getCurrentUser } from '@/lib/authApi';
 import { ProfileQuestion } from '@/types';
 import { clearConversationStates } from '@/lib/conversationStorage';
+import { chatApi } from '@/services/api';
 import { GenderIdentity, Orientation, AttractionPreference, getAttractionPreferences } from './app-utils';
 
 // Import UserLanguage type from auth.ts
@@ -77,6 +78,7 @@ export interface AppContextType extends AppState {
   setSafeMode: (mode: SafeMode) => void;
   joinRoom: (roomId: string) => void;
   leaveRoom: (roomId: string) => void;
+  refreshJoinedRooms: () => Promise<void>;
   logout: () => void;
 }
 
@@ -127,38 +129,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         savedDarkMode = false;
       }
       
-      // Safely parse joined rooms from localStorage
-      try {
-        const joinedRoomsData = localStorage.getItem('joinedRooms');
-        if (joinedRoomsData) {
-          const parsed = JSON.parse(joinedRoomsData);
-          if (Array.isArray(parsed)) {
-            savedJoinedRooms = parsed;
-          } else {
-            console.warn('Invalid joined rooms data format, resetting to empty array');
-            try {
-              localStorage.setItem('joinedRooms', JSON.stringify([]));
-            } catch (setError) {
-              console.warn('Failed to reset joined rooms:', setError);
-            }
-          }
-        }
-      } catch (joinedRoomsError) {
-        console.warn('Failed to parse joined rooms:', joinedRoomsError);
-        savedJoinedRooms = [];
-        try {
-          localStorage.removeItem('joinedRooms');
-        } catch (cleanupError) {
-          console.warn('Failed to clean up joined rooms:', cleanupError);
-        }
-      }
+      // Joined rooms are now loaded from API when user is set (no localStorage)
+      savedJoinedRooms = [];
     } catch (error) {
       console.error('Failed to initialize app state from localStorage:', error);
-      // Reset corrupted data with enhanced error handling
       try {
         localStorage.removeItem('driftzo_current_user');
         sessionStorage.removeItem('driftzo_current_user');
-        localStorage.setItem('joinedRooms', JSON.stringify([]));
         localStorage.setItem('darkMode', 'false');
       } catch (resetError) {
         console.error('Failed to reset corrupted localStorage data:', resetError);
@@ -186,23 +163,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []); // Run only once on mount
 
-  // Listen for storage events (changes from other tabs only)
+  // Fetch joined rooms from API when user is available
+  const refreshJoinedRooms = React.useCallback(async () => {
+    if (!state.user?.id) return;
+    try {
+      const res = await chatApi.listMyRooms();
+      const ids = (res.rooms ?? []).map((r) => r.id);
+      setState((prev) => ({ ...prev, joinedRooms: ids }));
+    } catch {
+      setState((prev) => ({ ...prev, joinedRooms: [] }));
+    }
+  }, [state.user?.id]);
+
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'joinedRooms' && e.newValue) {
-        try {
-          const parsedRooms = JSON.parse(e.newValue);
-
-          setState(prev => ({ ...prev, joinedRooms: parsedRooms }));
-        } catch (error) {
-          console.error('Failed to sync from storage event:', error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    if (state.user?.id) {
+      refreshJoinedRooms();
+    } else {
+      setState((prev) => ({ ...prev, joinedRooms: [] }));
+    }
+  }, [state.user?.id]);
 
   const setUser = (user: User | null) => {
     setState(prev => ({ ...prev, user }));
@@ -240,57 +219,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const joinRoom = (roomId: string) => {
-    // Calculate new joined rooms immediately
-    const currentJoinedRooms = state.joinedRooms;
-    const newJoinedRooms = currentJoinedRooms.includes(roomId) 
-      ? currentJoinedRooms 
-      : [...currentJoinedRooms, roomId];
-    
-    // Persist to localStorage BEFORE updating state with safe fallback
-    try {
-      localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-    } catch (error) {
-      console.warn('Failed to save joined rooms to localStorage:', error);
-      // Try to clear corrupted data and save again
-      try {
-        localStorage.removeItem('joinedRooms');
-        localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-      } catch (retryError) {
-        console.error('Failed to save joined rooms even after cleanup:', retryError);
+    if (state.joinedRooms.includes(roomId)) return;
+    chatApi.joinChatRoom(roomId).then((res) => {
+      if (res.success) {
+        setState((prev) => ({
+          ...prev,
+          joinedRooms: [...prev.joinedRooms, roomId],
+        }));
       }
-    }
-    
-    // Update state
-    setState(prev => ({ 
-      ...prev, 
-      joinedRooms: newJoinedRooms
-    }));
+    });
   };
 
   const leaveRoom = (roomId: string) => {
-    // Calculate new joined rooms immediately
-    const currentJoinedRooms = state.joinedRooms;
-    const newJoinedRooms = currentJoinedRooms.filter(id => id !== roomId);
-    
-    // Persist to localStorage BEFORE updating state with safe fallback
-    try {
-      localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-    } catch (error) {
-      console.warn('Failed to save joined rooms to localStorage:', error);
-      // Try to clear corrupted data and save again
-      try {
-        localStorage.removeItem('joinedRooms');
-        localStorage.setItem('joinedRooms', JSON.stringify(newJoinedRooms));
-      } catch (retryError) {
-        console.error('Failed to save joined rooms even after cleanup:', retryError);
+    chatApi.leaveChatRoom(roomId).then((res) => {
+      if (res.success) {
+        setState((prev) => ({
+          ...prev,
+          joinedRooms: prev.joinedRooms.filter((id) => id !== roomId),
+        }));
       }
-    }
-    
-    // Update state
-    setState(prev => ({ 
-      ...prev, 
-      joinedRooms: newJoinedRooms
-    }));
+    });
   };
 
   const logout = () => {
@@ -306,13 +254,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } catch (cleanupError) {
         console.warn('Failed to manually clear user data:', cleanupError);
       }
-    }
-    
-    // Clear joined rooms from localStorage with safe fallback
-    try {
-      localStorage.setItem('joinedRooms', JSON.stringify([]));
-    } catch (error) {
-      console.warn('Failed to clear joined rooms from localStorage:', error);
     }
     
     // Clear conversation states
@@ -340,6 +281,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setSafeMode,
       joinRoom,
       leaveRoom,
+      refreshJoinedRooms,
       logout,
     }}>
       {children}

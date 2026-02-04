@@ -62,13 +62,11 @@ import TopBar from '@/components/layout/TopBar';
 import { useApp } from '@/hooks/useApp';
 import { useSocket } from '@/contexts/SocketContext';
 import { toast } from '@/hooks/use-toast';
-import { chatRooms } from '@/data/chatRooms';
-import { 
-  getConversationState, 
-  updateConversationState, 
-  markConversationAsLeft,
+import {
+  getConversationState,
+  updateConversationState,
 } from '@/lib/conversationStorage';
-import { conversationApi, getPersistedConversations, type ConversationListItem } from '@/services/api';
+import { conversationApi, chatApi, getPersistedConversations, type ConversationListItem, type ChatRoomListItem } from '@/services/api';
 import { mockProfiles } from '@/data/mockProfiles';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -128,13 +126,15 @@ interface ContactRequest {
 
 const ChatInbox = () => {
   const navigate = useNavigate();
-  const { user, joinedRooms, leaveRoom } = useApp();
+  const { user, refreshJoinedRooms } = useApp();
   const { socket } = useSocket();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('chatInboxActiveTab') || 'chats';
   });
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [myRooms, setMyRooms] = useState<ChatRoomListItem[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
   const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
@@ -231,6 +231,35 @@ const ChatInbox = () => {
   }, [socket, user?.id]);
 
   // Poll list so unarchived chats and last-activity preview stay current (backup to socket)
+  const loadMyRooms = () => {
+    setRoomsLoading(true);
+    chatApi
+      .listMyRooms()
+      .then((res) => {
+        if (res.success && res.rooms) setMyRooms(res.rooms);
+        else setMyRooms([]);
+      })
+      .catch(() => setMyRooms([]))
+      .finally(() => setRoomsLoading(false));
+  };
+
+  useEffect(() => {
+    if (user) loadMyRooms();
+    else setMyRooms([]);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!socket || !user) return;
+    const onRoomUpdated = () => {
+      loadMyRooms();
+      refreshJoinedRooms();
+    };
+    socket.on('room:updated', onRoomUpdated);
+    return () => {
+      socket.off('room:updated', onRoomUpdated);
+    };
+  }, [socket, user?.id, refreshJoinedRooms]);
+
   useEffect(() => {
     if (!user || activeTab !== 'chats') return;
     const REFRESH_INTERVAL_MS = 4000;
@@ -240,6 +269,7 @@ const ChatInbox = () => {
           setConversations(mapConversationListToState(res.conversations));
         }
       }).catch(() => {});
+      loadMyRooms();
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [user?.id, activeTab]);
@@ -337,62 +367,42 @@ const ChatInbox = () => {
     initializeContactRequests();
   }, []);
 
-  // Add joined rooms to conversations (exclude left rooms)
-  const joinedRoomConversations: ChatConversation[] = (joinedRooms || []).map(roomId => {
-    const room = chatRooms.find(r => r.id === roomId);
-    if (!room) return null;
-
-    const conversationId = `joined-${roomId}`;
-    const state = getConversationState(conversationId);
-    
-    // Skip if this room has been left
-    if (state.isLeft) return null;
-
-    // Generate some sample last messages based on room type
-    const getLastMessage = () => {
-      const messages = {
-        'philosophy': 'LanguageHelper: The discussion about existentialism was fascinating today!',
-        'books': 'BookWorm: Just finished reading "The Midnight Library" - amazing!',
-        'wellness': 'ZenMaster: Today\'s meditation session was incredibly peaceful',
-        'art': 'PoetSoul: New poem shared in the group!',
-        'languages': 'PracticeBot: Great pronunciation practice session everyone! 🎉',
-        'science': 'ScienceBot: New breakthrough in quantum computing discussed!'
-      }[room.category] || 'Welcome to the group!';
-      
-      return messages;
-    };
-
+  const joinedRoomConversations: ChatConversation[] = myRooms.map((room) => {
+    const lastMessageAt = room.lastMessageAt ? new Date(room.lastMessageAt).toISOString() : room.createdAt ?? new Date().toISOString();
+    const preview = room.lastActivitySummary ?? room.lastMessageAt ? 'New activity' : 'No messages yet';
     return {
-      id: conversationId,
+      id: room.id,
       type: 'group',
       participant: {
-        id: `room-${roomId}`,
+        id: `room-${room.id}`,
         name: room.title,
-        avatar: room.icon,
+        avatar: room.icon ?? '💬',
         isOnline: true,
       },
       roomInfo: {
         title: room.title,
-        memberCount: room.members,
+        memberCount: room.memberCount ?? 0,
         category: room.category,
       },
       lastMessage: {
-        id: `msg-joined-${roomId}`,
-        content: getLastMessage(),
-        sender: 'System',
-        timestamp: '1 hour ago',
+        id: `msg-room-${room.id}`,
+        content: preview,
+        sender: room.lastActivityUserId === user?.id ? 'you' : 'Member',
+        timestamp: lastMessageAt,
         type: 'text',
         isRead: true,
       },
+      lastActivityType: room.lastActivityType ?? null,
+      lastActivitySummary: room.lastActivitySummary ?? null,
+      lastActivityUserId: room.lastActivityUserId ?? null,
       unreadCount: 0,
-      isPinned: state.isPinned,
-      isArchived: state.isArchived,
-      isMuted: state.isMuted,
+      isPinned: false,
+      isArchived: room.isArchived ?? false,
+      isMuted: false,
       isTyping: false,
     };
-  }).filter(Boolean) as ChatConversation[];
+  });
 
-  // Combine existing conversations with joined room conversations
   const allConversations = [...conversations, ...joinedRoomConversations];
 
   const filteredConversations = allConversations.filter(conv => {
@@ -432,7 +442,8 @@ const ChatInbox = () => {
     if (conversation.type === 'private') {
       navigate(`/private-chat/${conversation.participant.id}`, { state: { from: 'chat-inbox' } });
     } else if (conversation.type === 'group') {
-      navigate(`/chat-room/${conversation.participant.id.replace('room-', '')}`, { state: { from: 'chat-inbox' } });
+      const roomId = conversation.id;
+      navigate(`/chat-room/${roomId}`, { state: { from: 'chat-inbox' } });
     }
     
     // Mark as read
@@ -461,10 +472,21 @@ const ChatInbox = () => {
   };
 
   const handleArchiveConversation = (conversationId: string) => {
-    const conv = allConversations.find(c => c.id === conversationId);
+    const conv = allConversations.find((c) => c.id === conversationId);
     const newArchivedState = !conv?.isArchived;
 
-    if (conv?.type === 'private' && !conversationId.startsWith('joined-')) {
+    if (conv?.type === 'group') {
+      chatApi.setRoomArchived(conversationId, newArchivedState).then((res) => {
+        if (res.success) {
+          setMyRooms((prev) =>
+            prev.map((r) => (r.id === conversationId ? { ...r, isArchived: newArchivedState } : r))
+          );
+        } else toast({ title: 'Error', description: 'Failed to update archive state', variant: 'destructive' });
+      });
+      return;
+    }
+
+    if (conv?.type === 'private') {
       conversationApi.setArchived(conversationId, newArchivedState).then((res) => {
         if (res.success) loadConversations();
         else toast({ title: 'Error', description: 'Failed to update archive state', variant: 'destructive' });
@@ -473,9 +495,9 @@ const ChatInbox = () => {
     }
 
     updateConversationState(conversationId, { isArchived: newArchivedState });
-    setConversations(prev => prev.map(c =>
-      c.id === conversationId ? { ...c, isArchived: newArchivedState } : c
-    ));
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conversationId ? { ...c, isArchived: newArchivedState } : c))
+    );
   };
 
   const handleMuteConversation = (conversationId: string) => {
@@ -494,11 +516,14 @@ const ChatInbox = () => {
   };
 
   const handleLeaveConversation = (conversationId: string) => {
-    const conv = allConversations.find(c => c.id === conversationId);
-    if (conv?.type === 'group' && conversationId.startsWith('joined-')) {
-      const roomId = conversationId.replace('joined-', '');
-      markConversationAsLeft(conversationId);
-      leaveRoom(roomId);
+    const conv = allConversations.find((c) => c.id === conversationId);
+    if (conv?.type === 'group') {
+      chatApi.leaveChatRoom(conversationId).then((res) => {
+        if (res.success) {
+          setMyRooms((prev) => prev.filter((r) => r.id !== conversationId));
+          refreshJoinedRooms();
+        } else toast({ title: 'Error', description: 'Failed to leave room', variant: 'destructive' });
+      });
       return;
     }
     if (conv?.type === 'private') {
@@ -538,33 +563,59 @@ const ChatInbox = () => {
     }
   };
 
-  /** Preview line and icon for last activity (message, reaction, or theme) on private chats */
+  /** Preview line and icon for last activity (message, reaction, theme, etc.) on private and group chats */
   const getLastActivityPreview = (conv: ChatConversation) => {
-    if (conv.type !== 'private' || !conv.lastActivityType || !conv.lastActivitySummary) {
-      return {
-        icon: getMessageTypeIcon(conv.lastMessage.type),
-        text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + conv.lastMessage.content,
-      };
-    }
-    const otherName = conv.participant.name;
     const isYou = conv.lastActivityUserId === user?.id;
-    switch (conv.lastActivityType) {
-      case 'reaction':
-        return {
-          icon: <Heart size={12} className="text-muted-foreground" />,
-          text: (isYou ? 'You ' : otherName + ' ') + conv.lastActivitySummary,
-        };
-      case 'theme':
-        return {
-          icon: <Palette size={12} className="text-muted-foreground" />,
-          text: conv.lastActivitySummary,
-        };
-      default:
-        return {
-          icon: getMessageTypeIcon(conv.lastMessage.type),
-          text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + (conv.lastActivitySummary || conv.lastMessage.content),
-        };
+    if (conv.type === 'group' && conv.lastActivityType && conv.lastActivitySummary) {
+      switch (conv.lastActivityType) {
+        case 'reaction':
+          return {
+            icon: <Heart size={12} className="text-muted-foreground" />,
+            text: (isYou ? 'You ' : '') + conv.lastActivitySummary,
+          };
+        case 'theme':
+          return {
+            icon: <Palette size={12} className="text-muted-foreground" />,
+            text: conv.lastActivitySummary,
+          };
+        case 'member_left':
+        case 'member_kicked':
+        case 'admin_changed':
+          return {
+            icon: <Users size={12} className="text-muted-foreground" />,
+            text: conv.lastActivitySummary,
+          };
+        default:
+          return {
+            icon: getMessageTypeIcon(conv.lastMessage.type),
+            text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + (conv.lastActivitySummary || conv.lastMessage.content),
+          };
+      }
     }
+    if (conv.type === 'private' && conv.lastActivityType && conv.lastActivitySummary) {
+      const otherName = conv.participant.name;
+      switch (conv.lastActivityType) {
+        case 'reaction':
+          return {
+            icon: <Heart size={12} className="text-muted-foreground" />,
+            text: (isYou ? 'You ' : otherName + ' ') + conv.lastActivitySummary,
+          };
+        case 'theme':
+          return {
+            icon: <Palette size={12} className="text-muted-foreground" />,
+            text: conv.lastActivitySummary,
+          };
+        default:
+          return {
+            icon: getMessageTypeIcon(conv.lastMessage.type),
+            text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + (conv.lastActivitySummary || conv.lastMessage.content),
+          };
+      }
+    }
+    return {
+      icon: getMessageTypeIcon(conv.lastMessage.type),
+      text: (conv.lastMessage.sender === 'you' ? 'You: ' : '') + conv.lastMessage.content,
+    };
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -744,15 +795,15 @@ const ChatInbox = () => {
         ) : (
           /* Conversations List */
         <div className="space-y-3">
-          {conversationsLoading ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">Loading conversations…</div>
+          {(conversationsLoading || roomsLoading) && allConversations.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
           ) : filteredConversations.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground text-sm">
               <p className="mb-2">No conversations yet</p>
-              <p className="text-xs">Chat with someone from their profile to start.</p>
+              <p className="text-xs">Chat with someone from their profile or join a chat room.</p>
             </div>
-          ) : null}
-          {!conversationsLoading && filteredConversations.map((conversation, index) => (
+          ) : (
+          filteredConversations.map((conversation, index) => (
             <Card 
               key={conversation.id}
               className={`cursor-pointer transform-gpu will-change-transform transition-all active:scale-[0.98] hover:shadow-large animate-fade-in animate-slide-up ${conversation.unreadCount > 0 ? 'border-primary/20 shadow-glow-primary/40' : ''}`}
@@ -939,9 +990,9 @@ const ChatInbox = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          )}
         </div>
-        )}
 
         {/* Empty State */}
         {((activeTab === 'requests' && filteredRequests.length === 0) || 

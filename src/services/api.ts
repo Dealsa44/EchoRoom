@@ -667,15 +667,56 @@ export const eventsApi = {
   },
 };
 
+// Chat room types
+export interface ChatRoomListItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  icon?: string | null;
+  tags: string[];
+  memberCount: number;
+  activeNow: number;
+  messageCount?: number;
+  chatTheme?: string | null;
+  lastMessageAt?: string | null;
+  lastActivityType?: string | null;
+  lastActivitySummary?: string | null;
+  lastActivityUserId?: string | null;
+  createdAt?: string;
+  isJoined?: boolean;
+  isCreator?: boolean;
+  isArchived?: boolean;
+}
+
 // Chat API functions
 export const chatApi = {
-  getChatRooms: async (category?: string, limit = 20, offset = 0): Promise<ApiResponse<any[]>> => {
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    params.append('limit', limit.toString());
-    params.append('offset', offset.toString());
-    const key = `chat/rooms/${category ?? '_'}/${limit}/${offset}`;
-    return cachedOrFetch(key, () => apiRequest<any[]>(`/chat/rooms?${params.toString()}`));
+  getJoinableCount: async (): Promise<{ success: boolean; count?: number; message?: string }> => {
+    return apiRequest<any>('/chat/rooms/joinable-count');
+  },
+
+  getChatRooms: async (params?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ success: boolean; rooms?: ChatRoomListItem[] }> => {
+    const searchParams = new URLSearchParams();
+    if (params?.category && params.category !== 'all') searchParams.set('category', params.category);
+    if (params?.search?.trim()) searchParams.set('search', params.search.trim());
+    searchParams.set('limit', String(params?.limit ?? 50));
+    searchParams.set('offset', String(params?.offset ?? 0));
+    const key = `chat/rooms/${params?.category ?? '_'}/${params?.search ?? '_'}/${params?.limit ?? 50}/${params?.offset ?? 0}`;
+    return cachedOrFetch(key, () => apiRequest<any>(`/chat/rooms?${searchParams.toString()}`));
+  },
+
+  listMyRooms: async (): Promise<{ success: boolean; rooms?: ChatRoomListItem[] }> => {
+    const key = 'chat/rooms/my';
+    return cachedOrFetch(key, () => apiRequest<any>('/chat/rooms/my'));
+  },
+
+  createRoom: async (data: { title: string; category: string; description?: string; icon?: string; tags?: string[] }): Promise<{ success: boolean; room?: ChatRoomListItem; message?: string }> => {
+    const res = await apiRequest<any>('/chat/rooms', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
   },
 
   getChatRoom: async (id: string): Promise<ApiResponse<any>> => {
@@ -694,11 +735,20 @@ export const chatApi = {
     return res;
   },
 
-  getRoomMessages: async (id: string, limit = 50, offset = 0): Promise<ApiResponse<any[]>> => {
-    const key = `chat/room/${id}/messages/${limit}/${offset}`;
-    return cachedOrFetch(key, () =>
-      apiRequest<any[]>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`)
-    );
+  kickMember: async (roomId: string, userId: string): Promise<ApiResponse> => {
+    const res = await apiRequest(`/chat/rooms/${roomId}/kick/${userId}`, { method: 'POST' });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
+  },
+
+  deleteRoom: async (id: string): Promise<ApiResponse> => {
+    const res = await apiRequest(`/chat/rooms/${id}`, { method: 'DELETE' });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
+  },
+
+  getRoomMessages: async (id: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: any[]; total?: number }> => {
+    return apiRequest<any>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`);
   },
 
   sendMessage: async (roomId: string, content: string, type = 'text', imageUrl?: string, fileData?: any, voiceData?: any): Promise<ApiResponse<any>> => {
@@ -712,7 +762,55 @@ export const chatApi = {
         voiceData,
       }),
     });
+    if (res.success) invalidateApiCache((k) => k.startsWith(`chat/room/${roomId}/`) || k === 'chat/rooms/my');
+    return res;
+  },
+
+  updateRoom: async (roomId: string, data: { title?: string; description?: string; chatTheme?: string }): Promise<ApiResponse<any>> => {
+    const res = await apiRequest<any>(`/chat/rooms/${roomId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
+  },
+
+  setRoomTheme: async (roomId: string, themeId: string, themeName: string): Promise<ApiResponse<any>> => {
+    const res = await apiRequest<any>(`/chat/rooms/${roomId}/theme`, {
+      method: 'PUT',
+      body: JSON.stringify({ themeId, themeName }),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith('chat/'));
+    return res;
+  },
+
+  setRoomArchived: async (roomId: string, isArchived: boolean): Promise<ApiResponse> => {
+    const res = await apiRequest(`/chat/rooms/${roomId}/archive`, {
+      method: 'PUT',
+      body: JSON.stringify({ isArchived }),
+    });
+    if (res.success) invalidateApiCache((k) => k === 'chat/rooms/my' || k.startsWith('chat/room/'));
+    return res;
+  },
+
+  clearRoomChat: async (roomId: string): Promise<ApiResponse> => {
+    const res = await apiRequest(`/chat/rooms/${roomId}/clear`, { method: 'POST' });
     if (res.success) invalidateApiCache((k) => k.startsWith(`chat/room/${roomId}/`));
+    return res;
+  },
+
+  deleteMessageForMe: async (roomId: string, messageId: string): Promise<ApiResponse> => {
+    const res = await apiRequest(`/chat/rooms/${roomId}/messages/${messageId}`, { method: 'DELETE' });
+    if (res.success) invalidateApiCache((k) => k.startsWith(`chat/room/${roomId}/`));
+    return res;
+  },
+
+  addMessageReaction: async (roomId: string, messageId: string, emoji: string): Promise<ApiResponse<any>> => {
+    const res = await apiRequest<any>(`/chat/rooms/${roomId}/messages/${messageId}/react`, {
+      method: 'PUT',
+      body: JSON.stringify({ emoji }),
+    });
+    if (res.success) invalidateApiCache((k) => k.startsWith(`chat/room/${roomId}/`) || k === 'chat/rooms/my');
     return res;
   },
 };

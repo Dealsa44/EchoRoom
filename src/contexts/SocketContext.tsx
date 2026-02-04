@@ -19,6 +19,10 @@ interface SocketContextType {
   leaveConversation: (conversationId: string) => void;
   emitTypingStart: (conversationId: string) => void;
   emitTypingStop: (conversationId: string) => void;
+  joinChatRoom: (roomId: string) => void;
+  leaveChatRoom: (roomId: string) => void;
+  emitTypingStartRoom: (roomId: string) => void;
+  emitTypingStopRoom: (roomId: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -80,6 +84,22 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.emit('typing:stop', conversationId);
   };
 
+  const joinChatRoom = (roomId: string) => {
+    socketRef.current?.emit('join_chat_room', roomId);
+  };
+
+  const leaveChatRoom = (roomId: string) => {
+    socketRef.current?.emit('leave_chat_room', roomId);
+  };
+
+  const emitTypingStartRoom = (roomId: string) => {
+    socketRef.current?.emit('typing:start_room', roomId);
+  };
+
+  const emitTypingStopRoom = (roomId: string) => {
+    socketRef.current?.emit('typing:stop_room', roomId);
+  };
+
   return (
     <SocketContext.Provider
       value={{
@@ -89,6 +109,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         leaveConversation,
         emitTypingStart,
         emitTypingStop,
+        joinChatRoom,
+        leaveChatRoom,
+        emitTypingStartRoom,
+        emitTypingStopRoom,
       }}
     >
       {children}
