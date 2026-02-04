@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -131,7 +131,16 @@ interface Event {
 const Event = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useApp();
+  const backFrom = (location.state as { from?: string } | null)?.from;
+
+  const handleBackFromEvent = () => {
+    if (backFrom === 'my-events') navigate('/my-events');
+    else if (backFrom === 'events') navigate('/events');
+    else navigate(-1);
+  };
+
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
   const [messages, setMessages] = useState<EventMessage[]>([]);
@@ -335,7 +344,7 @@ const Event = () => {
   if (loading) {
     return (
       <div className="min-h-screen app-gradient-bg">
-        <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="Event" showBack={true} onBack={handleBackFromEvent} />
         <div className="px-4 py-5 max-w-md mx-auto space-y-5 content-safe-top pb-24">
           <div className="animate-pulse space-y-4">
             <div className="h-64 bg-muted rounded-2xl"></div>
@@ -352,7 +361,7 @@ const Event = () => {
   if (!event) {
     return (
       <div className="min-h-screen app-gradient-bg">
-        <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="Event" showBack={true} onBack={handleBackFromEvent} />
         <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
           <Card>
             <CardContent className="p-8 text-center">
@@ -376,7 +385,7 @@ const Event = () => {
   if (!event.organizer) {
     return (
       <div className="min-h-screen app-gradient-bg">
-        <TopBar title="Event" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="Event" showBack={true} onBack={handleBackFromEvent} />
         <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
           <Card>
             <CardContent className="p-8 text-center">
@@ -407,7 +416,7 @@ const Event = () => {
       <TopBar 
         title="Event" 
         showBack={true}
-        onBack={() => navigate(-1)}
+        onBack={handleBackFromEvent}
       />
       
       <div className="flex-1 px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24 flex flex-col overflow-x-hidden">
@@ -499,7 +508,7 @@ const Event = () => {
                  </DropdownMenuTrigger>
                  <DropdownMenuContent align="end" className="w-48">
                    {!event.isOrganizer && (
-                     <DropdownMenuItem onClick={() => navigate(`/profile/${event.organizer.id}`)}>
+                     <DropdownMenuItem onClick={() => navigate(`/profile/${event.organizer.id}`, { state: { from: 'event', eventId: event.id } })}>
                        <Globe size={16} className="mr-2" />
                        View Organizer Profile
                      </DropdownMenuItem>
@@ -763,7 +772,7 @@ const Event = () => {
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => navigate(user?.id === event.organizer.id ? '/profile' : `/profile/${event.organizer.id}`)}
+                    onClick={() => navigate(user?.id === event.organizer.id ? '/profile' : `/profile/${event.organizer.id}`, user?.id === event.organizer.id ? undefined : { state: { from: 'event', eventId: event.id } })}
                     className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     <Avatar className="h-12 w-12">
@@ -1022,7 +1031,7 @@ const Event = () => {
                     <div key={participant.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
                       <button
                         type="button"
-                        onClick={() => navigate(participant.id === user?.id ? '/profile' : `/profile/${participant.id}`)}
+                        onClick={() => navigate(participant.id === user?.id ? '/profile' : `/profile/${participant.id}`, participant.id === user?.id ? undefined : { state: { from: 'event', eventId: event.id } })}
                         className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
                       >
                         <Avatar className="h-12 w-12">
@@ -1087,7 +1096,7 @@ const Event = () => {
                         <div key={message.id} className="flex gap-3">
                           <button
                             type="button"
-                            onClick={() => navigate(message.user.id === user?.id ? '/profile' : `/profile/${message.user.id}`)}
+                            onClick={() => navigate(message.user.id === user?.id ? '/profile' : `/profile/${message.user.id}`, message.user.id === user?.id ? undefined : { state: { from: 'event', eventId: event.id } })}
                             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 flex-shrink-0"
                           >
                             <Avatar className="h-8 w-8">

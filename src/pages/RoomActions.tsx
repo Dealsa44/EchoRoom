@@ -281,7 +281,7 @@ const RoomActions = () => {
                 <Button
                   variant="ghost"
                   className="flex-1 justify-start gap-2"
-                  onClick={() => navigate(`/profile/${member.id}`)}
+                  onClick={() => navigate(`/profile/${member.id}`, { state: { from: 'room-actions', roomId: id } })}
                 >
                   <span className="text-lg">{member.avatar || '👤'}</span>
                   <span className="truncate">{member.username}</span>

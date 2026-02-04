@@ -155,7 +155,7 @@ const MyEvents = () => {
 
   const handleEditEvent = (eventId: string) => {
     // Navigate to edit event page (to be implemented)
-    navigate(`/edit-event/${eventId}`);
+    navigate(`/edit-event/${eventId}`, { state: { from: 'my-events' } });
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -286,7 +286,7 @@ const MyEvents = () => {
               </Card>
             ) : (
               filteredHostedEvents.map((event) => (
-                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`)}>
+                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'my-events' } })}>
                   <CardContent className="p-0">
                     {event.image && (
                       <div className="relative h-48 overflow-hidden">
@@ -395,7 +395,7 @@ const MyEvents = () => {
               </Card>
             ) : (
               filteredJoinedEvents.map((event) => (
-                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`)}>
+                <Card key={event.id} className="shadow-medium border-border-soft cursor-pointer" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'my-events' } })}>
                   <CardContent className="p-0">
                     {event.image && (
                       <div className="relative h-48 overflow-hidden">
@@ -456,7 +456,7 @@ const MyEvents = () => {
                         )}
                       </div>
                       <div className="flex gap-2 pt-2 border-t border-border-soft" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/event/${event.id}`)} className="flex-1">
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'my-events' } })} className="flex-1">
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </Button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -63,8 +63,16 @@ type DisplayUserInfo = {
 
 const UserProfileActions = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useParams();
   const { user } = useApp();
+  const backState = location.state as { from?: string } | null;
+
+  const handleBackFromUserActions = () => {
+    if (backState?.from === 'chat-inbox') navigate('/chat-inbox');
+    else if (userId) navigate(`/private-chat/${userId}`);
+    else navigate(-1);
+  };
 
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -143,7 +151,7 @@ const UserProfileActions = () => {
   };
 
   const handleViewProfile = () => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/${userId}`, { state: { from: 'user-actions' } });
   };
 
   const handleLike = () => {
@@ -242,7 +250,7 @@ const UserProfileActions = () => {
   if (profileLoading && !userInfo) {
     return (
       <div className="min-h-screen bg-background">
-        <TopBar title="User Actions" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="User Actions" showBack={true} onBack={handleBackFromUserActions} />
         <div className="px-4 py-6 max-w-md mx-auto content-safe-top flex items-center justify-center min-h-[40vh]">
           <p className="text-muted-foreground text-sm">Loading profile…</p>
         </div>
@@ -253,10 +261,10 @@ const UserProfileActions = () => {
   if (profileError || (!profileLoading && userId && userId !== user?.id && !userInfo)) {
     return (
       <div className="min-h-screen bg-background">
-        <TopBar title="User Actions" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="User Actions" showBack={true} onBack={handleBackFromUserActions} />
         <div className="px-4 py-6 max-w-md mx-auto content-safe-top flex flex-col items-center justify-center min-h-[40vh] gap-2">
           <p className="text-muted-foreground text-sm text-center">{profileError ?? 'User not found'}</p>
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>Go back</Button>
+          <Button variant="outline" size="sm" onClick={handleBackFromUserActions}>Go back</Button>
         </div>
       </div>
     );
@@ -277,7 +285,7 @@ const UserProfileActions = () => {
       <TopBar 
         title="User Actions" 
         showBack={true}
-        onBack={() => navigate(`/private-chat/${userId}`)}
+        onBack={handleBackFromUserActions}
       />
       
       <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24 overflow-y-auto h-full">

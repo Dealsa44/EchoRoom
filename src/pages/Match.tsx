@@ -544,8 +544,8 @@ const Match = () => {
         }
       />
       
-      {/* Empty States - Full screen with fixed header */}
-      {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
+      {/* Empty States - only when not loading */}
+      {!loading && (filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount > 0 && (
         <>
           <div className="flex flex-col items-center justify-center px-4 h-screen content-safe-top">
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
@@ -568,7 +568,7 @@ const Match = () => {
         </>
       )}
 
-      {(filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
+      {!loading && (filteredProfiles.length === 0 || currentProfileIndex >= filteredProfiles.length) && activeFiltersCount === 0 && (
         <>
           <div className="flex flex-col items-center justify-center px-4 h-screen content-safe-top">
             <Card className="shadow-medium rounded-2xl bg-gradient-to-br from-muted/50 to-muted w-full max-w-sm">
@@ -1336,7 +1336,7 @@ const ProfileCardContent = memo(({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              navigate(`/profile/${profile.id}`);
+              navigate(`/profile/${profile.id}`, { state: { from: 'match' } });
             }}
             onTouchStart={(e) => {
               e.stopPropagation();
@@ -1344,7 +1344,7 @@ const ProfileCardContent = memo(({
             onTouchEnd={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              navigate(`/profile/${profile.id}`);
+              navigate(`/profile/${profile.id}`, { state: { from: 'match' } });
             }}
             className="absolute top-4 right-4 h-9 px-3 hover:scale-110 transition-spring backdrop-blur-md z-[100] border-white/20 text-foreground dark:text-white touch-manipulation"
             style={{ 

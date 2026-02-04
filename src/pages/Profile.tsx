@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -129,8 +129,10 @@ type DisplayUser = UserType | (ProfileType & {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useParams();
   const { user, safeMode, setSafeMode, logout, setUser } = useApp();
+  const backState = location.state as { from?: string; eventId?: string; roomId?: string } | null;
   const [profileData, setProfileData] = useState<ProfileType | null>(null);
   const [loading, setLoading] = useState(false);
   const [userPhotos, setUserPhotos] = useState<Array<{ id: string; url: string; uploadDate: Date; [key: string]: unknown }>>([]);
@@ -140,6 +142,18 @@ const Profile = () => {
   
   // Determine if this is own profile or viewing another user's profile
   const isOwnProfile = !userId || userId === user?.id;
+
+  const handleBackFromProfile = () => {
+    if (isOwnProfile) return;
+    const from = backState?.from;
+    if (from === 'match') navigate('/match');
+    else if (from === 'chat-inbox') navigate('/chat-inbox');
+    else if (from === 'private-chat' && userId) navigate(`/private-chat/${userId}`);
+    else if (from === 'user-actions' && userId) navigate(`/user-actions/${userId}`);
+    else if (from === 'event' && backState?.eventId) navigate(`/event/${backState.eventId}`);
+    else if (from === 'room-actions' && backState?.roomId) navigate(`/room-actions/${backState.roomId}`);
+    else navigate(-1);
+  };
 
   // Fetch user profile from backend so interests/languages etc. are always from DB
   const fetchUserProfile = async () => {
@@ -516,6 +530,7 @@ const Profile = () => {
           <TopBar 
             title={isOwnProfile ? "Profile" : (displayUser?.username || "Profile")}
             showBack={!isOwnProfile}
+            onBack={handleBackFromProfile}
           />
           
           <div className="px-4 py-6 max-w-md mx-auto space-y-6 content-safe-top pb-24">

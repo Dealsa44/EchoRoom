@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -93,7 +93,15 @@ interface EventFormData {
 
 const EditEvent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { eventId } = useParams();
+  const backState = location.state as { from?: string; eventId?: string } | null;
+
+  const handleBackFromEditEvent = () => {
+    if (backState?.from === 'my-events') navigate('/my-events');
+    else if (backState?.from === 'event' && (backState?.eventId ?? eventId)) navigate(`/event/${backState?.eventId ?? eventId}`);
+    else navigate(-1);
+  };
   const { user } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -1289,7 +1297,7 @@ const EditEvent = () => {
   if (loadState === 'loading' || (eventId && loadState === 'idle')) {
     return (
       <div className="min-h-screen app-gradient-bg relative">
-        <TopBar title="Edit Event" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="Edit Event" showBack={true} onBack={handleBackFromEditEvent} />
         <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24 flex items-center justify-center min-h-[50vh]">
           <div className="animate-pulse space-y-4 w-full max-w-sm">
             <div className="h-8 bg-muted rounded w-3/4" />
@@ -1307,7 +1315,7 @@ const EditEvent = () => {
   if (loadState === 'not_found' || loadState === 'error') {
     return (
       <div className="min-h-screen app-gradient-bg relative">
-        <TopBar title="Edit Event" showBack={true} onBack={() => navigate(-1)} />
+        <TopBar title="Edit Event" showBack={true} onBack={handleBackFromEditEvent} />
         <div className="px-4 py-5 max-w-md mx-auto content-safe-top pb-24">
           <Card className="shadow-medium border-border-soft">
             <CardContent className="p-8 text-center">
@@ -1348,7 +1356,7 @@ const EditEvent = () => {
       <TopBar 
         title="Edit Event" 
         showBack={true}
-        onBack={() => navigate(-1)}
+        onBack={handleBackFromEditEvent}
       />
       
       <div className="px-4 py-5 max-w-md mx-auto space-y-5 relative z-10 content-safe-top pb-24">

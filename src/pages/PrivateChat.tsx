@@ -41,7 +41,7 @@ const PrivateChat = () => {
     const state = location.state as { from?: string } | null;
     
     if (state?.from === 'profile') {
-      navigate(`/profile/${userId}`);
+      navigate(`/profile/${userId}`, { state: { from: 'private-chat' } });
     } else if (state?.from === 'user-actions') {
       // If coming from user actions, go back to chat inbox
       navigate('/chat-inbox');
@@ -653,7 +653,7 @@ const PrivateChat = () => {
             </button>
             <button
               className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 m-0 rounded-lg transition-colors"
-              onClick={() => navigate(`/user-actions/${userId}`)}
+              onClick={() => navigate(`/user-actions/${userId}`, { state: { from: 'private-chat' } })}
             >
               <div className="text-2xl flex-shrink-0">{chatPartner.avatar}</div>
               <div className="min-w-0 flex-1 text-left">

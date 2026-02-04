@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,8 @@ const categories = [
 
 const ChatRooms = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const backFrom = (location.state as { from?: string } | null)?.from ?? new URLSearchParams(location.search).get('from');
   const { refreshJoinedRooms } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -98,13 +100,9 @@ const ChatRooms = () => {
         title="Chat Rooms"
         showBack={true}
         onBack={() => {
-          const urlParams = new URLSearchParams(window.location.search);
-          const from = urlParams.get('from');
-          if (from === 'community') {
-            navigate('/community');
-          } else {
-            navigate(-1);
-          }
+          if (backFrom === 'community') navigate('/community');
+          else if (backFrom === 'chat-inbox') navigate('/chat-inbox');
+          else navigate(-1);
         }}
       />
 

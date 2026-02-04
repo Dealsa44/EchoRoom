@@ -479,12 +479,12 @@ const Events = () => {
               <Card 
                 key={event.id} 
                 className="cursor-pointer shadow-medium border-border-soft hover:shadow-large transition-all duration-300 active:scale-[0.98] overflow-hidden"
-                onClick={() => navigate(`/event/${event.id}`)}
+                onClick={() => navigate(`/event/${event.id}`, { state: { from: 'events' } })}
               >
                 <CardContent className="p-0">
                   {/* Event Image */}
                   {event.image && (
-                    <div className="relative h-48 overflow-hidden" onClick={() => navigate(`/event/${event.id}`)}>
+                    <div className="relative h-48 overflow-hidden" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'events' } })}>
                       <img
                         src={event.image}
                         alt={event.title}
@@ -516,7 +516,7 @@ const Events = () => {
                   
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1" onClick={() => navigate(`/event/${event.id}`)}>
+                      <div className="flex-1" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'events' } })}>
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="outline" className="text-xs h-6 px-2">
                             {getCategoryIcon(event.category)} {categories.find(cat => cat.value === event.category)?.label}
@@ -588,7 +588,7 @@ const Events = () => {
                     
                     {/* Organizer and Join/Leave only */}
                     <div className="flex items-center justify-between pt-2 border-t border-border-soft">
-                      <div className="flex items-center gap-2 min-w-0" onClick={() => navigate(`/event/${event.id}`)}>
+                      <div className="flex items-center gap-2 min-w-0" onClick={() => navigate(`/event/${event.id}`, { state: { from: 'events' } })}>
                         <span className="text-2xl flex-shrink-0">{event.organizer?.avatar ?? '👤'}</span>
                         <div className="min-w-0">
                           <p className="text-sm font-medium break-words min-w-0" title={event.organizer?.name ?? 'Event host'}>{event.organizer?.name ?? 'Event host'}</p>

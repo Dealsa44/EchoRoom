@@ -495,7 +495,7 @@ const ChatInbox = () => {
   };
 
   const handleViewProfile = (userId: string) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profile/${userId}`, { state: { from: 'chat-inbox' } });
   };
 
   const getMessageTypeIcon = (type: string) => {
@@ -638,7 +638,7 @@ const ChatInbox = () => {
         <Button
           variant="outline"
           className="w-full border-dashed border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all"
-          onClick={() => navigate('/chat-rooms')}
+          onClick={() => navigate('/chat-rooms', { state: { from: 'chat-inbox' } })}
         >
           <Users size={16} className="mr-2" />
           Discover New Chat Rooms
@@ -814,7 +814,7 @@ const ChatInbox = () => {
                                 <DropdownMenuItem 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(`/profile/${conversation.participant.id}`);
+                                    navigate(`/profile/${conversation.participant.id}`, { state: { from: 'chat-inbox' } });
                                   }}
                                   className="cursor-pointer"
                                 >
