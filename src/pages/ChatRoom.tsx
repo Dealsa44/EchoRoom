@@ -54,7 +54,7 @@ const ChatRoom = () => {
           chatTheme: res.room.chatTheme ?? 'default',
           isCreator: res.room.isCreator ?? false,
         });
-      } else {
+    } else {
         setRoom(null);
       }
     });
@@ -206,7 +206,7 @@ const ChatRoom = () => {
     if (v.trim()) {
       emitTypingStartRoom(id);
       typingTimeoutRef.current = setTimeout(() => emitTypingStopRoom(id), 2000);
-    } else {
+          } else {
       emitTypingStopRoom(id);
     }
   };
@@ -260,7 +260,7 @@ const ChatRoom = () => {
     );
   }
 
-  const state = location.state as { from?: string } | null;
+    const state = location.state as { from?: string } | null;
   const handleBack = () => {
     if (state?.from === 'chat-inbox') navigate('/chat-inbox');
     else navigate('/chat-rooms');
@@ -281,7 +281,7 @@ const ChatRoom = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header: same as PrivateChat - same class and layout, name clickable -> room-actions */}
-      <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
+              <div className="fixed top-0 left-0 right-0 z-40 chat-room-header border-b border-border shadow-soft safe-top">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto w-full min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
@@ -307,11 +307,11 @@ const ChatRoom = () => {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="opacity-50 pointer-events-none" title="Coming soon" aria-hidden>
-              <CallButtons
+            <CallButtons
                 participantId={id ?? ''}
                 participantName={room.title}
                 participantAvatar="💬"
-                variant="full"
+              variant="full"
                 callType="private"
               />
             </div>
@@ -340,7 +340,7 @@ const ChatRoom = () => {
                   <p className="text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
                     {msg.content}
                   </p>
-                </div>
+                      </div>
               );
             }
             return (
@@ -366,8 +366,8 @@ const ChatRoom = () => {
           {typingUserIds.size > 0 && (
             <div className="flex justify-start">
               <p className="text-xs text-muted-foreground italic">Someone is typing…</p>
-            </div>
-          )}
+                        </div>
+                      )}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -416,7 +416,7 @@ const ChatRoom = () => {
             </Button>
           )}
         </div>
-      </div>
+            </div>
     </div>
   );
 };
