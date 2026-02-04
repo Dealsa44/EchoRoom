@@ -3,14 +3,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import {
-  Users,
-  Palette,
-  LogOut,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Users, Palette, LogOut, Trash2, X, Check } from 'lucide-react';
 import TopBar from '@/components/layout/TopBar';
+import { useSocket } from '@/contexts/SocketContext';
+import { moodThemesOrdered, type MoodTheme } from '@/lib/moodThemes';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +22,6 @@ import { useApp } from '@/hooks/useApp';
 import { chatApi } from '@/services/api';
 import { moodThemes } from '@/lib/moodThemes';
 import { toast } from '@/hooks/use-toast';
-
-const ALLOWED_THEMES = ['default', 'aurora', 'ocean', 'sunset', 'forest', 'midnight'] as const;
 
 const RoomActions = () => {
   const { id } = useParams();
@@ -52,6 +47,9 @@ const RoomActions = () => {
   const [kickingUserId, setKickingUserId] = useState<string | null>(null);
   const [showKickConfirm, setShowKickConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<{ id: string; name: string } | null>(null);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [themeApplying, setThemeApplying] = useState(false);
+  const { socket, joinChatRoom, leaveChatRoom } = useSocket();
 
   const loadRoom = () => {
     if (!id) return;
@@ -87,6 +85,23 @@ const RoomActions = () => {
   useEffect(() => {
     loadRoom();
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    joinChatRoom(id);
+    return () => leaveChatRoom(id);
+  }, [id, joinChatRoom, leaveChatRoom]);
+
+  useEffect(() => {
+    if (!socket || !id) return;
+    const onMemberLeft = () => loadRoom();
+    socket.on('member:left_room', onMemberLeft);
+    socket.on('member:kicked_room', onMemberLeft);
+    return () => {
+      socket.off('member:left_room', onMemberLeft);
+      socket.off('member:kicked_room', onMemberLeft);
+    };
+  }, [socket, id]);
 
   const handleLeaveRoom = () => {
     if (!id) return;
@@ -135,12 +150,16 @@ const RoomActions = () => {
     });
   };
 
-  const handleThemeChange = (themeId: string) => {
-    const theme = moodThemes[themeId as keyof typeof moodThemes];
-    if (!id || !theme) return;
-    chatApi.setRoomTheme(id, themeId, theme.name).then((res) => {
-      if (res.success) setRoom((prev) => (prev ? { ...prev, chatTheme: themeId } : null));
-    });
+  const handleApplyRoomTheme = async (theme: MoodTheme) => {
+    if (!id || (room?.chatTheme || 'default') === theme.id) return;
+    setThemeApplying(true);
+    try {
+      const res = await chatApi.setRoomTheme(id, theme.id, theme.name);
+      if (res.success) setRoom((prev) => (prev ? { ...prev, chatTheme: theme.id } : null));
+      setShowThemeModal(false);
+    } finally {
+      setThemeApplying(false);
+    }
   };
 
   if (loading && !room) {
@@ -191,35 +210,59 @@ const RoomActions = () => {
           </CardContent>
         </Card>
 
-        {/* Theme */}
+        {/* Theme: button opens modal like private chat */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Palette size={20} />
-              Chat theme
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {ALLOWED_THEMES.map((themeId) => {
-                const theme = moodThemes[themeId as keyof typeof moodThemes];
-                if (!theme) return null;
-                const isActive = (room.chatTheme || 'default') === themeId;
+          <CardContent className="pt-6">
+            <Button
+              variant="outline"
+              className="w-full h-12 flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50"
+              onClick={() => setShowThemeModal(true)}
+            >
+              <Palette className="w-5 h-5" />
+              <span>Mood Themes</span>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Dialog open={showThemeModal} onOpenChange={setShowThemeModal}>
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto max-h-[70vh] overflow-hidden rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Palette className="h-5 w-5 text-purple-500" />
+                Mood Themes
+              </DialogTitle>
+              <DialogDescription>
+                Change the chat background theme for this room. All members will see the same theme.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-4">
+              {moodThemesOrdered.map((theme) => {
+                const isSelected = (room?.chatTheme || 'default') === theme.id;
                 return (
-                  <Button
-                    key={themeId}
-                    variant={isActive ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleThemeChange(themeId)}
-                  >
-                    <span className="mr-1">{theme.emoji}</span>
-                    {theme.name}
-                  </Button>
+                  <Card key={theme.id} className="transition-all hover:shadow-md">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{theme.emoji}</span>
+                          <span className="font-medium">{theme.name}</span>
+                        </div>
+                        {isSelected && <Check className="h-4 w-4 text-primary" />}
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleApplyRoomTheme(theme)}
+                        disabled={isSelected || themeApplying}
+                      >
+                        {isSelected ? 'Current theme' : 'Apply theme'}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
 
         {/* Members */}
         <Card>

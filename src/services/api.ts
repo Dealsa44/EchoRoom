@@ -748,7 +748,8 @@ export const chatApi = {
   },
 
   getRoomMessages: async (id: string, limit = 50, offset = 0): Promise<{ success: boolean; messages?: any[]; total?: number }> => {
-    return apiRequest<any>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`);
+    const key = `chat/room/${id}/messages/${limit}/${offset}`;
+    return cachedOrFetch(key, () => apiRequest<any>(`/chat/rooms/${id}/messages?limit=${limit}&offset=${offset}`));
   },
 
   sendMessage: async (roomId: string, content: string, type = 'text', imageUrl?: string, fileData?: any, voiceData?: any): Promise<ApiResponse<any>> => {

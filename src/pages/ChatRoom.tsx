@@ -3,12 +3,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Send, Moon, Sun, Paperclip, Mic } from 'lucide-react';
+import { ArrowLeft, Send, Moon, Sun, Paperclip, Mic, Bot, Languages, BookOpen } from 'lucide-react';
 import { useApp } from '@/hooks/useApp';
 import { useSocket } from '@/contexts/SocketContext';
 import { chatApi } from '@/services/api';
 import { moodThemes } from '@/lib/moodThemes';
 import CallButtons from '@/components/calls/CallButtons';
+import AITooltip from '@/components/ai/AITooltip';
 
 type RoomMessage = {
   id: string;
@@ -32,12 +33,14 @@ const ChatRoom = () => {
     title: string;
     chatTheme: string | null;
     isCreator: boolean;
+    membersList: Array<{ id: string; username: string; avatar: string | null }>;
   } | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [typingUserIds, setTypingUserIds] = useState<Set<string>>(new Set());
+  const [kickedModal, setKickedModal] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -53,8 +56,13 @@ const ChatRoom = () => {
           title: res.room.title,
           chatTheme: res.room.chatTheme ?? 'default',
           isCreator: res.room.isCreator ?? false,
+          membersList: (res.room.membersList ?? []).map((m: any) => ({
+            id: m.id,
+            username: m.username,
+            avatar: m.avatar ?? null,
+          })),
         });
-    } else {
+      } else {
         setRoom(null);
       }
     });
@@ -80,16 +88,13 @@ const ChatRoom = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!id || !user) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!id || !user) return;
     let done = 0;
     const maybeDone = () => {
       done++;
       if (done >= 2) setLoading(false);
     };
+    setLoading(true);
     chatApi.getChatRoom(id).then((res) => {
       if (res.success && res.room) {
         setRoom({
@@ -97,6 +102,11 @@ const ChatRoom = () => {
           title: res.room.title,
           chatTheme: res.room.chatTheme ?? 'default',
           isCreator: res.room.isCreator ?? false,
+          membersList: (res.room.membersList ?? []).map((m: any) => ({
+            id: m.id,
+            username: m.username,
+            avatar: m.avatar ?? null,
+          })),
         });
       } else {
         setRoom(null);
@@ -172,6 +182,11 @@ const ChatRoom = () => {
     };
     const onMemberLeft = () => loadRoom();
     const onAdminChanged = () => loadRoom();
+    const onKickedOrLeft = (payload: { userId: string; userName?: string; isKick?: boolean }) => {
+      if (payload.userId === user?.id && payload.isKick) {
+        setKickedModal(true);
+      }
+    };
 
     socket.on('message:new_room', onNewMessage);
     socket.on('typing:start_room', onTypingStart);
@@ -179,6 +194,7 @@ const ChatRoom = () => {
     socket.on('theme:changed_room', onThemeChanged);
     socket.on('room:updated', onRoomUpdated);
     socket.on('room:deleted', onRoomDeleted);
+    socket.on('member:left_room', onKickedOrLeft);
     socket.on('member:left_room', onMemberLeft);
     socket.on('admin:changed_room', onAdminChanged);
 
@@ -189,6 +205,7 @@ const ChatRoom = () => {
       socket.off('theme:changed_room', onThemeChanged);
       socket.off('room:updated', onRoomUpdated);
       socket.off('room:deleted', onRoomDeleted);
+      socket.off('member:left_room', onKickedOrLeft);
       socket.off('member:left_room', onMemberLeft);
       socket.off('admin:changed_room', onAdminChanged);
     };
@@ -241,24 +258,19 @@ const ChatRoom = () => {
     }
   };
 
-  if (loading && !room) {
+  if (!id || !user) return null;
+
+  if (!loading && !room) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <h1 className="text-xl font-bold mb-4">Room not found</h1>
+        <Button onClick={() => navigate('/chat-rooms')}>Back to Chat Rooms</Button>
       </div>
     );
   }
 
-  if (!room) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Room not found</h1>
-          <Button onClick={() => navigate('/chat-rooms')}>Back to Chat Rooms</Button>
-        </div>
-      </div>
-    );
-  }
+  const displayTitle = room?.title ?? '…';
+  const showKickedModal = kickedModal;
 
     const state = location.state as { from?: string } | null;
   const handleBack = () => {
@@ -294,11 +306,11 @@ const ChatRoom = () => {
             <button
               type="button"
               className="flex items-center gap-2 min-w-0 flex-1 p-2 h-auto bg-transparent hover:bg-transparent active:bg-transparent border-none outline-none focus:outline-none focus:ring-0 m-0 rounded-lg transition-colors text-left"
-              onClick={() => navigate(`/room-actions/${id}`, { state: { originalFrom: state?.from } })}
+              onClick={() => room && navigate(`/room-actions/${id}`, { state: { originalFrom: state?.from } })}
             >
               <div className="text-2xl flex-shrink-0">💬</div>
               <div className="min-w-0 flex-1">
-                <h1 className="font-semibold truncate">{room.title}</h1>
+                <h1 className="font-semibold truncate">{displayTitle}</h1>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground truncate">Group</span>
                 </div>
@@ -309,7 +321,7 @@ const ChatRoom = () => {
             <div className="opacity-50 pointer-events-none" title="Coming soon" aria-hidden>
             <CallButtons
                 participantId={id ?? ''}
-                participantName={room.title}
+                participantName={displayTitle}
                 participantAvatar="💬"
               variant="full"
                 callType="private"
@@ -330,6 +342,9 @@ const ChatRoom = () => {
         className={`flex-1 overflow-y-auto px-4 max-w-md mx-auto w-full chat-content-below-header chat-messages-area content-safe-top ${isDefault ? 'bg-background' : ''} ${isDefault ? '' : `mood-${themeId} ${theme.designClass || ''}`} pb-36`}
         style={themeStyle}
       >
+        {loading && !room ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">Loading…</div>
+        ) : (
         <div className="space-y-3">
           {messages.map((msg) => {
             const isMe = msg.userId === user?.id;
@@ -363,17 +378,69 @@ const ChatRoom = () => {
               </div>
             );
           })}
-          {typingUserIds.size > 0 && (
-            <div className="flex justify-start">
-              <p className="text-xs text-muted-foreground italic">Someone is typing…</p>
-                        </div>
+          {typingUserIds.size > 0 && (() => {
+            const membersList = room?.membersList ?? [];
+            const typingList = Array.from(typingUserIds);
+            const avatars = typingList.map((uid) => {
+              const m = membersList.find((x) => x.id === uid);
+              return m?.avatar ?? '👤';
+            });
+            const n = avatars.length;
+            return (
+              <div className="flex justify-start">
+                <Card className="bg-card max-w-[80%]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      {n <= 3 && avatars.map((av, i) => (
+                        <span key={i} className="text-lg">{av}</span>
+                      ))}
+                      {n > 3 && (
+                        <>
+                          <span className="text-lg">{avatars[0]}</span>
+                          <span className="text-lg">{avatars[1]}</span>
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                            +{n - 2}
+                          </span>
+                        </>
                       )}
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
           <div ref={messagesEndRef} />
         </div>
+        )}
       </div>
 
-      {/* Message input: same as PrivateChat - Paperclip (disabled), Input, Send/Mic (Mic disabled) */}
+      {/* Message input: same as PrivateChat - 3 buttons (AI, Translate, Language), Paperclip, Input, Send/Mic */}
       <div className="fixed bottom-0 left-0 right-0 bg-card p-4 max-w-md mx-auto w-full border-t border-border safe-bottom">
+        <div className="flex flex-wrap gap-2 mb-2">
+          <AITooltip title="AI Assistant" description="Coming soon for chat rooms">
+            <Button variant="outline" size="sm" className="opacity-70 cursor-default" disabled>
+              <Bot size={14} />
+              <span className="ml-1 text-xs hidden sm:inline">AI Help</span>
+            </Button>
+          </AITooltip>
+          <AITooltip title="Quick Translate" description="Coming soon for chat rooms">
+            <Button variant="outline" size="sm" className="opacity-70 cursor-default" disabled>
+              <Languages size={14} />
+              <span className="ml-1 text-xs hidden sm:inline">Translate</span>
+            </Button>
+          </AITooltip>
+          <AITooltip title="Language Tools" description="Coming soon for chat rooms">
+            <Button variant="outline" size="sm" className="opacity-70 cursor-default" disabled>
+              <BookOpen size={14} />
+              <span className="ml-1 text-xs hidden sm:inline">Language Tools</span>
+            </Button>
+          </AITooltip>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -396,27 +463,34 @@ const ChatRoom = () => {
             className="flex-1"
           />
           {message.trim() ? (
-            <Button
-              onClick={handleSend}
-              variant="cozy"
-              className="px-3"
-              disabled={sending}
-            >
+            <Button onClick={handleSend} variant="cozy" className="px-3" disabled={sending}>
               <Send size={16} />
             </Button>
           ) : (
-            <Button
-              variant="ghost"
-              disabled
-              aria-disabled="true"
-              title="Voice messages coming soon"
-              className="px-3 opacity-50 cursor-not-allowed"
-            >
+            <Button variant="ghost" disabled aria-disabled="true" title="Voice messages coming soon" className="px-3 opacity-50 cursor-not-allowed">
               <Mic size={16} />
             </Button>
           )}
         </div>
-            </div>
+      </div>
+
+      {/* Kicked modal */}
+      {showKickedModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-card rounded-xl shadow-lg max-w-sm w-full p-6 text-center">
+            <p className="text-lg font-medium mb-4">You were removed from this room.</p>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setKickedModal(false);
+                navigate('/chat-inbox');
+              }}
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
